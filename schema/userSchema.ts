@@ -12,4 +12,9 @@ export const userSchema = z.object({
   companyId: z.string().nonempty("A empresa é obrigatória"),
 });
 
+export const loginSchema = z.object({
+  email: z.string().email("Email inválido").nonempty("O email é obrigatório"),
+  password: z.string().nonempty("A senha é obrigatória"),
+})
+
 export type UserSchemaType = z.infer<typeof userSchema>;
