@@ -5,7 +5,10 @@ export const createCompany = async (company: CompanySchemaType) => {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/company`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      },
       body: JSON.stringify(company),
     });
 
