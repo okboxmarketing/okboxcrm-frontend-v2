@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
+import { usePathname } from "next/navigation";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,33 +24,42 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const pathname = usePathname();
+  const pathSegments = pathname.split("/").filter(Boolean);
+
   return (
     <AuthProvider>
       <SidebarProvider>
         <AppSidebar />
-        < SidebarInset >
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12" >
-            <div className="flex items-center gap-2 px-4" >
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
               <Breadcrumb>
                 <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block" >
-                    <BreadcrumbLink href="#" >
-                      Building Your Application
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  < BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Data Fetching </BreadcrumbPage>
-                  </BreadcrumbItem>
+                  {pathSegments.map((segment, index) => {
+                    const isLast = index === pathSegments.length - 1;
+                    const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
+
+                    return (
+                      <BreadcrumbItem key={href}>
+                        {isLast ? (
+                          <BreadcrumbPage>{decodeURIComponent(segment).toLocaleUpperCase()}</BreadcrumbPage>
+                        ) : (
+                          <>
+                            <BreadcrumbLink href={href}>{decodeURIComponent(segment).toLocaleUpperCase()}</BreadcrumbLink>
+                            <BreadcrumbSeparator />
+                          </>
+                        )}
+                      </BreadcrumbItem>
+                    );
+                  })}
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
           </header>
-          < div className="flex flex-1 flex-col gap-4 p-4 pt-0" >
-            {children}
-          </div>
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </AuthProvider>

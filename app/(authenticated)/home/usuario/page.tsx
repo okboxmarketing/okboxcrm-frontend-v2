@@ -6,10 +6,12 @@ import { z } from "zod";
 import { useState } from "react";
 import { userSchema } from "@/schema/userSchema";
 import { createUser } from "@/service/userService";
+import { findAllCompanies } from "@/service/companyService";
 
 export default function UserRegister() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [companies, setCompanies] = useState<any[]>([]);
   const {
     register,
     handleSubmit,
@@ -17,6 +19,15 @@ export default function UserRegister() {
   } = useForm({
     resolver: zodResolver(userSchema),
   });
+
+  const fetchCompanies = async () => {
+    try {
+      const companies = await findAllCompanies();
+      setCompanies(companies);
+    } catch (error) {
+      console.error("Erro ao buscar empresas:", error);
+    }
+  }
 
   const onSubmit = async (data: any) => {
     setLoading(true);
