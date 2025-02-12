@@ -128,11 +128,15 @@ const EmpresaPage: React.FC = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold">{company?.name}</h1>
-          <p className="text-black/40">Acessor: <span>{company.Accessory.name || "Nenhum"} ({company.Accessory.email || ""})</span></p>
+          <p className="text-black/40">Acessor: <span>{company.Accessory?.name || "Nenhum"}
+            {company.Accessory?.email && (
+              <span> ({company.Accessory?.email})</span>
+            )}
+          </span></p>
         </div>
         <div className="flex gap-4">
           <Button onClick={() => setOpenDialog(true)}>Novo Usuário</Button>
-          {!company.Accessory.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Novo Acessor</Button>)}
+          {!company.Accessory?.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Novo Acessor</Button>)}
         </div>
       </div>
 
