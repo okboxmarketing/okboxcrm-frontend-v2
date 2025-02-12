@@ -65,7 +65,6 @@ const CadastroPage: React.FC = () => {
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Empresas Cadastradas</h1>
-
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>Nova Empresa</Button>

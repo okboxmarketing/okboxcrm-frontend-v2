@@ -18,6 +18,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/context/authContext";
+import { Toaster } from "@/components/ui/toaster";
 
 interface LayoutProps {
   children: ReactNode;
@@ -60,6 +61,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+          <Toaster />
         </SidebarInset>
       </SidebarProvider>
     </AuthProvider>

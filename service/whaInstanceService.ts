@@ -13,10 +13,6 @@ export const getInstance = async () => {
     console.log("Response status findMyWhaInstance:", response.status);
     console.log("Response body findMyWhaInstance:", responseData);
 
-    if (!response.ok) {
-      throw new Error(responseData.message || "Erro desconhecido");
-    }
-
     return responseData;
   } catch (error) {
     console.error("Erro ao buscar instância do WhatsApp:", error);
@@ -43,12 +39,13 @@ export const connect = async () => {
 
     console.log("Response status connectInstance:", response.status);
     console.log("Response body connectInstance:", responseData);
+    console.log("Base64", responseData.base64);
 
     if (!response.ok) {
       throw new Error(responseData.message || "Erro desconhecido");
     }
 
-    return responseData;
+    return responseData.base64;
   } catch (error) {
     console.error("Erro ao buscar instância do WhatsApp:", error);
 
@@ -60,9 +57,9 @@ export const connect = async () => {
   }
 };
 
-export const createInstance = async () => {
+export const isConnected = async () => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/wha-instance`, {
+    const status = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/wha-instance/status`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -70,16 +67,15 @@ export const createInstance = async () => {
       },
     });
 
-    const responseData = await response.json();
+    const statusData = await status.json();
 
-    console.log("Response status connectInstance:", response.status);
-    console.log("Response body connectInstance:", responseData);
-
-    if (!response.ok) {
-      throw new Error(responseData.message || "Erro desconhecido");
+    if (!status.ok) {
+      return false
     }
 
-    return responseData;
+    console.log("Response status isConnected:", status.status);
+    console.log("Response body isConnected:", statusData);
+    return statusData
   } catch (error) {
     console.error("Erro ao buscar instância do WhatsApp:", error);
 
@@ -89,6 +85,6 @@ export const createInstance = async () => {
 
     throw new Error("Erro inesperado");
   }
-};
+}
 
 
