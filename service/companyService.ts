@@ -16,3 +16,7 @@ export const findAllCompanies = async () => {
 export const findMyCompany = async () => {
   return apiHelper.get("/company/my-company");
 };
+
+export const assignAccessorToCompany = async (accessorEmail: string, companyId: string) => {
+  return apiHelper.post("/company/assign-accessor", { accessorEmail, companyId });
+}

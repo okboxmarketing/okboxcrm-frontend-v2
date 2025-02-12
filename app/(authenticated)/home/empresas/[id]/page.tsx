@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { findCompanyById } from "@/service/companyService";
+import { assignAccessorToCompany, findCompanyById } from "@/service/companyService";
 import { createUser } from "@/service/userService";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userSchema, UserSchemaType } from "@/schema/userSchema";
 import { useToast } from "@/hooks/use-toast";
+import { assignAccessorSchema } from "@/schema/companySchema";
 
 const EmpresaPage: React.FC = () => {
   const pathname = usePathname();
@@ -22,9 +23,24 @@ const EmpresaPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openAccessorDialog, setOpenAccessorDialog] = useState(false);
+  const [assigningAccessor, setAssigningAccessor] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+
+  const {
+    register: registerAccessor,
+    handleSubmit: handleSubmitAccessor,
+    reset: resetAccessorForm,
+    formState: { errors: errorsAccessor },
+  } = useForm<{ accessorEmail: string }>({
+    resolver: zodResolver(assignAccessorSchema),
+    defaultValues: {
+      accessorEmail: "",
+    },
+  });
+
 
   const {
     register,
@@ -82,6 +98,28 @@ const EmpresaPage: React.FC = () => {
     }
   };
 
+  const onSubmitAccessor = async (data: { accessorEmail: string }) => {
+    setAssigningAccessor(true);
+    try {
+      await assignAccessorToCompany(data.accessorEmail, companyId!);
+      toast({ description: "Acessor atribuído com sucesso!" });
+      resetAccessorForm();
+      setOpenAccessorDialog(false);
+      setCompany(await findCompanyById(companyId!));
+    } catch (error) {
+      if (error instanceof Error) {
+        toast({
+          description: error.message,
+          variant: "destructive"
+        })
+
+      }
+    } finally {
+      setAssigningAccessor(false);
+    }
+  };
+
+
   if (loading) return <p className="text-center">Carregando empresa...</p>;
   if (error) return <p className="text-red-500 text-center">{error}</p>;
 
@@ -90,11 +128,11 @@ const EmpresaPage: React.FC = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold">{company?.name}</h1>
-          <p className="text-black/40">Acessor: <span>{company.Acessor || "Nenhum"}</span></p>
+          <p className="text-black/40">Acessor: <span>{company.Accessory.name || "Nenhum"} ({company.Accessory.email || ""})</span></p>
         </div>
         <div className="flex gap-4">
           <Button onClick={() => setOpenDialog(true)}>Novo Usuário</Button>
-          <Button onClick={() => setOpenDialog(true)}>Novo Acessor</Button>
+          {!company.Accessory.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Novo Acessor</Button>)}
         </div>
       </div>
 
@@ -121,6 +159,29 @@ const EmpresaPage: React.FC = () => {
       ) : (
         <p className="text-center text-gray-500">Nenhum usuário cadastrado nesta empresa.</p>
       )}
+
+      <Dialog open={openAccessorDialog} onOpenChange={setOpenAccessorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Atribuir Novo Acessor</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmitAccessor(onSubmitAccessor)} className="space-y-4">
+            <div>
+              <Label>Email do Acessor</Label>
+              <Input type="email" {...registerAccessor("accessorEmail")} placeholder="Digite o email do acessor" />
+              {errorsAccessor.accessorEmail && <p className="text-red-500">{errorsAccessor.accessorEmail.message}</p>}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpenAccessorDialog(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={assigningAccessor}>
+                {assigningAccessor ? "Atribuindo..." : "Atribuir"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
