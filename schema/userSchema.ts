@@ -10,6 +10,7 @@ export const userSchema = z.object({
     .regex(/[a-z]/, "A senha deve ter pelo menos 1 letra minúscula")
     .regex(/[0-9]/, "A senha deve ter pelo menos 1 número"),
   companyId: z.string().nonempty("A empresa é obrigatória"),
+  userRole: z.enum(["USER", "ADMIN"]),
 });
 
 export const loginSchema = z.object({

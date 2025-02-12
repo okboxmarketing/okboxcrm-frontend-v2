@@ -1,78 +1,34 @@
+import { apiHelper } from "@/lib/apiHelper";
 import { UserSchemaType } from "@/schema/userSchema";
 
 export const createUser = async (user: UserSchemaType) => {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(user),
-    });
-
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      throw new Error(responseData.message || "Erro desconhecido ao cadastrar usuário");
-    }
-
-    return responseData;
-  } catch (error) {
-    console.error("Erro ao cadastrar usuário:", error);
-    throw error;
-  }
+  return apiHelper.post("/auth/signup", user);
 };
 
 export const loginUser = async (email: string, password: string) => {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/signin`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+  const response = await apiHelper.post("/auth/signin", { email, password });
 
-    const responseData = await response.json();
-    if (!response.ok) throw new Error(responseData.message || "Erro ao fazer login");
-
-    localStorage.setItem("token", responseData.access_token);
-  } catch (error) {
-    console.error("Erro ao logar usuário:", error);
-    throw error;
+  if (response.access_token) {
+    localStorage.setItem("token", response.access_token);
   }
+
+  return response;
 };
 
 export const verifyUser = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("Token não encontrado. Faça login novamente.");
+  const user = await apiHelper.get("/auth/me");
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Falha na verificação do usuário.");
-    }
-
-    const user = await response.json();
-
-    if (!user || !user.userId) {
-      throw new Error("Resposta inválida da API.");
-    }
-
-    localStorage.setItem("userId", user.userId);
-    localStorage.setItem("companyId", user.companyId);
-    localStorage.setItem("role", user.userRole);
-    localStorage.setItem("userName", user.userName);
-    localStorage.setItem("userEmail", user.userEmail);
-
-    return user;
-  } catch (error) {
-    console.error("Erro ao verificar usuário:", error);
-    throw error;
+  if (!user || !user.userId) {
+    throw new Error("Resposta inválida da API.");
   }
+
+  localStorage.setItem("userId", user.userId);
+  localStorage.setItem("companyId", user.companyId);
+  localStorage.setItem("role", user.userRole);
+  localStorage.setItem("userName", user.userName);
+  localStorage.setItem("userEmail", user.userEmail);
+
+  return user;
 };
 
 export const logout = () => {

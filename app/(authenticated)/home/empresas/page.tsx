@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Users } from "lucide-react";
 
 type CompanyType = {
   name: string;
@@ -91,6 +92,7 @@ const CadastroPage: React.FC = () => {
             <TableHead>Data Criação</TableHead>
             <TableHead>Nome</TableHead>
             <TableHead>Acessor</TableHead>
+            <TableHead>Usuários</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -110,6 +112,7 @@ const CadastroPage: React.FC = () => {
 
               <TableCell>{company.name}</TableCell>
               <TableCell>{company.Accessory?.name || "Nenhum"}</TableCell>
+              <TableCell className="flex items-center gap-2"><Users size={14} />{company._count.users}</TableCell>
             </TableRow>
           ))}
         </TableBody>
