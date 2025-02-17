@@ -5,6 +5,7 @@ import { isConnected, connect } from '@/service/whaInstanceService';
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { syncContacts } from '@/service/contactService';
 
 const ConectarPage: React.FC = () => {
   const [base64, setBase64] = useState<string | null>(null);
@@ -13,6 +14,7 @@ const ConectarPage: React.FC = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [connectedLoading, setConnectedLoading] = useState(true);
+  const [syncingContacts, setSyncingContacts] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -51,12 +53,36 @@ const ConectarPage: React.FC = () => {
             title: 'Conexão estabelecida',
             description: 'Você está conectado ao WhatsApp',
           });
+
+          handleSyncContacts();
         }
       }, 10000);
     } catch (err) {
       console.log(err)
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleSyncContacts = async () => {
+    setSyncingContacts(true);
+    setShowDialog(true);
+    try {
+      await syncContacts();
+      toast({
+        title: 'Contatos sincronizados',
+        description: 'A sincronização de contatos foi concluída com sucesso!',
+      });
+    } catch (err) {
+      toast({
+        title: 'Erro ao sincronizar',
+        description: 'Houve um problema ao sincronizar os contatos.',
+        variant: 'destructive',
+      });
+      console.log(err);
+    } finally {
+      setSyncingContacts(false);
+      setShowDialog(false);
     }
   };
 
@@ -95,9 +121,13 @@ const ConectarPage: React.FC = () => {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="flex flex-col items-center">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Escaneie o QR Code</DialogTitle>
+            <DialogTitle className="text-xl font-bold">
+              {syncingContacts ? 'Sincronizando Contatos' : 'Escaneie o QR Code'}
+            </DialogTitle>
           </DialogHeader>
-          {base64 ? (
+          {syncingContacts ? (
+            <p className="text-gray-600">Aguarde enquanto sincronizamos seus contatos...</p>
+          ) : base64 ? (
             <Image src={base64} width={350} height={350} alt="QR Code de Conexão" />
           ) : (
             <p className="text-gray-600">Aguardando QR Code...</p>
