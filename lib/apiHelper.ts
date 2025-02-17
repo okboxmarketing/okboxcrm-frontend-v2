@@ -13,7 +13,7 @@ export const apiHelper = {
       });
 
       const responseData = await response.json();
-      console.log(`Response [GET ${url}]:`, responseData);
+      console.log(`Response [GET ${url} JSON]:`, responseData);
 
       if (!response.ok) throw new Error(responseData.message || "Erro desconhecido");
 

@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import {
-  AudioWaveform,
   BookOpen,
   Bot,
-  Command,
   GalleryVerticalEnd,
   PieChart,
   Settings2,
   PlugZap,
+  Contact,
   Settings,
   Building2,
 } from "lucide-react";
@@ -66,11 +65,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "#",
         icon: PieChart,
         isActive: true,
-        items: [
-          { title: "History", url: "#" },
-          { title: "Starred", url: "#" },
-          { title: "Settings", url: "#" },
-        ],
+      },
+      {
+        title: "Contatos",
+        url: "/home/contatos",
+        icon: Contact,
+        isActive: true,
       },
       {
         title: "Kanban",
