@@ -56,3 +56,32 @@ export interface Response {
   access_token: string;
   message: string;
 }
+
+export type TicketStatusEnum = "PENDING" | "OPEN" | "CLOSED";
+
+
+export interface Ticket {
+  id: string;
+  companyId: string;
+  contactId: string;
+  responsibleId?: string;
+  status: TicketStatusEnum;
+  createdAt: string;
+  updatedAt: string;
+  Contact: {
+    id: string;
+    name: string;
+    phone: string;
+    pictureUrl: string | null;
+    remoteJid: string
+  };
+}
+
+export interface NewMessagePayload {
+  contactId: string;
+  data: {
+    message: {
+      conversation: string;
+    };
+  };
+}

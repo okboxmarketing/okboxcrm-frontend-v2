@@ -64,7 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     navMain: [
       {
         title: "Atendimento",
-        url: "#",
+        url: "/home/atendimento",
         icon: MessageCircle,
         isActive: true,
       },
