@@ -5,13 +5,13 @@ export const getInstance = async () => {
 };
 
 export const connect = async () => {
-  const response = await apiHelper.get("/wha-instance/connect");
+  const response: { base64: string } = await apiHelper.get("/wha-instance/connect");
   return response.base64;
 };
 
 export const isConnected = async () => {
   try {
-    const response = await apiHelper.post("/wha-instance/status");
+    const response = await apiHelper.post<boolean>("/wha-instance/status");
     return response;
   } catch {
     return false;

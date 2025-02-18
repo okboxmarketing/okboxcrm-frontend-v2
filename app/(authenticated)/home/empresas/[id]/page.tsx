@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { assignAccessorToCompany, findCompanyById } from "@/service/companyService";
 import { createUser } from "@/service/userService";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,11 +15,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { userSchema, UserSchemaType } from "@/schema/userSchema";
 import { useToast } from "@/hooks/use-toast";
 import { assignAccessorSchema } from "@/schema/companySchema";
+import { Company, User } from "@/lib/types";
 
 const EmpresaPage: React.FC = () => {
   const pathname = usePathname();
   const companyId = pathname.split("/").pop();
-  const [company, setCompany] = useState<any>(null);
+  const [company, setCompany] = useState<Company>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -27,7 +28,6 @@ const EmpresaPage: React.FC = () => {
   const [assigningAccessor, setAssigningAccessor] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
   const { toast } = useToast();
-  const router = useRouter();
 
   const {
     register: registerAccessor,
@@ -66,7 +66,7 @@ const EmpresaPage: React.FC = () => {
         const data = await findCompanyById(companyId);
         setCompany(data);
       } catch (err) {
-        setError("Erro ao carregar empresa");
+        setError("Erro ao carregar empresa" + err);
       } finally {
         setLoading(false);
       }
@@ -128,20 +128,20 @@ const EmpresaPage: React.FC = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold">{company?.name}</h1>
-          <p className="text-black/40">Acessor: <span>{company.Accessory?.name || "Nenhum"}
-            {company.Accessory?.email && (
+          <p className="text-black/40">Acessor: <span>{company?.Accessory?.name || "Nenhum"}
+            {company?.Accessory?.email && (
               <span> ({company.Accessory?.email})</span>
             )}
           </span></p>
         </div>
         <div className="flex gap-4">
           <Button onClick={() => setOpenDialog(true)}>Novo Usuário</Button>
-          {!company.Accessory?.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Novo Acessor</Button>)}
+          {!company?.Accessory?.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Novo Acessor</Button>)}
         </div>
       </div>
 
       <h2 className="text-xl font-semibold mt-4 mb-2">Usuários da Empresa</h2>
-      {company?.users?.length > 0 ? (
+      {(company && company?.users?.length > 0) ? (
         <Table>
           <TableHeader>
             <TableRow>
@@ -151,7 +151,7 @@ const EmpresaPage: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {company.users.map((user: any) => (
+            {company.users.map((user: User) => (
               <TableRow key={user.id} className="hover:bg-gray-100">
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { verifyUser as fetchVerifyUser, logout as authLogout } from "@/service/userService";
+import { AuthUser } from "@/lib/types";
 
 interface AuthContextType {
   user: any;
@@ -12,7 +13,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<AuthUser>();
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -30,7 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     authLogout();
-    setUser(null);
+    setUser(undefined);
     router.push("/");
   };
 

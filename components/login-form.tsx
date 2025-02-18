@@ -19,6 +19,7 @@ export function LoginForm({
   ...props
 }: React.ComponentPropsWithoutRef<"form">) {
   const [loading, setLoading] = useState(false);
+  console.log("Tirar: Loading", loading);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const {

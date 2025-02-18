@@ -2,15 +2,15 @@
 
 import { ReactNode } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
-import { usePathname } from "next/navigation";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+// import { usePathname } from "next/navigation";
+// import {
+//   Breadcrumb,
+//   BreadcrumbItem,
+//   BreadcrumbLink,
+//   BreadcrumbList,
+//   BreadcrumbPage,
+//   BreadcrumbSeparator,
+// } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -25,8 +25,8 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const pathname = usePathname();
-  const pathSegments = pathname.split("/").filter(Boolean);
+  // const pathname = usePathname();
+  // const pathSegments = pathname.split("/").filter(Boolean);
 
   return (
     <AuthProvider>
@@ -37,7 +37,7 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
-              <Breadcrumb>
+              {/* <Breadcrumb>
                 <BreadcrumbList>
                   {pathSegments.map((segment, index) => {
                     const isLast = index === pathSegments.length - 1;
@@ -57,7 +57,7 @@ export default function Layout({ children }: LayoutProps) {
                     );
                   })}
                 </BreadcrumbList>
-              </Breadcrumb>
+              </Breadcrumb> */}
             </div>
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>

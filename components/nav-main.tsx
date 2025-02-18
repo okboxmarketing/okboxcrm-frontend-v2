@@ -38,7 +38,6 @@ export function NavMain({
       <SidebarMenu>
         {items.map((item) =>
           item.items && item.items.length > 0 ? (
-            // Itens com subitens (Collapsible)
             <Collapsible
               key={item.title}
               asChild

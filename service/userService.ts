@@ -1,4 +1,5 @@
 import { apiHelper } from "@/lib/apiHelper";
+import { AuthUser, Response } from "@/lib/types";
 import { UserSchemaType } from "@/schema/userSchema";
 
 export const createUser = async (user: UserSchemaType) => {
@@ -6,7 +7,7 @@ export const createUser = async (user: UserSchemaType) => {
 };
 
 export const loginUser = async (email: string, password: string) => {
-  const response = await apiHelper.post("/auth/signin", { email, password });
+  const response: Response = await apiHelper.post("/auth/signin", { email, password });
 
   if (response.access_token) {
     localStorage.setItem("token", response.access_token);
@@ -16,7 +17,7 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 export const verifyUser = async () => {
-  const user = await apiHelper.get("/auth/me");
+  const user = await apiHelper.get<AuthUser>("/auth/me");
 
   if (!user || !user.userId) {
     throw new Error("Resposta inválida da API.");

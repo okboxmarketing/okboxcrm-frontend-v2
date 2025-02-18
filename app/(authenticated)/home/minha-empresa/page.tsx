@@ -1,29 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { assignAccessorToCompany, findCompanyById, findMyCompany } from "@/service/companyService";
+import { findMyCompany } from "@/service/companyService";
 import { createUser } from "@/service/userService";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userSchema, UserSchemaType } from "@/schema/userSchema";
 import { useToast } from "@/hooks/use-toast";
-import { assignAccessorSchema } from "@/schema/companySchema";
+import { Company, User } from "@/lib/types";
 
 const MinhaEmpresaPage: React.FC = () => {
-  const [company, setCompany] = useState<any>(null);
+  const [company, setCompany] = useState<Company>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
+  const [companyId, setCompanyId] = useState<string>("");
   const { toast } = useToast();
-  const companyId = localStorage.getItem("companyId");
 
   const {
     register,
@@ -38,10 +56,20 @@ const MinhaEmpresaPage: React.FC = () => {
       email: "",
       password: "",
       userRole: "USER",
-      companyId: companyId || "",
+      companyId: "",
     },
   });
 
+  // Lê companyId do localStorage apenas no client
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("companyId") || "";
+      setCompanyId(id);
+      setValue("companyId", id);
+    }
+  }, [setValue]);
+
+  // Busca a empresa sempre que companyId for definido
   useEffect(() => {
     const fetchCompany = async () => {
       try {
@@ -49,15 +77,14 @@ const MinhaEmpresaPage: React.FC = () => {
         const data = await findMyCompany();
         setCompany(data);
       } catch (err) {
-        setError("Erro ao carregar empresa");
+        setError("Erro ao carregar empresa: " + err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCompany();
-  }, []);
-
+  }, [companyId]);
 
   const onSubmit = async (data: UserSchemaType) => {
     setCreatingUser(true);
@@ -66,11 +93,16 @@ const MinhaEmpresaPage: React.FC = () => {
       toast({
         description: "Usuário cadastrado com sucesso!",
       });
-      reset()
+      reset();
       setOpenDialog(false);
-      setCompany(await findMyCompany());
+      const updated = await findMyCompany();
+      setCompany(updated);
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Erro ao cadastrar usuário");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Erro ao cadastrar usuário"
+      );
     } finally {
       setCreatingUser(false);
     }
@@ -85,13 +117,14 @@ const MinhaEmpresaPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold">{company?.name}</h1>
           <p className="text-black/40">
-            Acessor: <span>{company.Accessory?.name || "Nenhum"}
-              {company.Accessory?.email && (
-                <span>
-                  {company.Accessory?.email || ""}
-                </span>
+            Acessor:{" "}
+            <span>
+              {company?.Accessory?.name || "Nenhum"}
+              {company?.Accessory?.email && (
+                <span> ({company?.Accessory?.email})</span>
               )}
-            </span></p>
+            </span>
+          </p>
         </div>
         <div className="flex gap-4">
           <Button onClick={() => setOpenDialog(true)}>Novo Usuário</Button>
@@ -99,7 +132,7 @@ const MinhaEmpresaPage: React.FC = () => {
       </div>
 
       <h2 className="text-xl font-semibold mt-4 mb-2">Usuários da Empresa</h2>
-      {company?.users?.length > 0 ? (
+      {company?.users?.length ? (
         <Table>
           <TableHeader>
             <TableRow>
@@ -109,7 +142,7 @@ const MinhaEmpresaPage: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {company.users.map((user: any) => (
+            {company.users.map((user: User) => (
               <TableRow key={user.id} className="hover:bg-gray-100">
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
@@ -119,7 +152,9 @@ const MinhaEmpresaPage: React.FC = () => {
           </TableBody>
         </Table>
       ) : (
-        <p className="text-center text-gray-500">Nenhum usuário cadastrado nesta empresa.</p>
+        <p className="text-center text-gray-500">
+          Nenhum usuário cadastrado nesta empresa.
+        </p>
       )}
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -130,22 +165,45 @@ const MinhaEmpresaPage: React.FC = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <Label>Nome</Label>
-              <Input type="text" {...register("name")} placeholder="Digite o nome" />
-              {errors.name && <p className="text-red-500">{errors.name.message}</p>}
+              <Input
+                type="text"
+                {...register("name")}
+                placeholder="Digite o nome"
+              />
+              {errors.name && (
+                <p className="text-red-500">{errors.name.message}</p>
+              )}
             </div>
             <div>
               <Label>Email</Label>
-              <Input type="email" {...register("email")} placeholder="Digite o email" />
-              {errors.email && <p className="text-red-500">{errors.email.message}</p>}
+              <Input
+                type="email"
+                {...register("email")}
+                placeholder="Digite o email"
+              />
+              {errors.email && (
+                <p className="text-red-500">{errors.email.message}</p>
+              )}
             </div>
             <div>
               <Label>Senha</Label>
-              <Input type="password" {...register("password")} placeholder="Digite a senha" />
-              {errors.password && <p className="text-red-500">{errors.password.message}</p>}
+              <Input
+                type="password"
+                {...register("password")}
+                placeholder="Digite a senha"
+              />
+              {errors.password && (
+                <p className="text-red-500">{errors.password.message}</p>
+              )}
             </div>
             <div>
               <Label>Função</Label>
-              <Select onValueChange={(value) => setValue("userRole", value as "USER" | "ADMIN")} defaultValue="USER">
+              <Select
+                onValueChange={(value) =>
+                  setValue("userRole", value as "USER" | "ADMIN")
+                }
+                defaultValue="USER"
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o papel do usuário" />
                 </SelectTrigger>

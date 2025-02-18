@@ -12,13 +12,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Users } from "lucide-react";
+import { Company } from "@/lib/types";
 
 type CompanyType = {
   name: string;
 };
 
 const CadastroPage: React.FC = () => {
-  const [companies, setCompanies] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -30,7 +31,7 @@ const CadastroPage: React.FC = () => {
         const data = await findAllCompanies();
         setCompanies(data);
       } catch (err) {
-        setError("Erro ao carregar empresas");
+        setError("Erro ao carregar empresas" + err);
       } finally {
         setLoading(false);
       }

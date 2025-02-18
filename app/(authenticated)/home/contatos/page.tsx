@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
+// import { useToast } from "@/hooks/use-toast";
 import { Trash } from "lucide-react";
 import { getContacts } from "@/service/contactService";
+import { Contact } from "@/lib/types";
 
 const ContatosPage: React.FC = () => {
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+  // const { toast } = useToast();
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -20,7 +21,7 @@ const ContatosPage: React.FC = () => {
         const data = await getContacts();
         setContacts(data);
       } catch (err) {
-        setError("Erro ao carregar contatos");
+        setError("Erro ao carregar contatos" + err);
       } finally {
         setLoading(false);
       }

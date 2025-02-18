@@ -1,4 +1,5 @@
 import { apiHelper } from "@/lib/apiHelper";
+import { Company } from "@/lib/types";
 import { CompanySchemaType } from "@/schema/companySchema";
 
 export const createCompany = async (company: CompanySchemaType) => {
@@ -6,15 +7,15 @@ export const createCompany = async (company: CompanySchemaType) => {
 };
 
 export const findCompanyById = async (companyId: string) => {
-  return apiHelper.get(`/company/${companyId}`);
+  return apiHelper.get<Company>(`/company/${companyId}`);
 };
 
 export const findAllCompanies = async () => {
-  return apiHelper.get("/company");
+  return apiHelper.get<Company[]>("/company");
 };
 
 export const findMyCompany = async () => {
-  return apiHelper.get("/company/my-company");
+  return apiHelper.get<Company>("/company/my-company");
 };
 
 export const assignAccessorToCompany = async (accessorEmail: string, companyId: string) => {

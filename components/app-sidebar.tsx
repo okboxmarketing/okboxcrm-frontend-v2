@@ -2,21 +2,23 @@
 
 import * as React from "react";
 import {
-  BookOpen,
-  Bot,
   GalleryVerticalEnd,
   PieChart,
-  Settings2,
   PlugZap,
   Contact,
+  Kanban,
   Settings,
+  Cone,
   Building2,
+  MessageCircle,
+  MoveDownRight,
+  ShoppingBag,
 } from "lucide-react";
+import Image from "next/image";
 
 import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
 import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -61,6 +63,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     navMain: [
       {
+        title: "Atendimento",
+        url: "#",
+        icon: MessageCircle,
+        isActive: true,
+      },
+      {
+        title: "Kanban",
+        url: "#",
+        icon: Kanban,
+        isActive: true,
+      },
+      {
         title: "Dashboard",
         url: "#",
         icon: PieChart,
@@ -73,35 +87,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         isActive: true,
       },
       {
-        title: "Kanban",
+        title: "Etapas do Funil",
         url: "#",
-        icon: Bot,
-        items: [
-          { title: "Genesis", url: "#" },
-          { title: "Explorer", url: "#" },
-          { title: "Quantum", url: "#" },
-        ],
+        icon: Cone,
+        isActive: true,
       },
       {
         title: "Vendas",
         url: "#",
-        icon: BookOpen,
+        icon: ShoppingBag,
         items: [
-          { title: "Introduction", url: "#" },
-          { title: "Get Started", url: "#" },
-          { title: "Tutorials", url: "#" },
-          { title: "Changelog", url: "#" },
+          { title: "Histórico", url: "#" },
+          { title: "Produtos", url: "#" },
         ],
       },
       {
         title: "Perdas",
         url: "#",
-        icon: Settings2,
+        icon: MoveDownRight,
         items: [
-          { title: "General", url: "#" },
-          { title: "Team", url: "#" },
-          { title: "Billing", url: "#" },
-          { title: "Limits", url: "#" },
+          { title: "Histórico", url: "#" },
+          { title: "Motivos", url: "#" },
         ],
       },
     ],
@@ -124,7 +130,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher team={data.team} />
+        <Image
+          src={'/logo.png'}
+          width={200}
+          height={20}
+          alt="Logo"
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
