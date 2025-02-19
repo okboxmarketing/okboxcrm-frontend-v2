@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  return <AuthContext.Provider value={{ user, loading, verifyUser, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext value={{ user, loading, verifyUser, logout }}>{children}</AuthContext>;
 };
 
 export const useAuth = () => {

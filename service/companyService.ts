@@ -21,3 +21,7 @@ export const findMyCompany = async () => {
 export const assignAccessorToCompany = async (accessorEmail: string, companyId: string) => {
   return apiHelper.post("/company/assign-accessor", { accessorEmail, companyId });
 }
+
+export const deleteCompany = async (companyId: string) => {
+  return apiHelper.delete(`/company/${companyId}`);
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Users } from "lucide-react";
+import { Trash, Users } from "lucide-react";
 import { Company } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 type CompanyType = {
   name: string;
@@ -21,22 +22,24 @@ type CompanyType = {
 const CadastroPage: React.FC = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingCreate, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
+
+  const fetchCompanies = async () => {
+    try {
+      const data = await findAllCompanies();
+      setCompanies(data);
+    } catch (err) {
+      setError("Erro ao carregar empresas" + err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const data = await findAllCompanies();
-        setCompanies(data);
-      } catch (err) {
-        setError("Erro ao carregar empresas" + err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCompanies();
   }, []);
 
@@ -50,18 +53,28 @@ const CadastroPage: React.FC = () => {
   });
 
   const onSubmit = async (data: CompanyType) => {
-    try {
-      await createCompany(data);
-      setDialogOpen(false);
-      reset();
-      setCompanies(await findAllCompanies());
-    } catch (error) {
-      console.error("Erro ao cadastrar empresa:", error);
-    }
+    startTransition(async () => {
+      try {
+        await createCompany(data);
+        reset();
+        fetchCompanies();
+        setDialogOpen(false);
+        toast({
+          description: 'Empresa cadastrada com sucesso!',
+        });
+      } catch (error) {
+        console.error("Erro ao cadastrar empresa:", error);
+      }
+    });
   };
 
-  if (loading) return <p className="text-center">Carregando empresas...</p>;
-  if (error) return <p className="text-red-500 text-center">{error}</p>;
+  const sendToast = (message: string) => {
+    toast({
+      description: message,
+    });
+  }
+
+  if (loading) return <p className="text-center"></p>;
 
   return (
     <div className="container mx-auto p-6">
@@ -81,7 +94,7 @@ const CadastroPage: React.FC = () => {
                 <Input id="name" type="text" {...register("name")} />
                 {errors.name && <p className="text-red-500">{String(errors.name.message)}</p>}
               </div>
-              <Button type="submit" className="w-full">Cadastrar</Button>
+              <Button type="submit" className="w-full" isLoading={loadingCreate}>Cadastrar</Button>
             </form>
           </DialogContent>
         </Dialog>

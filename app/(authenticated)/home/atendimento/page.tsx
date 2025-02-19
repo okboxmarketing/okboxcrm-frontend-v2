@@ -223,8 +223,14 @@ export default function Chat() {
             </Avatar>
             <div>
               <h2 className="font-semibold">{selectedChat?.Contact.name || "Selecione um contato"}</h2>
-              <p className="text-sm text-green-500">Online</p>
+              <p className="text-sm text-black/40">Acompanhado por: USERNAME</p>
             </div>
+          </div>
+          <div>
+            Selecionar Etapa
+          </div>
+          <div>
+            Venda/Perda
           </div>
         </div>
 

@@ -15,7 +15,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/context/authContext";
 import { Toaster } from "@/components/ui/toaster";

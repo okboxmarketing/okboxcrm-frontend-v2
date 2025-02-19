@@ -54,4 +54,30 @@ export const apiHelper = {
       throw error;
     }
   },
+  delete: async <T>(url: string): Promise<T> => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+
+      const text = await response.text();
+      const responseData = text ? JSON.parse(text) as T : {} as T;
+      console.log(`Response [DELETE ${url}]:`, responseData);
+
+      if (!response.ok) {
+        throw new Error((responseData as Error).message || "Erro desconhecido");
+      }
+
+      return responseData;
+    } catch (error) {
+      console.error(`Erro [DELETE ${url}]:`, error);
+      throw error;
+    }
+  },
 };

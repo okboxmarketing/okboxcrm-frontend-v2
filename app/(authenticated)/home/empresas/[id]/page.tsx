@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { assignAccessorToCompany, findCompanyById } from "@/service/companyService";
+import { useEffect, useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { assignAccessorToCompany, deleteCompany, findCompanyById } from "@/service/companyService";
 import { createUser } from "@/service/userService";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,16 @@ const EmpresaPage: React.FC = () => {
   const pathname = usePathname();
   const companyId = pathname.split("/").pop();
   const [company, setCompany] = useState<Company>();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [openAccessorDialog, setOpenAccessorDialog] = useState(false);
-  const [assigningAccessor, setAssigningAccessor] = useState(false);
-  const [creatingUser, setCreatingUser] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [loadingCreateUser, setTransition] = useTransition();
+  const router = useRouter();
   const { toast } = useToast();
+
+
+  const [loadingAssignAccessor, setTransitionAssignAccessor] = useTransition();
+  const [loadingDeleteCompany, setTransitionDeleteCompany] = useTransition();
 
   const {
     register: registerAccessor,
@@ -40,7 +43,6 @@ const EmpresaPage: React.FC = () => {
       accessorEmail: "",
     },
   });
-
 
   const {
     register,
@@ -59,19 +61,17 @@ const EmpresaPage: React.FC = () => {
     },
   });
 
-  useEffect(() => {
-    const fetchCompany = async () => {
-      try {
-        if (!companyId) return;
-        const data = await findCompanyById(companyId);
-        setCompany(data);
-      } catch (err) {
-        setError("Erro ao carregar empresa" + err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchCompany = async () => {
+    try {
+      if (!companyId) return;
+      const data = await findCompanyById(companyId);
+      setCompany(data);
+    } catch (err) {
+      console.log("Erro ao carregar empresa" + err);
+    }
+  };
 
+  useEffect(() => {
     fetchCompany();
   }, [companyId]);
 
@@ -82,46 +82,54 @@ const EmpresaPage: React.FC = () => {
   }, [companyId, setValue]);
 
   const onSubmit = async (data: UserSchemaType) => {
-    setCreatingUser(true);
-    try {
-      await createUser(data);
-      toast({
-        description: "Usuário cadastrado com sucesso!",
-      });
-      reset()
-      setOpenDialog(false);
-      setCompany(await findCompanyById(companyId!));
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Erro ao cadastrar usuário");
-    } finally {
-      setCreatingUser(false);
-    }
+    setTransition(async () => {
+      try {
+        await createUser(data);
+        reset();
+        setOpenDialog(false);
+        setCompany(await findCompanyById(companyId!));
+        toast({
+          description: "Usuário cadastrado com sucesso!",
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          toast({
+            description: error.message,
+            variant: "destructive"
+          })
+        }
+      }
+    });
   };
 
   const onSubmitAccessor = async (data: { accessorEmail: string }) => {
-    setAssigningAccessor(true);
-    try {
-      await assignAccessorToCompany(data.accessorEmail, companyId!);
-      toast({ description: "Acessor atribuído com sucesso!" });
-      resetAccessorForm();
-      setOpenAccessorDialog(false);
-      setCompany(await findCompanyById(companyId!));
-    } catch (error) {
-      if (error instanceof Error) {
-        toast({
-          description: error.message,
-          variant: "destructive"
-        })
+    setTransitionAssignAccessor(async () => {
+      try {
+        await assignAccessorToCompany(data.accessorEmail, companyId!);
+        toast({ description: "Acessor atribuído com sucesso!" });
+        resetAccessorForm();
+        setOpenAccessorDialog(false);
+        setCompany(await findCompanyById(companyId!));
+      } catch (error) {
+        if (error instanceof Error) {
+          toast({
+            description: error.message,
+            variant: "destructive"
+          })
 
+        }
       }
-    } finally {
-      setAssigningAccessor(false);
-    }
+    });
   };
 
+  const handleDeleteCompany = async () => {
+    setTransitionDeleteCompany(async () => {
+      await deleteCompany(companyId!);
+      toast({ description: "Empresa deletada com sucesso!" });
+      router.push("/home/empresas");
+    });
+  }
 
-  if (loading) return <p className="text-center">Carregando empresa...</p>;
-  if (error) return <p className="text-red-500 text-center">{error}</p>;
 
   return (
     <div className="container mx-auto p-6">
@@ -137,6 +145,7 @@ const EmpresaPage: React.FC = () => {
         <div className="flex gap-4">
           <Button onClick={() => setOpenDialog(true)}>Novo Usuário</Button>
           {!company?.Accessory?.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Novo Acessor</Button>)}
+          <Button variant={'destructive'} onClick={() => setOpenDeleteDialog(true)}>Deletar Empresa</Button>
         </div>
       </div>
 
@@ -164,6 +173,18 @@ const EmpresaPage: React.FC = () => {
         <p className="text-center text-gray-500">Nenhum usuário cadastrado nesta empresa.</p>
       )}
 
+      <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Você tem certeza?</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenDeleteDialog(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={() => handleDeleteCompany()} isLoading={loadingDeleteCompany}>Deletar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={openAccessorDialog} onOpenChange={setOpenAccessorDialog}>
         <DialogContent>
           <DialogHeader>
@@ -179,8 +200,8 @@ const EmpresaPage: React.FC = () => {
               <Button type="button" variant="outline" onClick={() => setOpenAccessorDialog(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={assigningAccessor}>
-                {assigningAccessor ? "Atribuindo..." : "Atribuir"}
+              <Button type="submit" isLoading={loadingAssignAccessor}>
+                Atribuir
               </Button>
             </DialogFooter>
           </form>
@@ -226,8 +247,8 @@ const EmpresaPage: React.FC = () => {
               <Button type="button" variant="outline" onClick={() => setOpenDialog(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={creatingUser}>
-                {creatingUser ? "Cadastrando..." : "Cadastrar"}
+              <Button type="submit" isLoading={loadingCreateUser}>
+                Cadastrar
               </Button>
             </DialogFooter>
           </form>
