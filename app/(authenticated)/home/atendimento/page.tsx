@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Ticket, TicketStatusEnum } from "@/lib/types";
-import { getTickets } from "@/service/ticketsService";
+import { formatMessageTime } from "@/lib/utils";
+import { getMessagesByContactId, getTickets } from "@/service/ticketsService";
 import { Calendar, Globe, Info, Music, Paperclip, Search, Send, Settings, Video } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import io from "socket.io-client";
 
 interface NewMessagePayload {
@@ -35,18 +36,56 @@ export default function Chat() {
   const [selectedChat, setSelectedChat] = useState<Ticket | null>(null);
   const [tab, setTab] = useState<TicketStatusEnum>("PENDING");
 
+  const fetchTickets = useCallback(async () => {
+    try {
+      const response = await getTickets(tab);
+      console.log("Tickets recebidos:", response);
+      setTickets(response);
+    } catch (error) {
+      console.error("Erro ao buscar tickets:", error);
+    }
+  }, [tab]);
+
   useEffect(() => {
-    const fetchTickets = async () => {
-      try {
-        const response = await getTickets(tab);
-        console.log("Tickets recebidos:", response);
-        setTickets(response);
-      } catch (error) {
-        console.error("Erro ao buscar tickets:", error);
-      }
-    };
     fetchTickets();
   }, [tab]);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (selectedChat) {
+        try {
+          const response = await getMessagesByContactId(selectedChat.Contact.remoteJid);
+
+          const formattedMessages = response.map((msg) => ({
+            contactId: msg.contactId,
+            data: {
+              key: {
+                fromMe: msg.fromMe,
+                id: msg.id,
+                remoteJid: msg.contactId,
+              },
+              message: {
+                conversation: msg.content,
+              },
+              messageType: "conversation",
+              messageTimestamp: new Date(msg.createdAt).getTime(),
+              instanceId: "",
+              pushName: "",
+              status: "",
+            },
+          }));
+
+          console.log("Mensagens carregadas:", formattedMessages);
+          setMessages(formattedMessages);
+        } catch (error) {
+          console.error("Erro ao buscar mensagens:", error);
+        }
+      }
+    };
+
+    fetchMessages();
+  }, [selectedChat]);
+
 
   useEffect(() => {
     const socket = io("http://localhost:3001", {
@@ -67,6 +106,10 @@ export default function Chat() {
     socket.on("newMessage", (payload: NewMessagePayload) => {
       console.log("Nova mensagem recebida:", payload);
       setMessages((prev) => [...prev, payload]);
+
+      setTimeout(() => {
+        fetchTickets();
+      }, 500);
     });
 
     return () => {
@@ -80,6 +123,7 @@ export default function Chat() {
       <div className="mt-1 bg-white rounded-tl-xl w-80 border-r flex flex-col">
         <div className="p-4 border-b">
           <h1 className="text-xl font-semibold mb-4">Atendimento</h1>
+          <p></p>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
             <Input className="pl-9 bg-gray-50" placeholder="Pesquisar..." />
@@ -113,9 +157,15 @@ export default function Chat() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center">
                       <p className="font-medium truncate">{ticket.Contact.name}</p>
-                      <span className="text-xs text-gray-500">01/01/1999</span>
+                      <span className="text-xs text-gray-500">
+                        {ticket.lastMessage?.createdAt
+                          ? formatMessageTime(ticket.lastMessage.createdAt)
+                          : ""}
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-500 truncate">Mensagem recente...</p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {ticket.lastMessage?.content || ""}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -143,9 +193,15 @@ export default function Chat() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center">
                       <p className="font-medium truncate">{ticket.Contact.name}</p>
-                      <span className="text-xs text-gray-500">01/01/1999</span>
+                      <span className="text-xs text-gray-500">
+                        {ticket.lastMessage?.createdAt
+                          ? formatMessageTime(ticket.lastMessage.createdAt)
+                          : ""}
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-500 truncate">Mensagem recente...</p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {ticket.lastMessage?.content || ""}
+                    </p>
                   </div>
                 </div>
               ))}

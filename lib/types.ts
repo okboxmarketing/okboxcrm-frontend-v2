@@ -75,6 +75,11 @@ export interface Ticket {
     pictureUrl: string | null;
     remoteJid: string
   };
+
+  lastMessage: {
+    content: string;
+    createdAt: string;
+  }
 }
 
 export interface NewMessagePayload {
@@ -84,4 +89,13 @@ export interface NewMessagePayload {
       conversation: string;
     };
   };
+}
+
+export interface Message {
+  id: string;
+  companyId: string;
+  fromMe: boolean;
+  contactId: string;
+  content: string;
+  createdAt: string;
 }
