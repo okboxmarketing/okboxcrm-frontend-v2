@@ -49,12 +49,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, [user]);
 
-  if (!user) return null;
 
   const data = {
     user: {
-      name: user.userName,
-      email: user.userEmail,
+      name: user?.userName || "",
+      email: user?.userEmail || "",
     },
     team:
     {
@@ -115,9 +114,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         name: "Empresa",
         url:
-          user.userRole === "ADMIN"
+          user?.userRole === "ADMIN"
             ? `/home/minha-empresa`
-            : user.userRole === "MASTER"
+            : user?.userRole === "MASTER"
               ? `/home/empresas`
               : "/home",
         icon: Building2,
@@ -130,16 +129,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <Image
-          src={'/logo.png'}
-          width={200}
-          height={20}
-          alt="Logo"
-        />
+        <div className="w-200 h-20">
+          <Image
+            src="/logo.png"
+            width={200}
+            height={20}
+            alt="Logo"
+          />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {(user.userRole === "ADMIN" || user.userRole === "MASTER") && (
+        {(user?.userRole === "ADMIN" || user?.userRole === "MASTER") && (
           <NavProjects projects={data.projects} />
         )}
       </SidebarContent>

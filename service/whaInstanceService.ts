@@ -9,11 +9,16 @@ export const connect = async () => {
   return response.base64;
 };
 
-export const isConnected = async () => {
+export const getStatus = async () => {
   try {
-    const response = await apiHelper.post<boolean>("/wha-instance/status");
-    return response;
+    const status = await apiHelper.get("/wha-instance/status");
+    console.log(status)
+    return status
   } catch {
     return false;
   }
 };
+
+export const createInstance = async () => {
+  return apiHelper.post("/wha-instance");
+}

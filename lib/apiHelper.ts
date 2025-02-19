@@ -13,8 +13,14 @@ export const apiHelper = {
       });
 
       const text = await response.text();
-      const responseData = text ? JSON.parse(text) as T : {} as T;
-      console.log(`Response [GET ${url} JSON]:`, responseData);
+
+      let responseData: T
+      try {
+        responseData = JSON.parse(text) as T
+        console.log(`Response [GET ${url} JSON]:`, responseData);
+      } catch {
+        responseData = text as T
+      }
 
       if (!response.ok) {
         throw new Error((responseData as Error).message || "Erro desconhecido");

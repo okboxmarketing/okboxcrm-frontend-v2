@@ -1,140 +1,173 @@
 "use client";
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { isConnected, connect } from '@/service/whaInstanceService';
-import React, { useEffect, useState } from 'react';
+import { connect, createInstance, getStatus } from '@/service/whaInstanceService';
+import React, { useEffect, useState, useTransition } from 'react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { syncContacts } from '@/service/contactService';
+import { io } from 'socket.io-client';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { CircleCheckBig, Loader2 } from 'lucide-react';
 
 const ConectarPage: React.FC = () => {
-  const [base64, setBase64] = useState<string | null>(null);
-  const [creating, setCreating] = useState<boolean>(false);
-  const [connected, setConnected] = useState<boolean | null>(null);
-  const [showDialog, setShowDialog] = useState(false);
-  const [checkingStatus, setCheckingStatus] = useState(false);
-  const [connectedLoading, setConnectedLoading] = useState(true);
-  const [syncingContacts, setSyncingContacts] = useState(false);
+  const [base64, setBase64] = useState<string>();
+  const [syncingContactsLoading, setSyncingContactsTransition] = useTransition();
+  const [generatingQRCode, setGeneratingQRCode] = useTransition();
+  const [status, setStatus] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const checkStatus = async () => {
-      setConnectedLoading(true);
-      try {
-        const status = await isConnected();
-        setConnected(status);
-      } catch (err) {
-        console.log(err)
-      } finally {
-        setConnectedLoading(false);
-      }
-    };
-
-    checkStatus();
-  }, []);
-
-  const handleConnect = async () => {
-
-    setShowDialog(true);
-    setCreating(true);
+  const checkStatus = async () => {
+    setIsLoading(true);
     try {
-      const response = await connect();
-      setBase64(response);
-      setCheckingStatus(true);
-
-      const interval = setInterval(async () => {
-        const status = await isConnected();
-        if (status) {
-          clearInterval(interval);
-          setCheckingStatus(false);
-          setShowDialog(false);
-          setConnected(true);
-          toast({
-            title: 'Conexão estabelecida',
-            description: 'Você está conectado ao WhatsApp',
-          });
-
-          handleSyncContacts();
-        }
-      }, 10000);
-    } catch (err) {
-      console.log(err)
+      const newStatus = await getStatus();
+      if (newStatus === "close") setStatus("Desconectado");
+      if (newStatus === "open") setStatus("Conectado");
+      if (newStatus === "connecting") setStatus("Conectando");
+    } catch (error) {
+      console.error("Erro ao buscar status:", error);
     } finally {
-      setCreating(false);
+      setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    checkStatus();
+  }, []);
+
+  useEffect(() => {
+    const socket = io("http://localhost:3001", { transports: ["websocket"] });
+
+    socket.on("connect", () => {
+      const companyId = localStorage.getItem("companyId");
+      if (companyId) {
+        socket.emit("join", companyId);
+      }
+    });
+
+    socket.on("qrCode", (qrcode: string) => setBase64(qrcode));
+
+    socket.on("connectionStatus", (status: string) => {
+      if (status === "close") setStatus("Desconectado");
+      if (status === "open") {
+        setStatus("Conectado");
+        setBase64(undefined);
+        handleSyncContacts();
+      }
+      if (status === "connecting") setStatus("Conectando");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   const handleSyncContacts = async () => {
-    setSyncingContacts(true);
-    setShowDialog(true);
     try {
       await syncContacts();
-      toast({
-        title: 'Contatos sincronizados',
-        description: 'A sincronização de contatos foi concluída com sucesso!',
-      });
+      toast({ title: "Contatos sincronizados", description: "Os contatos foram sincronizados com sucesso!" });
     } catch (err) {
       toast({
-        title: 'Erro ao sincronizar',
-        description: 'Houve um problema ao sincronizar os contatos.',
-        variant: 'destructive',
-      });
+        title: "Erro ao sincronizar contatos",
+        description: "Ocorreu um erro ao sincronizar os contatos. Tente novamente mais tarde.",
+        variant: "destructive",
+      })
+    };
+  }
+
+  const handleConnect = async () => {
+    setGeneratingQRCode(async () => {
+      await connect();
+      checkStatus();
+    });
+  };
+
+  const handleCreateInstance = async () => {
+    try {
+      await createInstance();
+      toast({ title: "Conexão criada", description: "A conexão foi criada com sucesso!" });
+      checkStatus();
+    } catch (err) {
       console.log(err);
-    } finally {
-      setSyncingContacts(false);
-      setShowDialog(false);
     }
   };
 
   return (
-    <div className="container mx-auto p-6 overflow-y-hidden">
-      <div
-        className={`flex items-center justify-between mb-4 border-t-2 rounded-md p-4 transition-all relative overflow-hidden
-          ${connectedLoading ? 'shadow-none bg-transparent' : connected
-            ? 'border-green-500 bg-gradient-to-b from-green-100 to-transparent'
-            : 'border-red-500 bg-gradient-to-b from-red-100 to-transparent'
-          }`}
-      >
+    <div className="flex flex-col container mx-auto p-6 w-full h-full gap-6">
+      <div>
         <h1 className="text-2xl font-bold">Conexão</h1>
-        {!connected ? (
-          <h1>Você ainda não está conectado!</h1>
-        ) : (
-          <h1>Você está conectado! Agora pode utilizar todas as funcionalidades do CRM.</h1>
-        )}
-        {!connected && <Button onClick={handleConnect} disabled={creating}>Conectar</Button>}
+        <p className="text-black/40">Conecte-se para aproveitar todas as funcionalidades de nosso CRM!</p>
       </div>
 
-      {!connected && (
-        <div className="relative w-full h-screen flex items-center justify-center">
-          <div className="absolute flex flex-col items-center text-center px-4">
-            <Image
-              src={'/qrcode.svg'}
-              width={350}
-              height={350}
-              className="max-w-full h-auto mt-6"
-              alt="QR Code"
-            />
+      <Card
+        className={cn(
+          "flex justify-between p-6 border transition-shadow duration-200",
+          status === "Desconectado" && "border-red-500 shadow-red-300 shadow-sm",
+          status === "Conectando" && "border-orange-500 shadow-orange-300 shadow-sm",
+          status === "Conectado" && "border-green-500 shadow-green-300 shadow-sm"
+        )}
+      >
+        <div>
+          <div className="flex gap-2 items-center">
+            {isLoading ? (
+              <Loader2 className="animate-spin text-gray-400 w-4 h-4" />
+            ) : (
+              <span
+                className={cn(
+                  "w-4 h-4 transition-shadow duration-200 rounded-full",
+                  status === "Desconectado" && "bg-red-500 shadow-red-300 shadow-sm",
+                  status === "Conectando" && "bg-orange-500 shadow-orange-300 shadow-sm",
+                  status === "Conectado" && "bg-green-500 shadow-green-300 shadow-sm"
+                )}
+              />
+            )}
+            <p
+              className={cn(
+                "font-medium transition-colors duration-200",
+                status === "Desconectado" && "text-red-500",
+                status === "Conectando" && "text-orange-500",
+                status === "Conectado" && "text-green-500"
+              )}
+            >
+              {isLoading ? "Carregando..." : status}
+            </p>
           </div>
+          <p>Nome</p>
+          <p>Foto do User</p>
         </div>
-      )}
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="flex flex-col items-center">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
-              {syncingContacts ? 'Sincronizando Contatos' : 'Escaneie o QR Code'}
-            </DialogTitle>
-          </DialogHeader>
-          {syncingContacts ? (
-            <p className="text-gray-600">Aguarde enquanto sincronizamos seus contatos...</p>
-          ) : base64 ? (
-            <Image src={base64} width={350} height={350} alt="QR Code de Conexão" />
-          ) : (
-            <p className="text-gray-600">Aguardando QR Code...</p>
-          )}
-          {checkingStatus && <p className="text-blue-500 mt-4">Verificando conexão...</p>}
-        </DialogContent>
-      </Dialog>
+        {isLoading ? (
+          <div className="relative w-[350px] h-[350px] flex items-center justify-center">
+            <Loader2 className="animate-spin text-gray-400 w-12 h-12" />
+          </div>
+        ) : base64 ? (
+          <Image src={base64} width={350} height={350} alt="QR Code de Conexão" />
+        ) : (
+          <div className="relative w-[350px] h-[350px] flex items-center justify-center">
+            <Image
+              src="/qrcode-zap.svg"
+              alt="QR Code Placeholder"
+              layout="fill"
+              objectFit="cover"
+              className="absolute top-0 left-0 w-full h-full opacity-10"
+            />
+            {status === "Conectado" ? (
+              <CircleCheckBig className="text-green-500" size={150} />
+            ) : (
+              !status ? (
+                <Button className="relative z-10" onClick={handleCreateInstance}>
+                  Criar Conexão
+                </Button>
+              ) : (
+                <Button className="relative z-10" onClick={handleConnect} isLoading={generatingQRCode}>
+                  Gerar QR-Code
+                </Button>
+              )
+            )}
+          </div>
+        )}
+      </Card>
     </div>
   );
 };

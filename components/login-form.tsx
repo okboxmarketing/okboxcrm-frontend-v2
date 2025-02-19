@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { loginSchema } from "@/schema/userSchema"
 import { loginUser } from "@/service/userService"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation";
 
@@ -18,8 +18,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"form">) {
-  const [loading, setLoading] = useState(false);
-  console.log("Tirar: Loading", loading);
+  const [loading, setLoading] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const {
@@ -31,18 +30,18 @@ export function LoginForm({
   });
 
   const onSubmit = async (data: AuthCredentialsType) => {
-    setError(null);
-    setLoading(true);
-    try {
-      await loginUser(data.email, data.password);
-      console.log("Login efetuado com sucesso!");
-      router.push("/home");
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
+    setLoading(async () => {
+      setError(null);
+      try {
+        await loginUser(data.email, data.password);
+        console.log("Login efetuado com sucesso!");
+        router.push("/home");
+      } catch (error) {
+        if (error instanceof Error) {
+          setError(error.message);
+        }
       }
-    }
-    setLoading(false);
+    })
   }
 
   return (
@@ -67,7 +66,7 @@ export function LoginForm({
           {error && <p className="text-red-500">{error}</p>}
         </div>
         {error && <p className="text-red-500">{error}</p>}
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" isLoading={loading}>
           Entrar
         </Button>
       </div>

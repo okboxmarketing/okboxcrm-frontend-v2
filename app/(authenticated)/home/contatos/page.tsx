@@ -40,9 +40,6 @@ const ContatosPage: React.FC = () => {
   //   }
   // };
 
-  if (loading) return <p className="text-center">Carregando contatos...</p>;
-  if (error) return <p className="text-red-500 text-center">{error}</p>;
-
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Meus Contatos</h1>
