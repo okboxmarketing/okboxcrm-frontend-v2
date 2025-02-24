@@ -36,7 +36,7 @@ const ConectarPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const socket = io("http://localhost:3001", { transports: ["websocket"] });
+    const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, { transports: ["websocket"] });
 
     socket.on("connect", () => {
       const companyId = localStorage.getItem("companyId");
