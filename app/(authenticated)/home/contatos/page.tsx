@@ -45,6 +45,7 @@ const ContatosPage: React.FC = () => {
         toast({ description: "Contatos sincronizados com sucesso!" });
         fetchContacts()
       } catch (error) {
+        console.log(error)
         toast({
           description: "Erro ao sincronizar contatos",
           variant: "destructive",

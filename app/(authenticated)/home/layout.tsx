@@ -2,16 +2,6 @@
 
 import { ReactNode } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
-// import { usePathname } from "next/navigation";
-// import {
-//   Breadcrumb,
-//   BreadcrumbItem,
-//   BreadcrumbLink,
-//   BreadcrumbList,
-//   BreadcrumbPage,
-//   BreadcrumbSeparator,
-// } from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
@@ -24,8 +14,6 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  // const pathname = usePathname();
-  // const pathSegments = pathname.split("/").filter(Boolean);
 
   return (
     <AuthProvider>

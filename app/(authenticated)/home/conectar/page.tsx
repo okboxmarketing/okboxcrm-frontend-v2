@@ -12,7 +12,6 @@ import { CircleCheckBig, Loader2 } from 'lucide-react';
 
 const ConectarPage: React.FC = () => {
   const [base64, setBase64] = useState<string>();
-  const [syncingContactsLoading, setSyncingContactsTransition] = useTransition();
   const [generatingQRCode, setGeneratingQRCode] = useTransition();
   const [status, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +67,7 @@ const ConectarPage: React.FC = () => {
       await syncContacts();
       toast({ title: "Contatos sincronizados", description: "Os contatos foram sincronizados com sucesso!" });
     } catch (err) {
+      console.log(err);
       toast({
         title: "Erro ao sincronizar contatos",
         description: "Ocorreu um erro ao sincronizar os contatos. Tente novamente mais tarde.",

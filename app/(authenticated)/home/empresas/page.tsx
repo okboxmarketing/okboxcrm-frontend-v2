@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { Company } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,7 +23,7 @@ const CadastroPage: React.FC = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingCreate, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  // const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -33,7 +33,8 @@ const CadastroPage: React.FC = () => {
       const data = await findAllCompanies();
       setCompanies(data);
     } catch (err) {
-      setError("Erro ao carregar empresas" + err);
+      console.log(err)
+      // setError("Erro ao carregar empresas" + err);
     } finally {
       setLoading(false);
     }
@@ -67,12 +68,6 @@ const CadastroPage: React.FC = () => {
       }
     });
   };
-
-  const sendToast = (message: string) => {
-    toast({
-      description: message,
-    });
-  }
 
   if (loading) return <p className="text-center"></p>;
 

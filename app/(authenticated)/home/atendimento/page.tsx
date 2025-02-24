@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Ticket, TicketStatusEnum } from "@/lib/types";
 import { formatMessageTime } from "@/lib/utils";
 import { getMessagesByContactId, getTickets } from "@/service/ticketsService";
-import { Calendar, Check, Globe, Info, MoveDownRight, Music, Paperclip, Search, Send, Settings, ShoppingCart, Video } from "lucide-react";
+import { Check, MoveDownRight, Paperclip, Search, Send, ShoppingCart } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import io from "socket.io-client";
 
