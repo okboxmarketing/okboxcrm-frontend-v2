@@ -2,11 +2,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Ticket, TicketStatusEnum } from "@/lib/types";
 import { formatMessageTime } from "@/lib/utils";
 import { getMessagesByContactId, getTickets } from "@/service/ticketsService";
-import { Calendar, Globe, Info, Music, Paperclip, Search, Send, Settings, Video } from "lucide-react";
+import { Calendar, Check, Globe, Info, MoveDownRight, Music, Paperclip, Search, Send, Settings, ShoppingCart, Video } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import io from "socket.io-client";
 
@@ -122,8 +123,12 @@ export default function Chat() {
       {/* Sidebar */}
       <div className="mt-1 bg-white rounded-tl-xl w-80 border-r flex flex-col">
         <div className="p-4 border-b">
-          <h1 className="text-xl font-semibold mb-4">Atendimento</h1>
-          <p></p>
+          <div className="flex gap-4 items-center mb-4">
+            <h1 className="text-xl font-semibold">Atendimento</h1>
+            <span className="flex items-center justify-center w-6 h-6 bg-black text-white text-sm font-medium rounded-full">
+              {tickets.length}
+            </span>
+          </div>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
             <Input className="pl-9 bg-gray-50" placeholder="Pesquisar..." />
@@ -132,8 +137,8 @@ export default function Chat() {
 
         <Tabs defaultValue="PENDING" onValueChange={(value) => setTab(value as TicketStatusEnum)} className="w-full">
           <TabsList className="grid grid-cols-2">
-            <TabsTrigger value="PENDING">AGUARDANDO</TabsTrigger>
             <TabsTrigger value="OPEN">ATENDENDO</TabsTrigger>
+            <TabsTrigger value="PENDING">AGUARDANDO</TabsTrigger>
           </TabsList>
 
           <TabsContent value="PENDING">
@@ -167,6 +172,7 @@ export default function Chat() {
                       {ticket.lastMessage?.content || ""}
                     </p>
                   </div>
+                  <Button className="rounded"><Check /></Button>
                 </div>
               ))}
             </div>
@@ -213,7 +219,7 @@ export default function Chat() {
       {/* Chat principal */}
       <div className="flex-1 flex flex-col bg-[#FAFAFA]">
         <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-1/3">
             <Avatar>
               {selectedChat && selectedChat.Contact.pictureUrl ? (
                 <AvatarImage src={selectedChat.Contact.pictureUrl} />
@@ -226,11 +232,16 @@ export default function Chat() {
               <p className="text-sm text-black/40">Acompanhado por: USERNAME</p>
             </div>
           </div>
-          <div>
-            Selecionar Etapa
-          </div>
-          <div>
-            Venda/Perda
+          <div className="flex items-center gap-4">
+            <Select>
+              <SelectTrigger className="bg-white">Selecione a Etapa</SelectTrigger>
+            </Select>
+            <Button>
+              <ShoppingCart />
+            </Button>
+            <Button>
+              <MoveDownRight />
+            </Button>
           </div>
         </div>
 

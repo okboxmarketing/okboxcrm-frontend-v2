@@ -1,32 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { useToast } from "@/hooks/use-toast";
 import { Trash } from "lucide-react";
-import { getContacts } from "@/service/contactService";
+import { getContacts, syncContacts } from "@/service/contactService";
 import { Contact } from "@/lib/types";
+import { toast } from "@/hooks/use-toast";
 
 const ContatosPage: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // const { toast } = useToast();
+  const [syncLoading, setTransition] = useTransition()
+
+
+  const fetchContacts = async () => {
+    try {
+      const data = await getContacts();
+      setContacts(data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        const data = await getContacts();
-        setContacts(data);
-      } catch (err) {
-        setError("Erro ao carregar contatos" + err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchContacts();
   }, []);
 
@@ -40,10 +38,24 @@ const ContatosPage: React.FC = () => {
   //   }
   // };
 
+  const handleSyncContacts = async () => {
+    setTransition(async () => {
+      try {
+        syncContacts();
+        toast({ description: "Contatos sincronizados com sucesso!" });
+        fetchContacts()
+      } catch (error) {
+        toast({
+          description: "Erro ao sincronizar contatos",
+          variant: "destructive",
+        })
+      }
+    })
+  }
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Meus Contatos</h1>
-
       {contacts.length > 0 ? (
         <Table>
           <TableHeader>
@@ -75,7 +87,10 @@ const ContatosPage: React.FC = () => {
           </TableBody>
         </Table>
       ) : (
-        <p className="text-center text-gray-500">Nenhum contato encontrado.</p>
+        <div className="flex items-center flex-col gap-2">
+          <p className="text-center text-gray-500">Nenhum contato encontrado.</p>
+          <Button isLoading={syncLoading} onClick={handleSyncContacts}>Sincronizar Contatos</Button>
+        </div>
       )}
     </div>
   );
