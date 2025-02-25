@@ -87,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: "Etapas do Funil",
-        url: "#",
+        url: "/home/etapas-kanban",
         icon: Cone,
         isActive: true,
       },

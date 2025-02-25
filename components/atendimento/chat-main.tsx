@@ -1,0 +1,126 @@
+"use client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Paperclip, Send, ShoppingCart, MoveDownRight, Check } from "lucide-react";
+import MoveTicketSelect from "@/components/atendimento/kanban-step-selector";
+import { NewMessagePayload, Ticket } from "@/lib/types";
+import { sendTextMessage } from "@/service/messageService";
+import { useForm } from "react-hook-form";
+
+interface ChatMainProps {
+  selectedChat: Ticket | null;
+  messages: NewMessagePayload[];
+}
+
+interface FormData {
+  text: string;
+}
+
+const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages }) => {
+  const { register, handleSubmit, reset } = useForm<FormData>();
+
+  const onSubmit = async (data: FormData) => {
+    if (!selectedChat) return;
+    try {
+      await sendTextMessage(selectedChat.Contact.remoteJid, data.text);
+      reset();
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+    }
+  };
+
+  return (
+    <div className="flex-1 flex flex-col bg-[#FAFAFA] relative">
+      {selectedChat ? (
+        <>
+          <div className="sticky top-0 flex items-center justify-between p-4 border-b bg-[#FAFAFA] z-10">
+            <div className="flex items-center gap-3">
+              <Avatar>
+                {selectedChat.Contact.pictureUrl ? (
+                  <AvatarImage src={selectedChat.Contact.pictureUrl} />
+                ) : (
+                  <AvatarFallback>{selectedChat.Contact.name[0]}</AvatarFallback>
+                )}
+              </Avatar>
+              <div>
+                <h2 className="font-semibold">{selectedChat.Contact.name}</h2>
+                <p className="text-sm text-black/40">Acompanhado por: {selectedChat.responsibleId}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <MoveTicketSelect ticketId={selectedChat.id} />
+              <Button>
+                <ShoppingCart />
+              </Button>
+              <Button>
+                <MoveDownRight />
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto pt-4 pb-20 px-4 space-y-2">
+            {messages
+              .filter((msg) => msg.contactId === selectedChat.Contact.remoteJid)
+              .map((msg, index) => (
+                <div
+                  key={index}
+                  className={`flex items-start gap-3 ${msg.data.key.fromMe ? "justify-end" : "justify-start"
+                    }`}
+                >
+                  {msg.data.key.fromMe ? (
+                    <div className="flex items-center gap-2">
+                      <p className="bg-black text-white px-4 py-1 rounded-l-xl rounded-t-xl">
+                        {msg.data.message.conversation}
+                      </p>
+                      <div className="flex items-center">
+                        {msg.data.status === "PENDING" && (
+                          <Check className="text-gray-400" size={16} />
+                        )}
+                        {(msg.data.status === "DELIVERY_ACK" || msg.data.status === "SERVER_ACK") && (
+                          <div className="flex items-center gap-1">
+                            <Check className="text-gray-400" size={16} />
+                            <Check className="text-gray-400" size={16} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <p className="bg-white px-4 py-1 rounded-r-xl rounded-t-xl">
+                        {msg.data.message.conversation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+
+          <div className="sticky bottom-0 p-4 border-t bg-white">
+            <div className="flex items-center gap-4 bg-gray-50 rounded-lg p-2">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Paperclip className="h-5 w-5 text-gray-500" />
+              </Button>
+              <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex gap-2">
+                <Input
+                  {...register("text", { required: true })}
+                  className="flex-1 border-0 bg-transparent focus-visible:ring-0"
+                  placeholder="Escreva aqui..."
+                />
+                <Button type="submit" size="icon" className="h-10 w-10 rounded-full bg-black hover:bg-black/80">
+                  <Send className="h-5 w-5 text-white" />
+                </Button>
+              </form>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-center text-gray-500">Selecione um contato para iniciar o chat</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ChatMain;

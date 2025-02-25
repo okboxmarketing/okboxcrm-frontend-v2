@@ -59,9 +59,17 @@ export interface Response {
 
 export type TicketStatusEnum = "PENDING" | "OPEN" | "CLOSED";
 
+export interface KanbanStep {
+  id: number;
+  name: string;
+  color: string;
+  companyId: string;
+  ticketCount: number;
+  tickets: Ticket[];
+}
 
 export interface Ticket {
-  id: string;
+  id: number;
   companyId: string;
   contactId: string;
   responsibleId?: string;
@@ -82,12 +90,23 @@ export interface Ticket {
   }
 }
 
+
 export interface NewMessagePayload {
   contactId: string;
   data: {
+    key: {
+      fromMe: boolean;
+      id: string;
+      remoteJid: string;
+    };
     message: {
       conversation: string;
     };
+    messageType: string;
+    messageTimestamp: number;
+    instanceId: string;
+    pushName?: string;
+    status?: string;
   };
 }
 
@@ -98,4 +117,23 @@ export interface Message {
   contactId: string;
   content: string;
   createdAt: string;
+}
+
+export interface NewMessagePayload {
+  contactId: string;
+  data: {
+    key: {
+      fromMe: boolean;
+      id: string;
+      remoteJid: string;
+    };
+    message: {
+      conversation: string;
+    };
+    messageType: string;
+    messageTimestamp: number;
+    instanceId: string;
+    pushName?: string;
+    status?: string;
+  };
 }
