@@ -13,6 +13,7 @@ import { CircleCheckBig, Loader2 } from 'lucide-react';
 const ConectarPage: React.FC = () => {
   const [base64, setBase64] = useState<string>();
   const [generatingQRCode, setGeneratingQRCode] = useTransition();
+  const [creatingInstance, setCreatingInstanceTransition] = useTransition()
   const [status, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -84,13 +85,15 @@ const ConectarPage: React.FC = () => {
   };
 
   const handleCreateInstance = async () => {
-    try {
-      await createInstance();
-      toast({ title: "Conexão criada", description: "A conexão foi criada com sucesso!" });
-      checkStatus();
-    } catch (err) {
-      console.log(err);
-    }
+    setCreatingInstanceTransition(async () => {
+      try {
+        await createInstance();
+        toast({ title: "Conexão criada", description: "A conexão foi criada com sucesso!" });
+        checkStatus();
+      } catch (err) {
+        console.log(err);
+      }
+    })
   };
 
   return (
@@ -156,7 +159,7 @@ const ConectarPage: React.FC = () => {
               <CircleCheckBig className="text-green-500" size={150} />
             ) : (
               !status ? (
-                <Button className="relative z-10" onClick={handleCreateInstance}>
+                <Button className="relative z-10" onClick={handleCreateInstance} isLoading={creatingInstance}>
                   Criar Conexão
                 </Button>
               ) : (

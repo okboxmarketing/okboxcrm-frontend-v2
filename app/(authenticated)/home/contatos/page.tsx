@@ -42,8 +42,8 @@ const ContatosPage: React.FC = () => {
     setTransition(async () => {
       try {
         syncContacts();
-        toast({ description: "Contatos sincronizados com sucesso!" });
         fetchContacts()
+        toast({ description: "Contatos sincronizados com sucesso!" });
       } catch (error) {
         console.log(error)
         toast({

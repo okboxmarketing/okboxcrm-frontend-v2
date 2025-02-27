@@ -39,14 +39,16 @@ export default function Chat() {
                 remoteJid: msg.contactId,
               },
               message: {
-                conversation: msg.content,
+                conversation: msg.isImage ? msg.content : msg.content, // Se for imagem, armazena a URL
               },
-              messageType: "conversation",
+              messageType: msg.isImage ? "image" : "conversation",
               messageTimestamp: new Date(msg.createdAt).getTime(),
               instanceId: "",
               pushName: "",
-              status: "",
+              status: msg.status,
             },
+            isImage: msg.isImage,
+            imageUrl: msg.isImage ? msg.content : undefined,
           }));
           setMessages(formattedMessages);
         } catch (error) {
@@ -57,6 +59,7 @@ export default function Chat() {
 
     fetchMessages();
   }, [selectedChat]);
+
 
   // Socket para atualizar mensagens/tickets em tempo real
   useEffect(() => {
@@ -78,7 +81,7 @@ export default function Chat() {
       }, 500);
     });
 
-    socket.on("messageSent", (payload: { contactId: string; message: string; status: string }) => {
+    socket.on("messageSent", (payload: { contactId: string; message: string; status: string, isImage: boolean }) => {
       const newPayload: NewMessagePayload = {
         contactId: payload.contactId,
         data: {
@@ -94,6 +97,7 @@ export default function Chat() {
           pushName: "",
           status: payload.status,
         },
+        isImage: payload.isImage,
       };
 
       setMessages((prev) => [...prev, newPayload]);

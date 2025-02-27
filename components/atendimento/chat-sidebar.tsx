@@ -8,6 +8,7 @@ import { Ticket, TicketStatusEnum } from "@/lib/types";
 import { formatMessageTime } from "@/lib/utils";
 import { acceptTicket } from "@/service/ticketsService";
 import { toast } from "@/hooks/use-toast";
+import { Image as ImageIcon } from "lucide-react";
 
 interface ChatSidebarProps {
   tickets: Ticket[];
@@ -78,8 +79,15 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
                       {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 truncate">
-                    {ticket.lastMessage?.content || ""}
+                  <p className="text-sm text-gray-500 truncate flex items-center gap-2">
+                    {ticket.lastMessage?.isImage ? (
+                      <>
+                        <ImageIcon className="h-4 w-4 text-gray-400" />
+                        Imagem
+                      </>
+                    ) : (
+                      ticket.lastMessage?.content || ""
+                    )}
                   </p>
                 </div>
                 <Button className="rounded" onClick={handleAcceptTicket}>

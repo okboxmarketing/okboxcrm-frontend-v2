@@ -87,6 +87,7 @@ export interface Ticket {
   lastMessage: {
     content: string;
     createdAt: string;
+    isImage: boolean;
   }
 }
 
@@ -108,6 +109,8 @@ export interface NewMessagePayload {
     pushName?: string;
     status?: string;
   };
+  isImage: boolean;
+  imageUrl?: string;
 }
 
 export interface Message {
@@ -117,6 +120,8 @@ export interface Message {
   contactId: string;
   content: string;
   createdAt: string;
+  isImage: boolean;
+  status: string;
 }
 
 export interface NewMessagePayload {
