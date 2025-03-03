@@ -69,13 +69,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: "Kanban",
-        url: "#",
+        url: "/home/kanban",
         icon: Kanban,
         isActive: true,
       },
       {
         title: "Dashboard",
-        url: "#",
+        url: "/home/dashboard",
         icon: PieChart,
         isActive: true,
       },
@@ -96,8 +96,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "#",
         icon: ShoppingBag,
         items: [
-          { title: "Histórico", url: "#" },
-          { title: "Produtos", url: "#" },
+          { title: "Histórico", url: "/home/vendas/historico" },
+          { title: "Produtos", url: "/home/vendas/produtos" },
         ],
       },
       {
@@ -105,8 +105,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "#",
         icon: MoveDownRight,
         items: [
-          { title: "Histórico", url: "#" },
-          { title: "Motivos", url: "#" },
+          { title: "Histórico", url: "/home/perdas/historico" },
+          { title: "Motivos", url: "/home/perdas/motivos" },
         ],
       },
     ],

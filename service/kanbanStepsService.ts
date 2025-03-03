@@ -12,3 +12,7 @@ export const createKanbanStep = async (name: string, color: string) => {
 export const removeKanbanStep = async (stepId: number) => {
   return apiHelper.delete(`/kanban-steps/${stepId}`);
 }
+
+export const getKanbanStepByTicketId = async (ticketId: number) => {
+  return apiHelper.get<KanbanStep>(`/kanban-steps/${ticketId}`);
+}

@@ -8,6 +8,7 @@ import MoveTicketSelect from "@/components/atendimento/kanban-step-selector";
 import { NewMessagePayload, Ticket } from "@/lib/types";
 import { sendTextMessage } from "@/service/messageService";
 import { useForm } from "react-hook-form";
+import { useRef } from "react";
 
 interface ChatMainProps {
   selectedChat: Ticket | null;
@@ -21,6 +22,9 @@ interface FormData {
 const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages }) => {
   const { register, handleSubmit, reset } = useForm<FormData>();
 
+  // Rolagem para o fim do chat
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   // Estado para armazenar a imagem expandida
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -33,6 +37,12 @@ const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages }) => {
   const handleCloseImage = () => {
     setSelectedImage(null);
   };
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages])
 
   // Fechar ao pressionar ESC
   useEffect(() => {
@@ -144,6 +154,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages }) => {
                       )}
                     </div>
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
               ))}
           </div>

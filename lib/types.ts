@@ -63,7 +63,7 @@ export interface KanbanStep {
   id: number;
   name: string;
   color: string;
-  companyId: string;
+  companyId?: string;
   ticketCount: number;
   tickets: Ticket[];
 }

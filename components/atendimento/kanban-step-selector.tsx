@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { getKanbanSteps } from "@/service/kanbanStepsService";
+import { getKanbanSteps, getKanbanStepByTicketId } from "@/service/kanbanStepsService";
 import { moveTicket } from "@/service/ticketsService";
 
 interface KanbanStep {
@@ -16,15 +16,19 @@ interface MoveTicketSelectProps {
 
 const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
+  const [selectedStep, setSelectedStep] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Buscar etapas do Kanban
   useEffect(() => {
-    const fetchKanbanSteps = async () => {
+    const fetchKanbanData = async () => {
       try {
-        const steps = await getKanbanSteps();
+        const [steps, currentStep] = await Promise.all([
+          getKanbanSteps(),
+          getKanbanStepByTicketId(ticketId),
+        ]);
         setKanbanSteps(steps);
+        setSelectedStep(currentStep.id.toString());
       } catch (error) {
         console.log(error);
         toast({ description: "Erro ao carregar etapas do Kanban" });
@@ -33,8 +37,8 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
       }
     };
 
-    fetchKanbanSteps();
-  }, []);
+    fetchKanbanData();
+  }, [ticketId]);
 
   const handleMoveTicket = async (value: string) => {
     const stepId = Number(value);
@@ -42,22 +46,26 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
 
     try {
       await moveTicket(ticketId, stepId.toString());
+      setSelectedStep(value);
       toast({ description: "Ticket movido com sucesso!" });
     } catch (error) {
       console.log(error);
-      toast({ description: "Erro ao mover ticket" });
+      toast({
+        description: "Erro ao mover ticket",
+        variant: "destructive"
+      });
     }
   };
 
   return (
-    <Select onValueChange={handleMoveTicket}>
+    <Select onValueChange={handleMoveTicket} value={selectedStep}>
       <SelectTrigger className="bg-white">
         <SelectValue placeholder={loading ? "Carregando..." : "Selecione a Etapa"} className="w-1/2" />
       </SelectTrigger>
       <SelectContent>
         {kanbanSteps.map((step) => (
           <SelectItem key={step.id} value={step.id.toString()}>
-            <p className={`bg-[${step.color}]`}>
+            <p className={`font-bold`} style={{ color: step.color }}>
               {step.name}
             </p>
           </SelectItem>
