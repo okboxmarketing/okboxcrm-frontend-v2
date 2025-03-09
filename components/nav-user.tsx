@@ -38,8 +38,8 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const router = useRouter();
   const handleLogout = () => {
-    logout()
     router.push("/");
+    logout()
   };
 
 
