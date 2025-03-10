@@ -7,7 +7,6 @@ import {
   PlugZap,
   Contact,
   Kanban,
-  Settings,
   Cone,
   Building2,
   MessageCircle,
