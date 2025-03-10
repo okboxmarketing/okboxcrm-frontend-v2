@@ -4,6 +4,8 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import { getKanbanSteps } from "@/service/kanbanStepsService";
 import { KanbanStep } from "@/lib/types";
 import { moveTicket } from "@/service/ticketsService";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatPhone } from "@/lib/utils";
 
 const KanbanBoard = () => {
   const [columns, setColumns] = useState<Record<string, KanbanStep>>({});
@@ -62,38 +64,49 @@ const KanbanBoard = () => {
               }
             }}
           >
-            <div className="flex items-center justify-between  mb-4">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold" style={{ color: column.color }}>{column.name}</h2>
               <span className="flex items-center justify-center w-6 h-6 bg-black text-white text-sm font-medium rounded-full">
                 {column.ticketCount}
               </span>
             </div>
-            <div className="space-y-2">
-              {column.tickets.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="p-3 bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md flex items-center gap-4"
-                  draggable
-                  onDragStart={(event) => handleDragStart(event, ticket.id, column.id)}
-                >
-                  <img
-                    src={ticket.Contact.pictureUrl || "/images/avatar-placeholder.png"}
-                    alt={ticket.Contact.name}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                  <div>
-                    <p className="text-sm text-gray-800">{ticket.Contact.name}</p>
-                    <p>{ticket.Contact.phone}</p>
+            <div className="space-y-2 overflow-y-auto" style={{
+              maxHeight: "calc(100vh - 150px)"
+            }}>
+              {
+                column.tickets.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className="p-3 bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md flex items-center gap-4"
+                    draggable
+                    onDragStart={(event) => handleDragStart(event, ticket.id, column.id)}
+                    style={{ borderLeft: `4px solid ${column.color}` }}
+                  >
+                    {ticket.Contact.pictureUrl ? (
+                      <img
+                        src={ticket.Contact.pictureUrl}
+                        alt={ticket.Contact.name}
+                        width={40}
+                        height={40}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <Avatar>
+                        <AvatarFallback>{ticket.Contact.name[0]}</AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div>
+                      <p className="text-sm text-gray-800">{ticket.Contact.name}</p>
+                      <p className="text-sm text-black/40">{formatPhone(ticket.Contact.phone)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              }
             </div>
           </div>
         ))}
       </div>
-    </div>
+    </div >
   );
 };
 

@@ -62,6 +62,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     navMain: [
       {
+        title: "Dashboard",
+        url: "/home/dashboard",
+        icon: PieChart,
+        isActive: true,
+      },
+      {
         title: "Atendimento",
         url: "/home/atendimento",
         icon: MessageCircle,
@@ -71,12 +77,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Kanban",
         url: "/home/kanban",
         icon: Kanban,
-        isActive: true,
-      },
-      {
-        title: "Dashboard",
-        url: "/home/dashboard",
-        icon: PieChart,
         isActive: true,
       },
       {
@@ -122,7 +122,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: Building2,
       },
       { name: "Conexão", url: "/home/conectar", icon: PlugZap },
-      { name: "Configuração", url: "/home/configuracao", icon: Settings },
+      // { name: "Configuração", url: "/home/configuracao", icon: Settings },
     ],
   };
 

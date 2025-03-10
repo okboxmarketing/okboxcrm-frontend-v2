@@ -83,6 +83,11 @@ export interface Ticket {
     pictureUrl: string | null;
     remoteJid: string
   };
+  KanbanStep: {
+    id: number;
+    name: string;
+    color: string;
+  }
 
   lastMessage: {
     content: string;

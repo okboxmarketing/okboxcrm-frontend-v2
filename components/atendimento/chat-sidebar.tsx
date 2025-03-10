@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Check, Search } from "lucide-react";
 import { Ticket, TicketStatusEnum } from "@/lib/types";
-import { formatMessageTime } from "@/lib/utils";
+import { formatMessageTime, getContrastColor } from "@/lib/utils";
 import { acceptTicket } from "@/service/ticketsService";
 import { toast } from "@/hooks/use-toast";
 import { Image as ImageIcon } from "lucide-react";
@@ -104,34 +104,49 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
               <div
                 key={ticket.id}
                 onClick={() => onSelectChat(ticket)}
-                className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50 ${selectedChat?.id === ticket.id ? "bg-gray-50" : ""
+                className={`flex flex-col gap-1 p-4 cursor-pointer hover:bg-gray-50 ${selectedChat?.id === ticket.id ? "bg-gray-50" : ""
                   }`}
               >
-                {/* Layout similar para o tab "OPEN" */}
-                <div className="relative">
-                  <Avatar>
-                    {ticket.Contact.pictureUrl ? (
-                      <AvatarImage src={ticket.Contact.pictureUrl} />
-                    ) : (
-                      <AvatarFallback>{ticket.Contact.name[0]}</AvatarFallback>
-                    )}
-                  </Avatar>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center">
-                    <p className="font-medium truncate">{ticket.Contact.name}</p>
-                    <span className="text-xs text-gray-500">
-                      {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
-                    </span>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Avatar>
+                      {ticket.Contact.pictureUrl ? (
+                        <AvatarImage src={ticket.Contact.pictureUrl} />
+                      ) : (
+                        <AvatarFallback>{ticket.Contact.name[0]}</AvatarFallback>
+                      )}
+                    </Avatar>
                   </div>
-                  <p className="text-sm text-gray-500 truncate">
-                    {ticket.lastMessage?.content || ""}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center">
+                      <p className="font-medium truncate">{ticket.Contact.name}</p>
+                      <span className="text-xs text-gray-500">
+                        {ticket.lastMessage?.createdAt
+                          ? formatMessageTime(ticket.lastMessage.createdAt)
+                          : ""}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 truncate">
+                      {ticket.lastMessage?.content || ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <span
+                    className="text-xs px-2 py-1 rounded inline-block"
+                    style={{
+                      backgroundColor: ticket.KanbanStep.color,
+                      color: getContrastColor(ticket.KanbanStep.color)
+                    }}
+                  >
+                    {ticket.KanbanStep.name}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
         </TabsContent>
+
       </Tabs>
     </div>
   );
