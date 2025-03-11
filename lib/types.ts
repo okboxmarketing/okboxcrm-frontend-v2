@@ -88,7 +88,9 @@ export interface Ticket {
     name: string;
     color: string;
   }
-
+  Responsible: {
+    name: string;
+  }
   lastMessage: {
     content: string;
     createdAt: string;

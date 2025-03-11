@@ -12,6 +12,7 @@ import {
   MessageCircle,
   MoveDownRight,
   ShoppingBag,
+  Settings,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -61,8 +62,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     navMain: [
       {
-        title: "Dashboard",
-        url: "/home/dashboard",
+        title: "Dashboard - Em Breve",
+        url: "#",
         icon: PieChart,
         isActive: true,
       },
@@ -121,7 +122,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: Building2,
       },
       { name: "Conexão", url: "/home/conectar", icon: PlugZap },
-      // { name: "Configuração", url: "/home/configuracao", icon: Settings },
+      { name: "Configuração", url: "/home/configuracao", icon: Settings },
     ],
   };
 

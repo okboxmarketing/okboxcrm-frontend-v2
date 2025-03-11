@@ -14,12 +14,12 @@ export const apiHelper = {
 
       const text = await response.text();
 
-      let responseData: T
+      let responseData: T;
       try {
-        responseData = JSON.parse(text) as T
+        responseData = JSON.parse(text) as T;
         console.log(`Response [GET ${url} JSON]:`, responseData);
       } catch {
-        responseData = text as T
+        responseData = text as T;
       }
 
       if (!response.ok) {
@@ -47,7 +47,7 @@ export const apiHelper = {
       });
 
       const text = await response.text();
-      const responseData = text ? JSON.parse(text) as T : {} as T;
+      const responseData = text ? (JSON.parse(text) as T) : ({} as T);
       console.log(`Response [POST ${url}]:`, responseData);
 
       if (!response.ok) {
@@ -60,6 +60,7 @@ export const apiHelper = {
       throw error;
     }
   },
+
   delete: async <T>(url: string): Promise<T> => {
     try {
       const token = localStorage.getItem("token");
@@ -73,7 +74,7 @@ export const apiHelper = {
       });
 
       const text = await response.text();
-      const responseData = text ? JSON.parse(text) as T : {} as T;
+      const responseData = text ? (JSON.parse(text) as T) : ({} as T);
       console.log(`Response [DELETE ${url}]:`, responseData);
 
       if (!response.ok) {
@@ -83,6 +84,34 @@ export const apiHelper = {
       return responseData;
     } catch (error) {
       console.error(`Erro [DELETE ${url}]:`, error);
+      throw error;
+    }
+  },
+
+  patch: async <T>(url: string, data?: unknown): Promise<T> => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: data ? JSON.stringify(data) : null,
+      });
+
+      const text = await response.text();
+      const responseData = text ? (JSON.parse(text) as T) : ({} as T);
+      console.log(`Response [PATCH ${url}]:`, responseData);
+
+      if (!response.ok) {
+        throw new Error((responseData as Error).message || "Erro desconhecido");
+      }
+
+      return responseData;
+    } catch (error) {
+      console.error(`Erro [PATCH ${url}]:`, error);
       throw error;
     }
   },

@@ -87,18 +87,22 @@ const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages }) => {
               </Avatar>
               <div>
                 <h2 className="font-semibold">{selectedChat.Contact.name}</h2>
-                <p className="text-sm text-black/40">Acompanhado por: {selectedChat.responsibleId}</p>
+                {selectedChat.responsibleId && (
+                  <p className="text-sm text-black/40">Acompanhado por: {selectedChat.Responsible?.name}</p>
+                )}
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <MoveTicketSelect ticketId={selectedChat.id} />
-              <Button>
-                <ShoppingCart />
-              </Button>
-              <Button>
-                <MoveDownRight />
-              </Button>
-            </div>
+            {selectedChat.status != "PENDING" && (
+              < div className="flex items-center gap-4">
+                <MoveTicketSelect ticketId={selectedChat.id} />
+                <Button>
+                  <ShoppingCart />
+                </Button>
+                <Button>
+                  <MoveDownRight />
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Corpo do Chat */}
@@ -182,33 +186,35 @@ const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages }) => {
         <div className="flex-1 flex items-center justify-center">
           <p className="text-center text-gray-500">Selecione um contato para iniciar o chat</p>
         </div>
-      )}
-
+      )
+      }
       {/* Modal de Imagem Expandida */}
-      {selectedImage && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
-          onClick={handleCloseImage} // Fecha ao clicar fora
-        >
-          <div className="relative max-w-screen-lg max-h-screen-lg" onClick={(e) => e.stopPropagation()}>
-            {/* Botão de Fechar */}
-            <button
-              onClick={handleCloseImage}
-              className="absolute top-4 right-4 bg-gray-800 text-white p-2 rounded-full hover:bg-gray-600"
-            >
-              <X className="w-6 h-6" />
-            </button>
+      {
+        selectedImage && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+            onClick={handleCloseImage}
+          >
+            <div className="relative max-w-screen-lg max-h-screen-lg" onClick={(e) => e.stopPropagation()}>
+              {/* Botão de Fechar */}
+              <button
+                onClick={handleCloseImage}
+                className="absolute top-4 right-4 bg-gray-800 text-white p-2 rounded-full hover:bg-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
 
-            {/* Imagem Expandida */}
-            <img
-              src={selectedImage}
-              alt="Imagem expandida"
-              className="max-w-full max-h-[90vh] object-contain rounded-lg"
-            />
+              {/* Imagem Expandida */}
+              <img
+                src={selectedImage}
+                alt="Imagem expandida"
+                className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              />
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

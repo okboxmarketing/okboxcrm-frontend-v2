@@ -131,15 +131,28 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
                     </p>
                   </div>
                 </div>
-                <div className="mt-2">
+                <div className="flex mt-2 gap-2">
+                  {ticket.KanbanStep ? (
+                    <span
+                      className="text-xs px-2 py-1 rounded inline-block"
+                      style={{
+                        backgroundColor: ticket.KanbanStep?.color,
+                        color: getContrastColor(ticket.KanbanStep?.color)
+                      }}
+                    >
+                      {ticket.KanbanStep.name}
+                    </span>
+                  ) : (
+                    <span
+                      className="text-xs px-2 py-1 rounded inline-block border border-red-500 text-red-500"
+                    >
+                      Sem Etapa
+                    </span>
+                  )}
                   <span
-                    className="text-xs px-2 py-1 rounded inline-block"
-                    style={{
-                      backgroundColor: ticket.KanbanStep.color,
-                      color: getContrastColor(ticket.KanbanStep.color)
-                    }}
+                    className="text-xs px-2 py-1 rounded inline-block bg-black text-white"
                   >
-                    {ticket.KanbanStep.name}
+                    {ticket.Responsible?.name}
                   </span>
                 </div>
               </div>
