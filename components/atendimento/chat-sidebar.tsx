@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { formatMessageTime, getContrastColor } from "@/lib/utils";
 import { acceptTicket } from "@/service/ticketsService";
 import { toast } from "@/hooks/use-toast";
 import { Image as ImageIcon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface ChatSidebarProps {
   tickets: Ticket[];
@@ -19,44 +21,69 @@ interface ChatSidebarProps {
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSelectChat, tab, setTab }) => {
+  const [showMyTickets, setShowMyTickets] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
 
   const handleAcceptTicket = async () => {
     if (!selectedChat) return;
     try {
       await acceptTicket(selectedChat.id);
-      toast({
-        description: "Ticket aceito com sucesso",
-      });
-      setTab("OPEN")
+      toast({ description: "Ticket aceito com sucesso" });
+      setTab("OPEN");
     } catch (error) {
       console.error("Erro ao aceitar ticket:", error);
     }
-  }
+  };
+
+  const openTickets = tickets.filter(ticket => ticket.status === "OPEN");
+  const pendingTickets = tickets.filter(ticket => ticket.status === "PENDING");
+
+  useEffect(() => {
+    setUserId(localStorage.getItem("userId"));
+  }, []);
+
+  const filteredOpenTickets = showMyTickets
+    ? openTickets.filter(ticket => ticket.responsibleId === userId)
+    : openTickets;
 
   return (
     <div className="w-80 bg-white border-r flex flex-col overflow-y-auto">
-      <div className="p-4 border-b">
-        <div className="flex gap-4 items-center mb-4">
-          <h1 className="text-xl font-semibold">Atendimento</h1>
-          <span className="flex items-center justify-center w-6 h-6 bg-black text-white text-sm font-medium rounded-full">
-            {tickets.length}
-          </span>
+      <div className="p-4 border-b flex items-center">
+        <h1 className="text-xl font-semibold">Atendimento</h1>
+        <div className="ml-auto flex items-center gap-2">
+          <Switch
+            id="myTicketsSwitch"
+            checked={showMyTickets}
+            onCheckedChange={(checked: boolean | ((prevState: boolean) => boolean)) => setShowMyTickets(checked)}
+          />
+          <label htmlFor="myTicketsSwitch" className="text-sm">
+            Meus Tickets
+          </label>
         </div>
+      </div>
+      <div className="p-4 border-b">
         <div className="relative">
           <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
           <Input className="pl-9 bg-gray-50" placeholder="Pesquisar..." />
         </div>
       </div>
-
-      <Tabs value={tab} onValueChange={(value) => setTab(value as TicketStatusEnum)} className="flex-1">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(value as TicketStatusEnum)}
+        className="flex-1"
+      >
         <TabsList className="grid grid-cols-2">
-          <TabsTrigger value="OPEN">ATENDENDO</TabsTrigger>
-          <TabsTrigger value="PENDING">AGUARDANDO</TabsTrigger>
+          <TabsTrigger value="OPEN">
+            ATENDENDO ({filteredOpenTickets.length})
+          </TabsTrigger>
+          <TabsTrigger value="PENDING">
+            AGUARDANDO ({pendingTickets.length})
+          </TabsTrigger>
         </TabsList>
-
         <TabsContent value="PENDING">
           <div className="overflow-y-auto">
-            {tickets.map((ticket) => (
+            {pendingTickets.map((ticket) => (
               <div
                 key={ticket.id}
                 onClick={() => onSelectChat(ticket)}
@@ -97,10 +124,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
             ))}
           </div>
         </TabsContent>
-
         <TabsContent value="OPEN">
           <div className="overflow-y-auto">
-            {tickets.map((ticket) => (
+            {filteredOpenTickets.map((ticket) => (
               <div
                 key={ticket.id}
                 onClick={() => onSelectChat(ticket)}
@@ -121,9 +147,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
                     <div className="flex justify-between items-center">
                       <p className="font-medium truncate">{ticket.Contact.name}</p>
                       <span className="text-xs text-gray-500">
-                        {ticket.lastMessage?.createdAt
-                          ? formatMessageTime(ticket.lastMessage.createdAt)
-                          : ""}
+                        {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
                       </span>
                     </div>
                     <p className="text-sm text-gray-500 truncate">
@@ -137,21 +161,17 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
                       className="text-xs px-2 py-1 rounded inline-block"
                       style={{
                         backgroundColor: ticket.KanbanStep?.color,
-                        color: getContrastColor(ticket.KanbanStep?.color)
+                        color: getContrastColor(ticket.KanbanStep?.color),
                       }}
                     >
                       {ticket.KanbanStep.name}
                     </span>
                   ) : (
-                    <span
-                      className="text-xs px-2 py-1 rounded inline-block border border-red-500 text-red-500"
-                    >
+                    <span className="text-xs px-2 py-1 rounded inline-block border border-red-500 text-red-500">
                       Sem Etapa
                     </span>
                   )}
-                  <span
-                    className="text-xs px-2 py-1 rounded inline-block bg-black text-white"
-                  >
+                  <span className="text-xs px-2 py-1 rounded inline-block bg-black text-white">
                     {ticket.Responsible?.name}
                   </span>
                 </div>
@@ -159,7 +179,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
             ))}
           </div>
         </TabsContent>
-
       </Tabs>
     </div>
   );
