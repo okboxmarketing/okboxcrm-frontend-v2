@@ -106,7 +106,7 @@ const EmpresaPage: React.FC = () => {
     setTransitionAssignAccessor(async () => {
       try {
         await assignAccessorToCompany(data.accessorEmail, companyId!);
-        toast({ description: "Acessor atribuído com sucesso!" });
+        toast({ description: "Assessor atribuído com sucesso!" });
         resetAccessorForm();
         setOpenAccessorDialog(false);
         setCompany(await findCompanyById(companyId!));
@@ -136,15 +136,15 @@ const EmpresaPage: React.FC = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold">{company?.name}</h1>
-          <p className="text-black/40">Acessor: <span>{company?.Accessory?.name || "Nenhum"}
-            {company?.Accessory?.email && (
-              <span> ({company.Accessory?.email})</span>
+          <p className="text-black/40">Assessor: <span>{company?.Advisor?.name || "Nenhum"}
+            {company?.Advisor?.email && (
+              <span> ({company.Advisor?.email})</span>
             )}
           </span></p>
         </div>
         <div className="flex gap-4">
           <Button onClick={() => setOpenDialog(true)}>Novo Usuário</Button>
-          {!company?.Accessory?.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Novo Acessor</Button>)}
+          {!company?.Advisor?.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Novo Assessor</Button>)}
           <Button variant={'destructive'} onClick={() => setOpenDeleteDialog(true)}>Deletar Empresa</Button>
         </div>
       </div>
@@ -188,12 +188,12 @@ const EmpresaPage: React.FC = () => {
       <Dialog open={openAccessorDialog} onOpenChange={setOpenAccessorDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Atribuir Novo Acessor</DialogTitle>
+            <DialogTitle>Atribuir Novo Assessor</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitAccessor(onSubmitAccessor)} className="space-y-4">
             <div>
-              <Label>Email do Acessor</Label>
-              <Input type="email" {...registerAccessor("accessorEmail")} placeholder="Digite o email do acessor" />
+              <Label>Email do Assessor</Label>
+              <Input type="email" {...registerAccessor("accessorEmail")} placeholder="Digite o email do assessor" />
               {errorsAccessor.accessorEmail && <p className="text-red-500">{errorsAccessor.accessorEmail.message}</p>}
             </div>
             <DialogFooter>

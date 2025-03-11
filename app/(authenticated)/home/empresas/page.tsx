@@ -100,7 +100,7 @@ const CadastroPage: React.FC = () => {
           <TableRow>
             <TableHead>Data Criação</TableHead>
             <TableHead>Nome</TableHead>
-            <TableHead>Acessor</TableHead>
+            <TableHead>Assessor</TableHead>
             <TableHead>Usuários</TableHead>
           </TableRow>
         </TableHeader>
@@ -120,7 +120,7 @@ const CadastroPage: React.FC = () => {
               </TableCell>
 
               <TableCell>{company.name}</TableCell>
-              <TableCell>{company.Accessory?.name || "Nenhum"}</TableCell>
+              <TableCell>{company.Advisor?.name || "Nenhum"}</TableCell>
               <TableCell className="flex items-center gap-2"><Users size={14} />{company._count.users}</TableCell>
             </TableRow>
           ))}

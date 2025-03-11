@@ -8,10 +8,10 @@ export interface Contact {
 export interface Company {
   id: string;
   name: string;
-  accessoryId: string | null;
+  advisorId: string | null;
   createdAt: string;
   updatedAt: string;
-  Accessory: {
+  Advisor: {
     id: string;
     name: string;
     email: string;

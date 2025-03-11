@@ -117,11 +117,11 @@ const MinhaEmpresaPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold">{company?.name}</h1>
           <p className="text-black/40">
-            Acessor:{" "}
+            Assessor:{" "}
             <span>
-              {company?.Accessory?.name || "Nenhum"}
-              {company?.Accessory?.email && (
-                <span> ({company?.Accessory?.email})</span>
+              {company?.Advisor?.name || "Nenhum"}
+              {company?.Advisor?.email && (
+                <span> ({company?.Advisor?.email})</span>
               )}
             </span>
           </p>
