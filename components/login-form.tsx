@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { loginSchema } from "@/schema/userSchema"
-import { loginUser } from "@/service/userService"
+import { loginUser, verifyUser } from "@/service/userService"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation";
+import FormError from "./ui/form-error";
 
 type AuthCredentialsType = {
   email: string
@@ -24,7 +25,6 @@ export function LoginForm({
   const {
     register,
     handleSubmit,
-    formState: { errors },
   } = useForm<AuthCredentialsType>({
     resolver: zodResolver(loginSchema),
   });
@@ -35,7 +35,21 @@ export function LoginForm({
       try {
         await loginUser(data.email, data.password);
         console.log("Login efetuado com sucesso!");
-        router.push("/home");
+        await verifyUser();
+        switch (localStorage.getItem("role")) {
+          case "MASTER":
+            router.push("/home/empresas");
+            break;
+          case "ADMIN":
+            router.push("/home/atendimento");
+            break;
+          case "ADVISOR":
+            router.push("/home/atendimento");
+            break;
+          default:
+            router.push("/home");
+            break;
+        }
       } catch (error) {
         if (error instanceof Error) {
           setError(error.message);
@@ -56,16 +70,14 @@ export function LoginForm({
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
           <Input id="email" type="email" {...register("email")} placeholder="email@exemplo.com" required />
-          {errors.email && <p className="text-red-500">{String(errors.email.message)}</p>}
         </div>
         <div className="grid gap-2">
           <div className="flex items-center">
             <Label htmlFor="password">Senha</Label>
           </div>
           <Input id="password" type="password" {...register("password")} placeholder="********" required />
-          {error && <p className="text-red-500">{error}</p>}
         </div>
-        {error && <p className="text-red-500">{error}</p>}
+        {error && <FormError message={error} />}
         <Button type="submit" className="w-full" isLoading={loading}>
           Entrar
         </Button>

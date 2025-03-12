@@ -10,7 +10,7 @@ export default function Chat() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedChat, setSelectedChat] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<NewMessagePayload[]>([]);
-  const [tab, setTab] = useState<TicketStatusEnum>("PENDING");
+  const [tab, setTab] = useState<TicketStatusEnum>("OPEN");
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -21,7 +21,6 @@ export default function Chat() {
     }
   }, []);
 
-  // Ao entrar, carrega os Tickets
   useEffect(() => {
     fetchTickets();
   }, []);

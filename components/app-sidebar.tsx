@@ -13,6 +13,7 @@ import {
   MoveDownRight,
   ShoppingBag,
   Settings,
+  UserCheck,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -31,6 +32,7 @@ import { findMyCompany } from "@/service/companyService";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
+
   const [companyName, setCompanyName] = React.useState<string>("");
 
   React.useEffect(() => {
@@ -38,25 +40,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       try {
         const company = await findMyCompany();
         setCompanyName(company.name);
-
       } catch (error) {
         console.error("Erro ao buscar empresa:", error);
       }
     };
-
-    if (user) {
+    if (user?.userRole !== "MASTER") {
       fetchCompany();
     }
   }, [user]);
-
 
   const data = {
     user: {
       name: user?.userName || "",
       email: user?.userEmail || "",
     },
-    team:
-    {
+    team: {
       name: companyName,
       logo: GalleryVerticalEnd,
     },
@@ -116,13 +114,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url:
           user?.userRole === "ADMIN"
             ? `/home/minha-empresa`
-            : user?.userRole === "MASTER"
+            : user?.userRole === "MASTER" || user?.userRole === "ADVISOR"
               ? `/home/empresas`
               : "/home",
         icon: Building2,
+        roles: ["ADMIN", "ADVISOR", "MASTER"],
       },
-      { name: "Conexão", url: "/home/conectar", icon: PlugZap },
-      { name: "Configuração", url: "/home/configuracao", icon: Settings },
+      {
+        name: "Conexão",
+        url: "/home/conectar",
+        icon: PlugZap,
+        roles: ["ADMIN", "ADVISOR"],
+      },
+      {
+        name: "Configuração",
+        url: "/home/configuracao",
+        icon: Settings,
+        roles: ["ADMIN", "ADVISOR"],
+      },
+      {
+        name: "Assessores",
+        url: "/home/cadastro-asessores",
+        icon: UserCheck,
+        roles: ["MASTER"],
+      },
     ],
   };
 
@@ -130,18 +145,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <div className="w-200 h-20">
-          <Image
-            src="/logo.png"
-            width={200}
-            height={20}
-            alt="Logo"
-          />
+          <Image src="/logo.png" width={200} height={20} alt="Logo" />
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        {user?.userRole !== "MASTER" && <NavMain items={data.navMain} />}
         {(user?.userRole === "ADMIN" || user?.userRole === "MASTER") && (
-          <NavProjects projects={data.projects} />
+          <NavProjects projects={data.projects} userRole={user?.userRole} />
         )}
       </SidebarContent>
       <SidebarFooter>

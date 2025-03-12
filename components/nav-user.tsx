@@ -23,7 +23,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/authContext"
 
 
@@ -37,7 +36,6 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { logout } = useAuth()
-  const router = useRouter();
 
   return (
     <SidebarMenu>

@@ -1,8 +1,6 @@
 "use client"
 
-import {
-  type LucideIcon,
-} from "lucide-react"
+import { type LucideIcon } from "lucide-react"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -13,28 +11,36 @@ import {
 
 export function NavProjects({
   projects,
+  userRole,
 }: {
   projects: {
     name: string
     url: string
     icon: LucideIcon
+    roles: string[]
   }[]
+  userRole: string
 }) {
-
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Administração</SidebarGroupLabel>
+      <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+        <SidebarGroupLabel>
+          {userRole === "MASTER" ? "Gestão" : "Administração"}
+        </SidebarGroupLabel>
+      </SidebarGroup>
       <SidebarMenu>
-        {projects.map((item) => (
-          <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
-                <item.icon />
-                <span>{item.name}</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
+        {projects.map((item) =>
+          item.roles.includes(userRole) ? (
+            <SidebarMenuItem key={item.name}>
+              <SidebarMenuButton asChild>
+                <a href={item.url}>
+                  <item.icon />
+                  <span>{item.name}</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ) : null
+        )}
       </SidebarMenu>
     </SidebarGroup>
   )
