@@ -60,7 +60,6 @@ export const apiHelper = {
       throw error;
     }
   },
-
   delete: async <T>(url: string): Promise<T> => {
     try {
       const token = localStorage.getItem("token");

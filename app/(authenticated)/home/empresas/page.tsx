@@ -34,7 +34,6 @@ const CadastroPage: React.FC = () => {
       setCompanies(data);
     } catch (err) {
       console.log(err)
-      // setError("Erro ao carregar empresas" + err);
     } finally {
       setLoading(false);
     }
@@ -56,10 +55,11 @@ const CadastroPage: React.FC = () => {
   const onSubmit = async (data: CompanyType) => {
     startTransition(async () => {
       try {
-        await createCompany(data);
+        const companyId = await createCompany(data);
         reset();
         fetchCompanies();
         setDialogOpen(false);
+        router.push(`/home/empresas/${companyId}`);
         toast({
           description: 'Empresa cadastrada com sucesso!',
         });

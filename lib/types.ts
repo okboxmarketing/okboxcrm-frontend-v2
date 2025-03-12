@@ -99,6 +99,14 @@ export interface Ticket {
 }
 
 
+export enum MediaEnum {
+  IMAGE = "IMAGE",
+  VIDEO = "VIDEO",
+  DOCUMENT = "DOCUMENT",
+  AUDIO = "AUDIO",
+  TEXT = "TEXT",
+}
+
 export interface NewMessagePayload {
   contactId: string;
   data: {
@@ -116,8 +124,8 @@ export interface NewMessagePayload {
     pushName?: string;
     status?: string;
   };
-  isImage: boolean;
-  imageUrl?: string;
+  mediaType: MediaEnum;
+  contentUrl?: string;
 }
 
 export interface Message {
@@ -127,25 +135,6 @@ export interface Message {
   contactId: string;
   content: string;
   createdAt: string;
-  isImage: boolean;
+  mediaType: MediaEnum;
   status: string;
-}
-
-export interface NewMessagePayload {
-  contactId: string;
-  data: {
-    key: {
-      fromMe: boolean;
-      id: string;
-      remoteJid: string;
-    };
-    message: {
-      conversation: string;
-    };
-    messageType: string;
-    messageTimestamp: number;
-    instanceId: string;
-    pushName?: string;
-    status?: string;
-  };
 }

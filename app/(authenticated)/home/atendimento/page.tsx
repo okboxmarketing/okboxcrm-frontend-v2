@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import io from "socket.io-client";
 import { getTickets, getMessagesByContactId } from "@/service/ticketsService";
-import { NewMessagePayload, Ticket, TicketStatusEnum } from "@/lib/types";
+import { MediaEnum, Message, NewMessagePayload, Ticket, TicketStatusEnum } from "@/lib/types";
 import ChatSidebar from "@/components/atendimento/chat-sidebar";
 import ChatMain from "@/components/atendimento/chat-main";
 
@@ -14,42 +14,63 @@ export default function Chat() {
 
   const fetchTickets = useCallback(async () => {
     try {
-      const response = await getTickets(tab);
+      const response = await getTickets();
       setTickets(response);
     } catch (error) {
       console.error("Erro ao buscar tickets:", error);
     }
-  }, [tab]);
+  }, []);
 
+  // Ao entrar, carrega os Tickets
   useEffect(() => {
     fetchTickets();
-  }, [tab]);
+  }, []);
 
   useEffect(() => {
     const fetchMessages = async () => {
       if (selectedChat) {
         try {
           const response = await getMessagesByContactId(selectedChat.Contact.remoteJid);
-          const formattedMessages = response.map((msg) => ({
-            contactId: msg.contactId,
-            data: {
-              key: {
-                fromMe: msg.fromMe,
-                id: msg.id,
-                remoteJid: msg.contactId,
+
+          const formattedMessages = response.map((msg: Message) => {
+            let mediaType = MediaEnum.TEXT;
+            let contentUrl = undefined;
+            let messageText = msg.content;
+
+            // Define o tipo de mídia com base no messageType
+            if (msg.mediaType === MediaEnum.IMAGE) {
+              mediaType = MediaEnum.IMAGE;
+              contentUrl = msg.content; // URL da imagem
+              messageText = ""; // Não exibe texto para imagens
+            } else if (msg.mediaType === MediaEnum.AUDIO) {
+              mediaType = MediaEnum.AUDIO;
+              contentUrl = msg.content;
+              messageText = "";
+            }
+
+            return {
+              contactId: msg.contactId,
+              data: {
+                key: {
+                  fromMe: msg.fromMe,
+                  id: msg.id,
+                  remoteJid: msg.contactId,
+                },
+                message: {
+                  conversation: messageText,
+                },
+                messageType: mediaType,
+                mediaType,
+                messageTimestamp: new Date(msg.createdAt).getTime(),
+                instanceId: "",
+                pushName: "",
+                status: msg.status,
               },
-              message: {
-                conversation: msg.isImage ? msg.content : msg.content, // Se for imagem, armazena a URL
-              },
-              messageType: msg.isImage ? "image" : "conversation",
-              messageTimestamp: new Date(msg.createdAt).getTime(),
-              instanceId: "",
-              pushName: "",
-              status: msg.status,
-            },
-            isImage: msg.isImage,
-            imageUrl: msg.isImage ? msg.content : undefined,
-          }));
+              mediaType,
+              contentUrl,
+            };
+          });
+
           setMessages(formattedMessages);
         } catch (error) {
           console.error("Erro ao buscar mensagens:", error);
@@ -57,9 +78,9 @@ export default function Chat() {
       }
     };
 
+
     fetchMessages();
   }, [selectedChat]);
-
 
   // Socket para atualizar mensagens/tickets em tempo real
   useEffect(() => {
@@ -81,7 +102,7 @@ export default function Chat() {
       }, 500);
     });
 
-    socket.on("messageSent", (payload: { contactId: string; message: string; status: string, isImage: boolean }) => {
+    socket.on("messageSent", (payload: { contactId: string; message: string; status: string, mediaType: MediaEnum }) => {
       const newPayload: NewMessagePayload = {
         contactId: payload.contactId,
         data: {
@@ -91,13 +112,14 @@ export default function Chat() {
             remoteJid: payload.contactId,
           },
           message: { conversation: payload.message },
-          messageType: "conversation",
+          // mediaType: MediaEnum.TEXT,
           messageTimestamp: Date.now(),
           instanceId: "",
           pushName: "",
           status: payload.status,
+          messageType: ""
         },
-        isImage: payload.isImage,
+        mediaType: payload.mediaType,
       };
 
       setMessages((prev) => [...prev, newPayload]);

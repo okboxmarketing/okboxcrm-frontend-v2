@@ -31,9 +31,3 @@ export const verifyUser = async () => {
 
   return user;
 };
-
-export const logout = () => {
-  ["token", "userId", "companyId", "role", "userName", "userEmail"].forEach((key) =>
-    localStorage.removeItem(key)
-  );
-};

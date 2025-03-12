@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { verifyUser as fetchVerifyUser, logout as authLogout } from "@/service/userService";
+import { verifyUser as fetchVerifyUser } from "@/service/userService";
 import { AuthUser } from "@/lib/types";
 
 interface AuthContextType {
@@ -30,10 +30,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    authLogout();
     setUser(undefined);
-    router.push("/");
+    ["token", "userId", "companyId", "role", "userName", "userEmail"].forEach((key) =>
+      localStorage.removeItem(key)
+    );
+
+    router.replace("/");
   };
+
 
   useEffect(() => {
     verifyUser();
@@ -47,7 +51,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  return <AuthContext value={{ user, loading, verifyUser, logout }}>{children}</AuthContext>;
+  return (
+    <AuthContext.Provider value={{ user, loading, verifyUser, logout }}>
+      {children}
+    </AuthContext.Provider>
+  )
 };
 
 export const useAuth = () => {

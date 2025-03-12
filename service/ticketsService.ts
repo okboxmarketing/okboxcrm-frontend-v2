@@ -1,8 +1,8 @@
 import { apiHelper } from "@/lib/apiHelper";
-import { Message, Ticket, TicketStatusEnum } from "@/lib/types";
+import { Message, Ticket } from "@/lib/types";
 
-export const getTickets = async (status: TicketStatusEnum) => {
-  return apiHelper.get<Ticket[]>(`/tickets/${status}`);
+export const getTickets = async () => {
+  return apiHelper.get<Ticket[]>(`/tickets`);
 };
 
 export const getMessagesByContactId = async (contactId: string) => {
