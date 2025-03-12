@@ -162,6 +162,14 @@ const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages: initialMess
                           <source src={msg.contentUrl} type="audio/ogg" />
                           Seu navegador não suporta áudio.
                         </audio>
+                      ) : msg.mediaType === MediaEnum.VIDEO ? (
+                        <video
+                          controls
+                          className="w-80 h-80 object-cover rounded-lg cursor-pointer"
+                        >
+                          <source src={msg.contentUrl} type="video/mp4" />
+                          Seu navegador não suporta vídeos.
+                        </video>
                       ) : (
                         <p className="bg-black text-white px-4 py-1 rounded-l-xl rounded-t-xl">
                           {msg.data.message.conversation}
@@ -191,10 +199,19 @@ const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages: initialMess
                           <source src={msg.contentUrl} type="audio/ogg" />
                           Seu navegador não suporta áudio.
                         </audio>
+                      ) : msg.mediaType === MediaEnum.VIDEO ? (
+                        <video
+                          controls
+                          className="w-80 h-80 object-cover rounded-lg cursor-pointer"
+                        >
+                          <source src={msg.contentUrl} type="video/mp4" />
+                          Seu navegador não suporta vídeos.
+                        </video>
                       ) : (
                         <p className="bg-white px-4 py-1 rounded-r-xl rounded-t-xl">
                           {msg.data.message.conversation}
                         </p>
+
                       )}
                     </div>
                   )}

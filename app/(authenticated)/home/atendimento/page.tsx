@@ -112,7 +112,6 @@ export default function Chat() {
             remoteJid: payload.contactId,
           },
           message: { conversation: payload.message },
-          // mediaType: MediaEnum.TEXT,
           messageTimestamp: Date.now(),
           instanceId: "",
           pushName: "",
