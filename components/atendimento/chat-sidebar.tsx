@@ -18,12 +18,23 @@ interface ChatSidebarProps {
   onSelectChat: (ticket: Ticket) => void;
   tab: TicketStatusEnum;
   setTab: (tab: TicketStatusEnum) => void;
+  fetchTickets: () => void;
 }
 
-const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSelectChat, tab, setTab }) => {
+const ChatSidebar: React.FC<ChatSidebarProps> = ({
+  tickets,
+  selectedChat,
+  onSelectChat,
+  tab,
+  setTab,
+  fetchTickets,
+}) => {
   const [showMyTickets, setShowMyTickets] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
+  useEffect(() => {
+    setUserId(localStorage.getItem("userId"));
+  }, []);
 
   const handleAcceptTicket = async () => {
     if (!selectedChat) return;
@@ -31,6 +42,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
       await acceptTicket(selectedChat.id);
       toast({ description: "Ticket aceito com sucesso" });
       setTab("OPEN");
+      fetchTickets()
     } catch (error) {
       console.error("Erro ao aceitar ticket:", error);
     }
@@ -39,13 +51,56 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
   const openTickets = tickets.filter(ticket => ticket.status === "OPEN");
   const pendingTickets = tickets.filter(ticket => ticket.status === "PENDING");
 
-  useEffect(() => {
-    setUserId(localStorage.getItem("userId"));
-  }, []);
-
   const filteredOpenTickets = showMyTickets
     ? openTickets.filter(ticket => ticket.responsibleId === userId)
     : openTickets;
+
+  const sortedPendingTickets = [...pendingTickets].sort(
+    (a, b) =>
+      new Date(b.lastMessage?.createdAt || 0).getTime() -
+      new Date(a.lastMessage?.createdAt || 0).getTime()
+  );
+
+  const sortedOpenTickets = [...filteredOpenTickets].sort(
+    (a, b) =>
+      new Date(b.lastMessage?.createdAt || 0).getTime() -
+      new Date(a.lastMessage?.createdAt || 0).getTime()
+  );
+
+  const renderLastMessage = (lastMessage: Ticket["lastMessage"]) => {
+    if (!lastMessage) return null;
+    const checkIcon = lastMessage.fromMe && <Check className="h-4 w-4 text-gray-400" />;
+    switch (lastMessage.mediaType) {
+      case MediaEnum.IMAGE:
+        return (
+          <>
+            {checkIcon}
+            <ImageIcon className="h-4 w-4 text-gray-400" /> Imagem
+          </>
+        );
+      case MediaEnum.AUDIO:
+        return (
+          <>
+            {checkIcon}
+            <Mic className="h-4 w-4 text-gray-400" /> Áudio
+          </>
+        );
+      case MediaEnum.VIDEO:
+        return (
+          <>
+            {checkIcon}
+            <Video className="h-4 w-4 text-gray-400" /> Vídeo
+          </>
+        );
+      default:
+        return (
+          <>
+            {checkIcon}
+            {lastMessage.content || ""}
+          </>
+        );
+    }
+  };
 
   return (
     <div className="w-80 bg-white border-r flex flex-col overflow-y-auto">
@@ -55,7 +110,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
           <Switch
             id="myTicketsSwitch"
             checked={showMyTickets}
-            onCheckedChange={(checked: boolean | ((prevState: boolean) => boolean)) => setShowMyTickets(checked)}
+            onCheckedChange={(checked: boolean) => setShowMyTickets(checked)}
           />
           <label htmlFor="myTicketsSwitch" className="text-sm">
             Meus Tickets
@@ -68,22 +123,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
           <Input className="pl-9 bg-gray-50" placeholder="Pesquisar..." />
         </div>
       </div>
-      <Tabs
-        value={tab}
-        onValueChange={(value) => setTab(value as TicketStatusEnum)}
-        className="flex-1"
-      >
+      <Tabs value={tab} onValueChange={(value) => setTab(value as TicketStatusEnum)} className="flex-1">
         <TabsList className="grid grid-cols-2">
-          <TabsTrigger value="OPEN">
-            ATENDENDO ({filteredOpenTickets.length})
-          </TabsTrigger>
-          <TabsTrigger value="PENDING">
-            AGUARDANDO ({pendingTickets.length})
-          </TabsTrigger>
+          <TabsTrigger value="OPEN">ATENDENDO ({sortedOpenTickets.length})</TabsTrigger>
+          <TabsTrigger value="PENDING">AGUARDANDO ({sortedPendingTickets.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="PENDING">
           <div className="overflow-y-auto">
-            {pendingTickets.map((ticket) => (
+            {sortedPendingTickets.map(ticket => (
               <div
                 key={ticket.id}
                 onClick={() => onSelectChat(ticket)}
@@ -106,31 +153,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
                       {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 truncate flex items-center gap-2">
-                    {ticket.lastMessage?.mediaType === MediaEnum.IMAGE ? (
-                      <>
-                        {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
-                        <ImageIcon className="h-4 w-4 text-gray-400" />
-                        Imagem
-                      </>
-                    ) : ticket.lastMessage?.mediaType === MediaEnum.AUDIO ? (
-                      <>
-                        {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
-                        <Mic className="h-4 w-4 text-gray-400" />
-                        Áudio
-                      </>
-                    ) : ticket.lastMessage?.mediaType === MediaEnum.VIDEO ? (
-                      <>
-                        {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
-                        <Video className="h-4 w-4 text-gray-400" />
-                        Vídeo
-                      </>
-                    ) : (
-                      <>
-                        {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
-                        {ticket.lastMessage?.content || ""}
-                      </>
-                    )}
+                  <p className={`text-sm truncate flex items-center gap-2 ${selectedChat?.id !== ticket.id ? "font-bold" : "font-normal"}`}>
+                    {renderLastMessage(ticket.lastMessage)}
                   </p>
                 </div>
                 <Button className="rounded" onClick={handleAcceptTicket}>
@@ -142,7 +166,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
         </TabsContent>
         <TabsContent value="OPEN">
           <div className="overflow-y-auto">
-            {filteredOpenTickets.map((ticket) => (
+            {sortedOpenTickets.map(ticket => (
               <div
                 key={ticket.id}
                 onClick={() => onSelectChat(ticket)}
@@ -167,30 +191,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
                       </span>
                     </div>
                     <p className="text-sm text-gray-500 truncate flex items-center gap-2">
-                      {ticket.lastMessage?.mediaType === MediaEnum.IMAGE ? (
-                        <>
-                          {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
-                          <ImageIcon className="h-4 w-4 text-gray-400" />
-                          Imagem
-                        </>
-                      ) : ticket.lastMessage?.mediaType === MediaEnum.AUDIO ? (
-                        <>
-                          {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
-                          <Mic className="h-4 w-4 text-gray-400" />
-                          Áudio
-                        </>
-                      ) : ticket.lastMessage?.mediaType === MediaEnum.VIDEO ? (
-                        <>
-                          {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
-                          <Video className="h-4 w-4 text-gray-400" />
-                          Vídeo
-                        </>
-                      ) : (
-                        <>
-                          {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
-                          {ticket.lastMessage?.content || ""}
-                        </>
-                      )}
+                      {renderLastMessage(ticket.lastMessage)}
                     </p>
                   </div>
                 </div>

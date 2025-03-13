@@ -137,9 +137,10 @@ export default function Chat() {
         onSelectChat={setSelectedChat}
         tab={tab}
         setTab={setTab}
+        fetchTickets={fetchTickets}
       />
 
-      <ChatMain selectedChat={selectedChat} messages={messages} />
+      <ChatMain selectedChat={selectedChat} messages={messages} fetchTickets={fetchTickets} />
     </div>
   );
 }

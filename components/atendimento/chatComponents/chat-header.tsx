@@ -9,9 +9,10 @@ import { Ticket } from "@/lib/types";
 
 interface ChatHeaderProps {
   selectedChat: Ticket;
+  fetchTickets: () => void;
 }
 
-const ChatHeader: React.FC<ChatHeaderProps> = ({ selectedChat }) => {
+const ChatHeader: React.FC<ChatHeaderProps> = ({ selectedChat, fetchTickets }) => {
   return (
     <div className="sticky top-0 flex items-center justify-between p-4 border-b bg-[#FAFAFA] z-10">
       <div className="flex items-center gap-3">
@@ -33,7 +34,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ selectedChat }) => {
       </div>
       {selectedChat.status !== "PENDING" && (
         <div className="flex items-center gap-4">
-          <MoveTicketSelect ticketId={selectedChat.id} />
+          <MoveTicketSelect ticketId={selectedChat.id} fetchTickets={fetchTickets} />
           <Button>
             <ShoppingCart />
           </Button>

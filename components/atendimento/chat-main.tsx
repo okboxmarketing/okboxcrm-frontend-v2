@@ -11,9 +11,10 @@ import ChatInput from "./chatComponents/chat-input";
 interface ChatMainProps {
   selectedChat: Ticket | null;
   messages: NewMessagePayload[];
+  fetchTickets: () => void;
 }
 
-const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages: initialMessages }) => {
+const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages: initialMessages, fetchTickets }) => {
   const [messages, setMessages] = useState<NewMessagePayload[]>(initialMessages);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -91,7 +92,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages: initialMess
     <div className="flex-1 flex flex-col bg-[#FAFAFA] relative">
       {selectedChat ? (
         <>
-          <ChatHeader selectedChat={selectedChat} />
+          <ChatHeader selectedChat={selectedChat} fetchTickets={fetchTickets} />
           <ChatBody
             messages={messages}
             selectedChat={selectedChat}
