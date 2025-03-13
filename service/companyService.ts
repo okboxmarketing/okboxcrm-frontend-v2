@@ -31,7 +31,6 @@ export const createCompany = async (company: any) => {
   }
 };
 
-
 export const findCompanyById = async (companyId: string) => {
   return apiHelper.get<Company>(`/company/${companyId}`);
 };

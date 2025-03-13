@@ -124,7 +124,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         name: "Conexão",
         url: "/home/conectar",
         icon: PlugZap,
-        roles: ["ADMIN", "ADVISOR"],
+        roles: ["ADMIN"],
       },
       {
         name: "Configuração",
@@ -134,7 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         name: "Assessores",
-        url: "/home/cadastro-asessores",
+        url: "/home/assessores",
         icon: UserCheck,
         roles: ["MASTER"],
       },
@@ -149,8 +149,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        {user?.userRole !== "MASTER" && <NavMain items={data.navMain} />}
-        {(user?.userRole === "ADMIN" || user?.userRole === "MASTER") && (
+        {user?.userRole !== "MASTER" || !user?.companyId && <NavMain items={data.navMain} />}
+        {(user?.userRole === "ADMIN" || user?.userRole === "MASTER" || user?.userRole === "ADVISOR") && (
           <NavProjects projects={data.projects} userRole={user?.userRole} />
         )}
       </SidebarContent>

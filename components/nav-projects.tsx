@@ -25,7 +25,7 @@ export function NavProjects({
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <SidebarGroupLabel>
-          {userRole === "MASTER" ? "Gestão" : "Administração"}
+          {userRole === "MASTER" ? "Gestão" : userRole === "ADVISOR" ? "Assessor" : "Administração"}
         </SidebarGroupLabel>
       </SidebarGroup>
       <SidebarMenu>
