@@ -5,14 +5,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, MoveDownRight } from "lucide-react";
 import MoveTicketSelect from "@/components/atendimento/kanban-step-selector";
-import { Ticket } from "@/lib/types";
+import { useChatContext } from "@/contexts/ChatContext";
 
-interface ChatHeaderProps {
-  selectedChat: Ticket;
-  fetchTickets: () => void;
-}
+const ChatHeader: React.FC = () => {
+  const { selectedChat, fetchTickets } = useChatContext();
 
-const ChatHeader: React.FC<ChatHeaderProps> = ({ selectedChat, fetchTickets }) => {
+  if (!selectedChat) return null;
+
   return (
     <div className="sticky top-0 flex items-center justify-between p-4 border-b bg-[#FAFAFA] z-10">
       <div className="flex items-center gap-3">

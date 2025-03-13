@@ -11,24 +11,10 @@ import { acceptTicket } from "@/service/ticketsService";
 import { toast } from "@/hooks/use-toast";
 import { Image as ImageIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { useChatContext } from "@/contexts/ChatContext";
 
-interface ChatSidebarProps {
-  tickets: Ticket[];
-  selectedChat: Ticket | null;
-  onSelectChat: (ticket: Ticket) => void;
-  tab: TicketStatusEnum;
-  setTab: (tab: TicketStatusEnum) => void;
-  fetchTickets: () => void;
-}
-
-const ChatSidebar: React.FC<ChatSidebarProps> = ({
-  tickets,
-  selectedChat,
-  onSelectChat,
-  tab,
-  setTab,
-  fetchTickets,
-}) => {
+const ChatSidebarWithContext: React.FC = () => {
+  const { tickets, selectedChat, setSelectedChat, tab, setTab, fetchTickets } = useChatContext();
   const [showMyTickets, setShowMyTickets] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -42,7 +28,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
       await acceptTicket(selectedChat.id);
       toast({ description: "Ticket aceito com sucesso" });
       setTab("OPEN");
-      fetchTickets()
+      fetchTickets();
     } catch (error) {
       console.error("Erro ao aceitar ticket:", error);
     }
@@ -133,7 +119,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             {sortedPendingTickets.map(ticket => (
               <div
                 key={ticket.id}
-                onClick={() => onSelectChat(ticket)}
+                onClick={() => setSelectedChat(ticket)}
                 className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50 ${selectedChat?.id === ticket.id ? "bg-gray-50" : ""
                   }`}
               >
@@ -169,7 +155,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             {sortedOpenTickets.map(ticket => (
               <div
                 key={ticket.id}
-                onClick={() => onSelectChat(ticket)}
+                onClick={() => setSelectedChat(ticket)}
                 className={`flex flex-col gap-1 p-4 cursor-pointer hover:bg-gray-50 ${selectedChat?.id === ticket.id ? "bg-gray-50" : ""
                   }`}
               >
@@ -224,4 +210,4 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   );
 };
 
-export default ChatSidebar;
+export default ChatSidebarWithContext;

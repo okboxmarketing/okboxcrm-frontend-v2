@@ -1,33 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { NewMessagePayload, Ticket, MediaEnum } from "@/lib/types";
-import { sendTextMessage } from "@/service/messageService";
-import { toast } from "@/hooks/use-toast";
-import ChatHeader from "./chatComponents/chat-header";
+import React, { useState, useEffect } from "react";
+import { useChatContext } from "@/contexts/ChatContext";
 import ChatBody from "./chatComponents/chat-body";
-import ChatInput from "./chatComponents/chat-input";
+import ChatInputWithContext from "./chatComponents/chat-input";
+import ChatHeader from "./chatComponents/chat-header";
 
-interface ChatMainProps {
-  selectedChat: Ticket | null;
-  messages: NewMessagePayload[];
-  fetchTickets: () => void;
-}
-
-const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages: initialMessages, fetchTickets }) => {
-  const [messages, setMessages] = useState<NewMessagePayload[]>(initialMessages);
+const ChatMainWithContext: React.FC = () => {
+  const { selectedChat } = useChatContext();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMessages(initialMessages);
-  }, [initialMessages]);
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -45,61 +26,13 @@ const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages: initialMess
     };
   }, [selectedImage]);
 
-  const onSend = async (text: string) => {
-    if (!selectedChat) return;
-    const tempMessageId = `temp-${Date.now()}`;
-
-    const tempMessage: NewMessagePayload = {
-      contactId: selectedChat.Contact.remoteJid,
-      data: {
-        key: {
-          fromMe: true,
-          id: tempMessageId,
-          remoteJid: selectedChat.Contact.remoteJid,
-        },
-        message: { conversation: text },
-        messageType: "conversation",
-        messageTimestamp: Date.now(),
-        instanceId: "",
-        pushName: "",
-        status: "PENDING",
-      },
-      mediaType: MediaEnum.TEXT,
-    };
-
-    setMessages((prev) => [...prev, tempMessage]);
-
-    try {
-      await sendTextMessage(selectedChat.Contact.remoteJid, text);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.data.key.id === tempMessageId
-            ? { ...msg, data: { ...msg.data, status: "SENT" } }
-            : msg
-        )
-      );
-    } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
-      setMessages((prev) => prev.filter((msg) => msg.data.key.id !== tempMessageId));
-      toast({
-        description: "Erro ao enviar mensagem",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="flex-1 flex flex-col bg-[#FAFAFA] relative">
       {selectedChat ? (
         <>
-          <ChatHeader selectedChat={selectedChat} fetchTickets={fetchTickets} />
-          <ChatBody
-            messages={messages}
-            selectedChat={selectedChat}
-            onSelectImage={(url) => setSelectedImage(url)}
-            messagesEndRef={messagesEndRef as React.RefObject<HTMLDivElement>}
-          />
-          {selectedChat.status !== "PENDING" && <ChatInput onSend={onSend} />}
+          <ChatHeader />
+          <ChatBody onSelectImage={(url) => setSelectedImage(url)} />
+          {selectedChat.status !== "PENDING" && <ChatInputWithContext />}
         </>
       ) : (
         <div className="flex-1 flex items-center justify-center">
@@ -112,4 +45,4 @@ const ChatMain: React.FC<ChatMainProps> = ({ selectedChat, messages: initialMess
   );
 };
 
-export default ChatMain;
+export default ChatMainWithContext;

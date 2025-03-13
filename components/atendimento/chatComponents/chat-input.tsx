@@ -5,21 +5,19 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paperclip, Send } from "lucide-react";
-
-interface ChatInputProps {
-  onSend: (text: string) => Promise<void>;
-}
+import { useChatContext } from "@/contexts/ChatContext";
 
 interface FormData {
   text: string;
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSend }) => {
+const ChatInputWithContext: React.FC = () => {
+  const { sendMessage } = useChatContext();
   const { register, handleSubmit, reset } = useForm<FormData>();
 
   const onSubmit = async (data: FormData) => {
     reset();
-    await onSend(data.text);
+    await sendMessage(data.text);
   };
 
   return (
@@ -44,4 +42,4 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend }) => {
   );
 };
 
-export default ChatInput;
+export default ChatInputWithContext;
