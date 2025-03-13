@@ -128,7 +128,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         if (messageExists) return prev;
         return [...prev, payload];
       });
-      
+
       setTimeout(() => {
         fetchTickets();
       }, 500);
@@ -139,8 +139,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       setMessages((prev) => {
         // Encontrar mensagem temporária com o mesmo conteúdo
         const tempMessageIndex = prev.findIndex(
-          (msg) => 
-            msg.data.key.fromMe && 
+          (msg) =>
+            msg.data.key.fromMe &&
             msg.data.message.conversation === payload.message &&
             msg.contactId === payload.contactId &&
             msg.data.key.id.startsWith('temp-')
@@ -182,7 +182,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           },
           mediaType: payload.mediaType,
         };
-        
+
         return [...prev, newPayload];
       });
     });
@@ -218,9 +218,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
     try {
       await sendTextMessage(selectedChat.Contact.remoteJid, text);
-      
+
       // Atualizar o lastMessage do ticket selecionado
-      setTickets((prevTickets) => 
+      setTickets((prevTickets) =>
         prevTickets.map((ticket) => {
           if (ticket.id === selectedChat.id) {
             return {
@@ -237,7 +237,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           return ticket;
         })
       );
-      
+
       // Também atualizar o selectedChat para refletir a mudança
       setSelectedChat((prev) => {
         if (!prev) return prev;
@@ -252,7 +252,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           }
         };
       });
-      
+
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
       // Remover a mensagem temporária apenas em caso de erro

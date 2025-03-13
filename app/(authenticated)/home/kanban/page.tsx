@@ -6,9 +6,11 @@ import { KanbanStep } from "@/lib/types";
 import { moveTicket } from "@/service/ticketsService";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatPhone } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 const KanbanBoard = () => {
   const [columns, setColumns] = useState<Record<string, KanbanStep>>({});
+  const router = useRouter();
 
   useEffect(() => {
     getKanbanSteps().then((steps) => {
@@ -43,6 +45,10 @@ const KanbanBoard = () => {
         }
       });
     }
+  };
+
+  const handleTicketClick = (ticketId: number) => {
+    router.push(`/home/atendimento?ticketId=${ticketId}`);
   };
 
   return (
@@ -80,6 +86,7 @@ const KanbanBoard = () => {
                     className="p-3 bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md flex items-center gap-4"
                     draggable
                     onDragStart={(event) => handleDragStart(event, ticket.id, column.id)}
+                    onClick={() => handleTicketClick(ticket.id)} // Adicionando o evento de clique
                     style={{ borderLeft: `4px solid ${column.color}` }}
                   >
                     {ticket.Contact.pictureUrl ? (
@@ -106,7 +113,7 @@ const KanbanBoard = () => {
           </div>
         ))}
       </div>
-    </div >
+    </div>
   );
 };
 
