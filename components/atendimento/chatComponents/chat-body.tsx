@@ -11,6 +11,21 @@ interface ChatBodyProps {
   messagesEndRef: React.RefObject<HTMLDivElement>;
 }
 
+const linkifyText = (text: string) => {
+  return text.split(" ").map((word, i) => {
+    const regex = /^https?:\/\/\S+$/;
+    if (regex.test(word)) {
+      return (
+        <a key={i} href={word} target="_blank" rel="noopener noreferrer" className="underline text-blue-500">
+          {word}{" "}
+        </a>
+      );
+    }
+    return word + " ";
+  });
+};
+
+
 const renderMessageContent = (
   msg: NewMessagePayload,
   onSelectImage: (url: string) => void,
@@ -41,14 +56,14 @@ const renderMessageContent = (
         </video>
       );
     default:
+      const messageText = msg.data.message.conversation;
       return (
         <p
           className={`px-4 py-1 ${fromMe
             ? "bg-black text-white rounded-l-xl rounded-t-xl"
-            : "bg-white rounded-r-xl rounded-t-xl"
-            }`}
+            : "bg-white rounded-r-xl rounded-t-xl"}`}
         >
-          {msg.data.message.conversation}
+          {linkifyText(messageText)}
         </p>
       );
   }

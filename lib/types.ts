@@ -94,7 +94,8 @@ export interface Ticket {
   lastMessage: {
     content: string;
     createdAt: string;
-    isImage: boolean;
+    mediaType: MediaEnum;
+    fromMe: boolean;
   }
 }
 

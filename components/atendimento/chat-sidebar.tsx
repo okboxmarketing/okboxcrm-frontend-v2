@@ -4,8 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Check, Search } from "lucide-react";
-import { Ticket, TicketStatusEnum } from "@/lib/types";
+import { Check, Mic, Search, Video } from "lucide-react";
+import { MediaEnum, Ticket, TicketStatusEnum } from "@/lib/types";
 import { formatMessageTime, getContrastColor } from "@/lib/utils";
 import { acceptTicket } from "@/service/ticketsService";
 import { toast } from "@/hooks/use-toast";
@@ -107,13 +107,29 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 truncate flex items-center gap-2">
-                    {ticket.lastMessage?.isImage ? (
+                    {ticket.lastMessage?.mediaType === MediaEnum.IMAGE ? (
                       <>
+                        {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
                         <ImageIcon className="h-4 w-4 text-gray-400" />
                         Imagem
                       </>
+                    ) : ticket.lastMessage?.mediaType === MediaEnum.AUDIO ? (
+                      <>
+                        {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
+                        <Mic className="h-4 w-4 text-gray-400" />
+                        Áudio
+                      </>
+                    ) : ticket.lastMessage?.mediaType === MediaEnum.VIDEO ? (
+                      <>
+                        {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
+                        <Video className="h-4 w-4 text-gray-400" />
+                        Vídeo
+                      </>
                     ) : (
-                      ticket.lastMessage?.content || ""
+                      <>
+                        {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
+                        {ticket.lastMessage?.content || ""}
+                      </>
                     )}
                   </p>
                 </div>
@@ -150,8 +166,31 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ tickets, selectedChat, onSele
                         {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500 truncate">
-                      {ticket.lastMessage?.content || ""}
+                    <p className="text-sm text-gray-500 truncate flex items-center gap-2">
+                      {ticket.lastMessage?.mediaType === MediaEnum.IMAGE ? (
+                        <>
+                          {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
+                          <ImageIcon className="h-4 w-4 text-gray-400" />
+                          Imagem
+                        </>
+                      ) : ticket.lastMessage?.mediaType === MediaEnum.AUDIO ? (
+                        <>
+                          {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
+                          <Mic className="h-4 w-4 text-gray-400" />
+                          Áudio
+                        </>
+                      ) : ticket.lastMessage?.mediaType === MediaEnum.VIDEO ? (
+                        <>
+                          {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
+                          <Video className="h-4 w-4 text-gray-400" />
+                          Vídeo
+                        </>
+                      ) : (
+                        <>
+                          {ticket.lastMessage?.fromMe && <Check className="h-4 w-4 text-gray-400" />}
+                          {ticket.lastMessage?.content || ""}
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>
