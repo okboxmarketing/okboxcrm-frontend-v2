@@ -14,20 +14,6 @@ const formatMessageTime = (timestamp: number) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-const linkifyText = (text: string) => {
-  return text.split(" ").map((word, i) => {
-    const regex = /^https?:\/\/\S+$/;
-    if (regex.test(word)) {
-      return (
-        <a key={i} href={word} target="_blank" rel="noopener noreferrer" className="underline text-blue-500">
-          {word}{" "}
-        </a>
-      );
-    }
-    return word + " ";
-  });
-};
-
 const renderMessageContent = (
   msg: NewMessagePayload,
   onSelectImage: (url: string) => void,
@@ -81,7 +67,7 @@ const renderMessageContent = (
               ? "bg-black text-white rounded-l-xl rounded-t-xl"
               : "bg-white rounded-r-xl rounded-t-xl"}`}
           >
-            {linkifyText(messageText)}
+            {messageText}
             <span className={`inline-block ml-2 text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>
               {formatMessageTime(msg.data.messageTimestamp)}
             </span>

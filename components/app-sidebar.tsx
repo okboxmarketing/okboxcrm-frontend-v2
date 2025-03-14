@@ -149,7 +149,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        {user?.userRole !== "MASTER" || !user?.companyId && <NavMain items={data.navMain} />}
+        {(user?.userRole !== "MASTER" || !user?.companyId) && <NavMain items={data.navMain} />}
         {(user?.userRole === "ADMIN" || user?.userRole === "MASTER" || user?.userRole === "ADVISOR") && (
           <NavProjects projects={data.projects} userRole={user?.userRole} />
         )}

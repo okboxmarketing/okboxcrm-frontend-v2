@@ -264,6 +264,15 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     }
   };
 
+  // Add this to the existing sendMessage function or create a new one for media
+  const sendMediaMessage = async (file: File, caption: string = "") => {
+    if (!selectedChat) return;
+
+    // Implementation would be similar to the one in the chat-input component
+    // This would be an alternative approach if you want to handle media uploads at the context level
+  };
+
+  // Make sure to expose this function in the context value
   const value = {
     tickets,
     selectedChat,
@@ -273,6 +282,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     setSelectedChat,
     fetchTickets,
     sendMessage,
+    // Add the new function if you implement it at the context level
+    // sendMediaMessage,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
