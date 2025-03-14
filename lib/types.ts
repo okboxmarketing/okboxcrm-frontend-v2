@@ -5,6 +5,34 @@ export interface Contact {
   phone: string,
 }
 
+export interface SaleItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  Product: {
+    name: string;
+  };
+}
+
+export interface Sale {
+  id: string;
+  ticketId: number;
+  totalAmount: number;
+  createdAt: string;
+  Ticket: {
+    Contact: {
+      name: string;
+      phone: string;
+    };
+    Responsible: {
+      name: string;
+    };
+  };
+  SaleItems: SaleItem[];
+}
+
 export interface Company {
   id: string;
   name: string;
