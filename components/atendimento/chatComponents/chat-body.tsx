@@ -1,9 +1,11 @@
 "use client";
 
+// First, let's update the imports to add the document icon
 import React, { useRef, useEffect } from "react";
-import { Check } from "lucide-react";
+import { Check, FileText, Download } from "lucide-react";
 import { MediaEnum, NewMessagePayload } from "@/lib/types";
 import { useChatContext } from "@/contexts/ChatContext";
+import { Button } from "@/components/ui/button";
 
 interface ChatBodyProps {
   onSelectImage: (url: string) => void;
@@ -47,6 +49,7 @@ const renderMessageContent = (
         </div>
       );
     case MediaEnum.VIDEO:
+      console.log("URL DO VÍDEO: ", msg.contentUrl, msg.mediaType)
       return (
         <div className="relative">
           <video controls className="w-80 h-80 object-cover rounded-lg cursor-pointer">
@@ -58,6 +61,37 @@ const renderMessageContent = (
           </span>
         </div>
       );
+    case MediaEnum.DOCUMENT:
+      // Get filename from URL or use a default name
+      const fileName = msg.contentUrl?.split('/').pop() || "documento";
+
+      return (
+        <div className="relative">
+          <div className={`p-4 rounded-lg ${fromMe ? "bg-black text-white" : "bg-white"} max-w-xs`}>
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="h-6 w-6" />
+              <span className="text-sm font-medium truncate">{fileName}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className={`w-full flex items-center gap-2 ${fromMe ? "bg-gray-800 hover:bg-gray-700 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+              onClick={() => {
+                if (msg.contentUrl) {
+                  window.open(msg.contentUrl, '_blank');
+                }
+              }}
+            >
+              <Download className="h-4 w-4" />
+              <span>Baixar</span>
+            </Button>
+            <span className={`block mt-2 text-right text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>
+              {formatMessageTime(msg.data.messageTimestamp)}
+            </span>
+          </div>
+        </div>
+      );
+
     default:
       const messageText = msg.data.message.conversation;
       return (
@@ -79,14 +113,38 @@ const renderMessageContent = (
 
 
 const formatMessageDate = (timestamp: number) => {
+  // Ensure we're working with a valid timestamp
+  if (!timestamp) return "Data desconhecida";
+
+  // Convert to milliseconds if needed (check if timestamp is in seconds)
+  if (timestamp < 10000000000) {
+    timestamp = timestamp * 1000;
+  }
+
   const messageDate = new Date(timestamp);
+  // Check if the date is valid
+  if (isNaN(messageDate.getTime())) return "Data inválida";
+
+  // Check if date is in the future (more than 1 day ahead)
+  const now = new Date();
+  if (messageDate.getTime() > now.getTime() + 86400000) {
+    // If date is in the future, use today's date instead
+    messageDate.setTime(now.getTime());
+  }
+
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  if (messageDate.toDateString() === today.toDateString()) {
+  // Reset hours to compare only dates
+  const todayDate = new Date(today.setHours(0, 0, 0, 0));
+  const yesterdayDate = new Date(yesterday.setHours(0, 0, 0, 0));
+  const messageDateOnly = new Date(messageDate);
+  messageDateOnly.setHours(0, 0, 0, 0);
+
+  if (messageDateOnly.getTime() === todayDate.getTime()) {
     return "Hoje";
-  } else if (messageDate.toDateString() === yesterday.toDateString()) {
+  } else if (messageDateOnly.getTime() === yesterdayDate.getTime()) {
     return "Ontem";
   } else {
     return messageDate.toLocaleDateString('pt-BR', {
@@ -100,10 +158,31 @@ const formatMessageDate = (timestamp: number) => {
 const shouldShowDateDivider = (currentMsg: NewMessagePayload, prevMsg: NewMessagePayload | null) => {
   if (!prevMsg) return true;
 
-  const currentDate = new Date(currentMsg.data.messageTimestamp).toDateString();
-  const prevDate = new Date(prevMsg.data.messageTimestamp).toDateString();
+  // Ensure we have valid timestamps
+  let currentTimestamp = currentMsg.data.messageTimestamp;
+  let prevTimestamp = prevMsg.data.messageTimestamp;
 
-  return currentDate !== prevDate;
+  if (!currentTimestamp || !prevTimestamp) return true;
+
+  // Convert to milliseconds if needed
+  if (currentTimestamp < 10000000000) currentTimestamp *= 1000;
+  if (prevTimestamp < 10000000000) prevTimestamp *= 1000;
+
+  // Handle future dates
+  const now = new Date().getTime();
+  if (currentTimestamp > now + 86400000) currentTimestamp = now;
+  if (prevTimestamp > now + 86400000) prevTimestamp = now;
+
+  // Create date objects and reset the time to compare only the date part
+  const currentDate = new Date(currentTimestamp);
+  const prevDate = new Date(prevTimestamp);
+
+  // Reset time to 00:00:00 to compare only the date part
+  currentDate.setHours(0, 0, 0, 0);
+  prevDate.setHours(0, 0, 0, 0);
+
+  // Compare the dates
+  return currentDate.getTime() !== prevDate.getTime();
 };
 
 const ChatBody: React.FC<ChatBodyProps> = ({

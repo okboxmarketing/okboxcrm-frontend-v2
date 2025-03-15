@@ -93,9 +93,6 @@ const ChatInputWithContext: React.FC = () => {
       reset();
       clearSelectedFile();
 
-      toast({
-        description: "Mídia enviada com sucesso!",
-      });
     } catch (error) {
       console.error("Erro ao enviar mídia:", error);
       toast({

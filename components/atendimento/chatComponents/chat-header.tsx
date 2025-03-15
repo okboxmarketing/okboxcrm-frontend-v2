@@ -59,6 +59,7 @@ const ChatHeader: React.FC = () => {
       const data = await getLossReasons();
       if (data) {
         setLossReasons(data);
+        console.log("Motivos de perda:", data)
       }
     } catch (error) {
       console.error("Erro ao carregar motivos de perda:", error);
@@ -145,10 +146,12 @@ const ChatHeader: React.FC = () => {
   const handleCreateLoss = async () => {
     if (!selectedChat || !lossData.reasonId) return;
 
+    console.log("handleCreateLoss + ticketId", lossData, selectedChat.id)
+    console.log("ticketId", selectedChat.id)
     try {
       await createLoss({
         ticketId: selectedChat.id,
-        reason: lossData.reasonId,
+        lossReasonId: lossData.reasonId,
         description: lossData.description
       });
 
@@ -337,7 +340,7 @@ const ChatHeader: React.FC = () => {
                 <SelectContent>
                   {lossReasons.map((reason) => (
                     <SelectItem key={reason.id} value={reason.id}>
-                      {reason.name}
+                      {reason.description}
                     </SelectItem>
                   ))}
                 </SelectContent>

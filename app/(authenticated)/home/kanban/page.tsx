@@ -16,7 +16,12 @@ const KanbanBoard = () => {
     getKanbanSteps().then((steps) => {
       if (steps) {
         const newColumns: Record<string, KanbanStep> = {};
-        steps.forEach((step: KanbanStep) => {
+
+        const filteredSteps = steps.filter(step =>
+          step.name !== "Perdido" && step.name !== "Vendido"
+        );
+
+        filteredSteps.forEach((step: KanbanStep) => {
           newColumns[step.id] = step;
         });
         setColumns(newColumns);

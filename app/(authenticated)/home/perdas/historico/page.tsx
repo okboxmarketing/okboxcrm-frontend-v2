@@ -5,23 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { getLosses } from "@/service/lossService";
-
-interface Loss {
-    id: string;
-    ticketId: number;
-    reason: string;
-    observation: string;
-    createdAt: string;
-    Ticket: {
-        Contact: {
-            name: string;
-            phone: string;
-        };
-        Responsible: {
-            name: string;
-        };
-    };
-}
+import { Loss } from "@/lib/types";
 
 const LossHistoryPage: React.FC = () => {
     const [losses, setLosses] = useState<Loss[]>([]);
@@ -92,7 +76,6 @@ const LossHistoryPage: React.FC = () => {
                                 <TableHead>Cliente</TableHead>
                                 <TableHead>Responsável</TableHead>
                                 <TableHead>Motivo</TableHead>
-                                <TableHead>Ticket ID</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -106,8 +89,7 @@ const LossHistoryPage: React.FC = () => {
                                         <TableCell>{formatDate(loss.createdAt)}</TableCell>
                                         <TableCell>{loss.Ticket.Contact.name}</TableCell>
                                         <TableCell>{loss.Ticket.Responsible?.name || "N/A"}</TableCell>
-                                        <TableCell className="font-medium">{loss.reason}</TableCell>
-                                        <TableCell>{loss.ticketId}</TableCell>
+                                        <TableCell className="font-medium">{loss.LossReason?.description || loss.lossReasonId}</TableCell>
                                     </TableRow>
                                     {expandedLoss === loss.id && (
                                         <TableRow className="bg-gray-50">
@@ -133,11 +115,11 @@ const LossHistoryPage: React.FC = () => {
                                                         </div>
                                                         <div className="col-span-2">
                                                             <p className="text-gray-500">Motivo:</p>
-                                                            <p>{loss.reason}</p>
+                                                            <p>{loss.LossReason?.description || loss.lossReasonId}</p>
                                                         </div>
                                                         <div className="col-span-2">
                                                             <p className="text-gray-500">Descrição:</p>
-                                                            <p>{loss.observation || "Sem descrição"}</p> {/* Changed from description to observation */}
+                                                            <p>{loss.observation || "Sem descrição"}</p>
                                                         </div>
                                                     </div>
                                                 </div>

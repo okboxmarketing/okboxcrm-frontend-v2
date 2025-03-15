@@ -136,6 +136,36 @@ export enum MediaEnum {
   TEXT = "TEXT",
 }
 
+export interface Loss {
+  id: string;
+  ticketId: number;
+  lossReasonId: string;
+  observation: string;
+  createdAt: string;
+  LossReason?: {
+    id: string;
+    description: string;
+    companyId: string;
+  };
+  Ticket: {
+    Contact: {
+      name: string;
+      phone: string;
+    };
+    Responsible: {
+      name: string;
+    };
+  };
+}
+
+export interface LossReason {
+  id: string;
+  description: string;
+  companyId: string;
+  createdAt: string;
+}
+
+
 export interface NewMessagePayload {
   contactId: string;
   data: {
@@ -155,6 +185,7 @@ export interface NewMessagePayload {
   };
   mediaType: MediaEnum;
   contentUrl?: string;
+  content?: string;
 }
 
 export interface Message {

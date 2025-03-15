@@ -1,30 +1,7 @@
 import { apiHelper } from "@/lib/apiHelper";
+import { Loss, LossReason } from "@/lib/types";
 
-interface Loss {
-  id: string;
-  ticketId: number;
-  reason: string;
-  observation: string;
-  createdAt: string;
-  Ticket: {
-    Contact: {
-      name: string;
-      phone: string;
-    };
-    Responsible: {
-      name: string;
-    };
-  };
-}
 
-interface LossReason {
-  id: string;
-  description: string;
-  companyId: string;
-  createdAt: string;
-}
-
-// Loss endpoints
 export const getLosses = async () => {
   try {
     return await apiHelper.get<Loss[]>(`/losses`);
@@ -43,7 +20,7 @@ export const getLossById = async (id: string) => {
   }
 };
 
-export const createLoss = async (data: { ticketId: number; reason: string; description?: string }) => {
+export const createLoss = async (data: { ticketId: number; lossReasonId: string; description?: string }) => {
   try {
     return await apiHelper.post<Loss>(`/losses`, data);
   } catch (error) {
@@ -52,7 +29,6 @@ export const createLoss = async (data: { ticketId: number; reason: string; descr
   }
 };
 
-// Loss Reason endpoints
 export const getLossReasons = async () => {
   try {
     return await apiHelper.get<LossReason[]>(`/loss-reasons`);
