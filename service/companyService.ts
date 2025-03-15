@@ -43,10 +43,29 @@ export const findMyCompany = async () => {
   return apiHelper.get<Company>("/company/my-company");
 };
 
-export const assignAccessorToCompany = async (accessorEmail: string, companyId: string) => {
-  return apiHelper.post("/company/assign-accessor", { accessorEmail, companyId });
+export const assignAccessorToCompany = async (advisorEmail: string, companyId: string) => {
+  return apiHelper.post("/company/assign-advisor", { advisorEmail, companyId });
 }
 
 export const deleteCompany = async (companyId: string) => {
   return apiHelper.delete(`/company/${companyId}`);
+}
+
+export const getCompaniesByAdvisor = async () => {
+  return apiHelper.get<Company[]>("/company/advisor");
+};
+
+export const setActiveCompany = async (companyId: string) => {
+  try {
+    const response = await apiHelper.post<{access_token: string, user: any}>('/company/set-active', { companyId });
+    
+    // Update the token and user in localStorage
+    localStorage.setItem('token', response.access_token);
+    localStorage.setItem('user', JSON.stringify(response.user));
+    
+    return response;
+  } catch (error) {
+    console.error("Error setting active company:", error);
+    throw error;
+  }
 }

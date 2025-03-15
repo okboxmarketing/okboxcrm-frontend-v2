@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Building2 } from "lucide-react";
+import { Building2, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
     Dialog,
@@ -12,8 +12,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getMyCompanies } from "@/service/advisorService";
+import { setActiveCompany } from "@/service/companyService";
 import { Company } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/authContext";
 
 interface AdvisorCompaniesDialogProps {
     open: boolean;
@@ -26,8 +28,11 @@ export function AdvisorCompaniesDialog({
 }: AdvisorCompaniesDialogProps) {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activating, setActivating] = useState<string | null>(null);
     const router = useRouter();
     const { toast } = useToast();
+    const { user, refreshUser } = useAuth();
+    const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchCompanies = async () => {
@@ -35,6 +40,11 @@ export function AdvisorCompaniesDialog({
                 setLoading(true);
                 const data = await getMyCompanies();
                 setCompanies(data);
+                
+                // Set active company from user context
+                if (user?.companyId) {
+                    setActiveCompanyId(user.companyId);
+                }
             } catch (error) {
                 console.error("Erro ao buscar empresas:", error);
                 toast({
@@ -49,13 +59,35 @@ export function AdvisorCompaniesDialog({
         if (open) {
             fetchCompanies();
         }
-    }, [open, toast]);
+    }, [open, toast, user]);
 
-    const handleSelectCompany = (companyId: string) => {
-        // Here you could implement any logic needed when selecting a company
-        // For now, just close the dialog and navigate to the home page
-        onOpenChange(false);
-        router.push("/home");
+    const handleSetActive = async (companyId: string) => {
+        try {
+            setActivating(companyId);
+            await setActiveCompany(companyId);
+            setActiveCompanyId(companyId);
+            
+            // Refresh user context to get updated token
+            if (refreshUser) {
+                await refreshUser();
+            }
+            
+            toast({
+                description: "Empresa ativada com sucesso!",
+            });
+            
+            // Close dialog and refresh page
+            onOpenChange(false);
+            router.refresh();
+        } catch (error) {
+            console.error("Erro ao ativar empresa:", error);
+            toast({
+                variant: "destructive",
+                description: "Não foi possível ativar a empresa.",
+            });
+        } finally {
+            setActivating(null);
+        }
     };
 
     return (
@@ -64,7 +96,7 @@ export function AdvisorCompaniesDialog({
                 <DialogHeader>
                     <DialogTitle>Suas Empresas</DialogTitle>
                     <DialogDescription>
-                        Selecione uma empresa para gerenciar.
+                        Selecione uma empresa para acompanhar.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -79,11 +111,9 @@ export function AdvisorCompaniesDialog({
                 ) : (
                     <div className="grid gap-4 py-4">
                         {companies.map((company) => (
-                            <Button
+                            <div
                                 key={company.id}
-                                variant="outline"
-                                className="flex justify-between items-center h-auto py-3 px-4 hover:bg-gray-50"
-                                onClick={() => handleSelectCompany(company.id)}
+                                className="flex justify-between items-center border rounded-md p-4 hover:bg-gray-50"
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="bg-gray-100 p-2 rounded-full">
@@ -92,14 +122,29 @@ export function AdvisorCompaniesDialog({
                                     <div className="text-left">
                                         <p className="font-medium">{company.name}</p>
                                         <p className="text-sm text-gray-500">
-                                            { } usuários
+                                            {company._count?.users || 0} usuários
                                         </p>
                                     </div>
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                    Criada em {new Date(company.createdAt).toLocaleDateString()}
-                                </div>
-                            </Button>
+                                <Button
+                                    onClick={() => handleSetActive(company.id)}
+                                    variant={activeCompanyId === company.id ? "default" : "outline"}
+                                    size="sm"
+                                    disabled={activating !== null}
+                                    className="flex items-center gap-1"
+                                >
+                                    {activating === company.id ? (
+                                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                                    ) : activeCompanyId === company.id ? (
+                                        <>
+                                            <CheckCircle size={16} />
+                                            Ativa
+                                        </>
+                                    ) : (
+                                        "Ativar"
+                                    )}
+                                </Button>
+                            </div>
                         ))}
                     </div>
                 )}

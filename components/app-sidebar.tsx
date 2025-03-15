@@ -138,6 +138,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: UserCheck,
         roles: ["MASTER"],
       },
+      {
+        name: "Selecionar Empresa",
+        url: "#", // This won't actually navigate anywhere
+        icon: UserCheck, // Or any other icon you prefer
+        roles: ["ADVISOR"], // Only for advisors
+      },
     ],
   };
 

@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   verifyUser: () => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +27,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logout();
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Add refreshUser function - similar to verifyUser but doesn't set loading to true initially
+  const refreshUser = async () => {
+    try {
+      const userData = await fetchVerifyUser();
+      setUser(userData);
+    } catch (error) {
+      console.error("Error refreshing user:", error);
     }
   };
 
@@ -52,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, verifyUser, logout }}>
+    <AuthContext.Provider value={{ user, loading, verifyUser, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )
