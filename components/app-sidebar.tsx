@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   Settings,
   UserCheck,
+  Building,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -70,32 +71,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/home/atendimento",
         icon: MessageCircle,
         isActive: true,
+        roles: ["USER", "ADMIN"],
       },
       {
         title: "Kanban",
         url: "/home/kanban",
         icon: Kanban,
         isActive: true,
+        roles: ["USER", "ADMIN", "ADVISOR"],
       },
       {
         title: "Contatos",
         url: "/home/contatos",
         icon: Contact,
         isActive: true,
+        roles: ["USER", "ADMIN"],
       },
       {
         title: "Etapas do Funil",
         url: "/home/etapas-kanban",
         icon: Cone,
         isActive: true,
+        roles: ["USER", "ADMIN"],
       },
       {
         title: "Vendas",
         url: "#",
         icon: ShoppingBag,
         items: [
-          { title: "Histórico", url: "/home/vendas/historico" },
-          { title: "Produtos", url: "/home/vendas/produtos" },
+          { title: "Histórico", url: "/home/vendas/historico", roles: ["USER", "ADMIN", "ADVISOR"] },
+          { title: "Produtos", url: "/home/vendas/produtos", roles: ["USER", "ADMIN"] },
         ],
       },
       {
@@ -103,8 +108,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "#",
         icon: MoveDownRight,
         items: [
-          { title: "Histórico", url: "/home/perdas/historico" },
-          { title: "Motivos", url: "/home/perdas/motivos" },
+          { title: "Histórico", url: "/home/perdas/historico", roles: ["USER", "ADMIN", "ADVISOR"] },
+          { title: "Motivos", url: "/home/perdas/motivos", roles: ["USER", "ADMIN"] },
         ],
       },
     ],
@@ -140,9 +145,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         name: "Selecionar Empresa",
-        url: "#", // This won't actually navigate anywhere
-        icon: UserCheck, // Or any other icon you prefer
-        roles: ["ADVISOR"], // Only for advisors
+        url: "#",
+        icon: Building,
+        roles: ["ADVISOR"],
       },
     ],
   };
@@ -155,7 +160,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        {(user?.userRole !== "MASTER" || !user?.companyId) && <NavMain items={data.navMain} />}
+        {user?.userRole !== "MASTER" && <NavMain items={data.navMain} userRole={user?.userRole} />}
         {(user?.userRole === "ADMIN" || user?.userRole === "MASTER" || user?.userRole === "ADVISOR") && (
           <NavProjects projects={data.projects} userRole={user?.userRole} />
         )}

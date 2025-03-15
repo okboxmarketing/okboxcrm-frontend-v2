@@ -20,23 +20,32 @@ import {
 
 export function NavMain({
   items,
+  userRole
 }: {
+  userRole: string,
   items: {
     title: string
     url: string
     icon?: LucideIcon
     isActive?: boolean
+    roles?: string[]
     items?: {
       title: string
       url: string
+      roles?: string[]
     }[]
   }[]
 }) {
+  // Filter items based on user role
+  const filteredItems = items.filter(item =>
+    !item.roles || item.roles.includes(userRole)
+  );
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>CRM</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) =>
+        {filteredItems.map((item) =>
           item.items && item.items.length > 0 ? (
             <Collapsible
               key={item.title}
@@ -54,15 +63,17 @@ export function NavMain({
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    {item.items.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild>
-                          <a href={subItem.url}>
-                            <span>{subItem.title}</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
+                    {item.items
+                      .filter(subItem => !subItem.roles || subItem.roles.includes(userRole))
+                      .map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton asChild>
+                            <a href={subItem.url}>
+                              <span>{subItem.title}</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
