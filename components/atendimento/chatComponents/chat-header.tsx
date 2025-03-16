@@ -16,6 +16,14 @@ import { createSale } from "@/service/saleService";
 import { createLoss } from "@/service/lossService";
 import { getLossReasons } from "@/service/lossService";
 import { getProducts } from "@/service/productService";
+import { LossReason } from "@/lib/types";
+
+type Products = {
+  id: string;
+  name: string;
+  price: number;
+};
+
 
 const ChatHeader: React.FC = () => {
   const { selectedChat, fetchTickets } = useChatContext();
@@ -23,7 +31,7 @@ const ChatHeader: React.FC = () => {
 
   // Sale dialog state
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Products[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<{ id: string, quantity: number, price: number }[]>([]);
   const [currentProduct, setCurrentProduct] = useState<{ id: string, quantity: string }>(
     { id: "", quantity: "1" }
@@ -31,7 +39,7 @@ const ChatHeader: React.FC = () => {
 
   // Loss dialog state
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
-  const [lossReasons, setLossReasons] = useState<any[]>([]);
+  const [lossReasons, setLossReasons] = useState<LossReason[]>([]);
   const [lossData, setLossData] = useState({
     reasonId: "",
     description: ""

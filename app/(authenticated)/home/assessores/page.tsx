@@ -107,8 +107,8 @@ export default function AdvisorsPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isLoading}
                   className="bg-black hover:bg-black/80"
                 >
@@ -123,7 +123,7 @@ export default function AdvisorsPage() {
       {/* Aqui você pode adicionar uma tabela para listar os assessores existentes */}
       <div className="bg-white rounded-lg shadow p-6">
         <p className="text-gray-500 text-center">
-          Nenhum assessor cadastrado ainda. Clique em "Novo Assessor" para adicionar.
+          Nenhum assessor cadastrado ainda. Clique em Novo Assessor para adicionar.
         </p>
       </div>
     </div>

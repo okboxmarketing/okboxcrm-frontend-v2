@@ -25,7 +25,7 @@ export function NavProjects({
 }) {
   const [companiesDialogOpen, setCompaniesDialogOpen] = useState(false)
 
-  const handleItemClick = (e: React.MouseEvent, item: any) => {
+  const handleItemClick = (e: React.MouseEvent, item: { name: string }) => {
     if (userRole === "ADVISOR" && item.name === "Selecionar Empresa") {
       e.preventDefault()
       setCompaniesDialogOpen(true)

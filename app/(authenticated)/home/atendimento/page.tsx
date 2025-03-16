@@ -5,7 +5,6 @@ import ChatMainWithContext from "@/components/atendimento/chat-main";
 import ChatSidebarWithContext from "@/components/atendimento/chat-sidebar";
 import { ChatProvider, useChatContext } from "@/contexts/ChatContext";
 
-// Componente interno que usa o contexto
 const ChatContent = () => {
   const { tickets, setSelectedChat } = useChatContext();
   const searchParams = useSearchParams();
