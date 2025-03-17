@@ -44,7 +44,7 @@ export function LoginForm({
             router.push("/home/atendimento");
             break;
           case "ADVISOR":
-            router.push("/home/atendimento");
+            router.push("/home/kanban");
             break;
           default:
             router.push("/home");

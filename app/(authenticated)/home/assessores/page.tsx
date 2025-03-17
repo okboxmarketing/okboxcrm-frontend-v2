@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { createAdvisor } from "@/service/advisorService";
+import { createAdvisor, getAdvisors } from "@/service/advisorService";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { UserPlus } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { User } from "@/lib/types";
 
 export default function AdvisorsPage() {
   const [open, setOpen] = useState(false);
@@ -24,7 +34,21 @@ export default function AdvisorsPage() {
     email: "",
     password: "",
   });
+  const [advisors, setAdvisors] = useState<User[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchAdvisors();
+  }, []);
+
+  const fetchAdvisors = async () => {
+    try {
+      const data = await getAdvisors();
+      setAdvisors(data);
+    } catch (error) {
+      console.error("Erro ao buscar assessores:", error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -42,6 +66,7 @@ export default function AdvisorsPage() {
       });
       setFormData({ name: "", email: "", password: "" });
       setOpen(false);
+      fetchAdvisors();
     } catch (error) {
       console.error("Erro ao cadastrar assessor:", error);
       toast({
@@ -54,7 +79,7 @@ export default function AdvisorsPage() {
   };
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Gerenciamento de Assessores</h1>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -120,12 +145,22 @@ export default function AdvisorsPage() {
         </Dialog>
       </div>
 
-      {/* Aqui você pode adicionar uma tabela para listar os assessores existentes */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-500 text-center">
-          Nenhum assessor cadastrado ainda. Clique em Novo Assessor para adicionar.
-        </p>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nome</TableHead>
+            <TableHead>Email</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {advisors.map((advisor) => (
+            <TableRow key={advisor.id}>
+              <TableCell>{advisor.name}</TableCell>
+              <TableCell>{advisor.email}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

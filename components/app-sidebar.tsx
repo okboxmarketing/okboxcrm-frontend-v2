@@ -65,6 +65,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "#",
         icon: PieChart,
         isActive: true,
+        roles: ["USER", "ADMIN"],
       },
       {
         title: "Atendimento",
@@ -131,12 +132,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: PlugZap,
         roles: ["ADMIN"],
       },
-      {
-        name: "Configuração",
-        url: "/home/configuracao",
-        icon: Settings,
-        roles: ["ADMIN", "ADVISOR"],
-      },
+      // {
+      //   name: "Configuração",
+      //   url: "/home/configuracao",
+      //   icon: Settings,
+      //   roles: ["ADMIN", "ADVISOR"],
+      // },
       {
         name: "Assessores",
         url: "/home/assessores",

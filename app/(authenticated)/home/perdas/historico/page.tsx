@@ -22,10 +22,6 @@ const LossHistoryPage: React.FC = () => {
             }
         } catch (error) {
             console.error("Erro ao carregar perdas:", error);
-            toast({
-                description: "Erro ao carregar histórico de perdas",
-                variant: "destructive",
-            });
         } finally {
             setLoading(false);
         }

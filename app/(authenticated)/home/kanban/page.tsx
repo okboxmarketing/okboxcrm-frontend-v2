@@ -43,7 +43,11 @@ const KanbanBoard = () => {
       getKanbanSteps().then((steps) => {
         if (steps) {
           const newColumns: Record<string, KanbanStep> = {};
-          steps.forEach((step: KanbanStep) => {
+          const filteredSteps = steps.filter(step =>
+            step.name !== "Perdido" && step.name !== "Vendido"
+          );
+
+          filteredSteps.forEach((step: KanbanStep) => {
             newColumns[step.id] = step;
           });
           setColumns(newColumns);
@@ -91,7 +95,7 @@ const KanbanBoard = () => {
                     className="p-3 bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md flex items-center gap-4"
                     draggable
                     onDragStart={(event) => handleDragStart(event, ticket.id, column.id)}
-                    onClick={() => handleTicketClick(ticket.id)} // Adicionando o evento de clique
+                    onClick={() => handleTicketClick(ticket.id)}
                     style={{ borderLeft: `4px solid ${column.color}` }}
                   >
                     {ticket.Contact.pictureUrl ? (

@@ -22,10 +22,7 @@ const SalesHistoryPage: React.FC = () => {
             }
         } catch (error) {
             console.error("Erro ao carregar vendas:", error);
-            toast({
-                description: "Erro ao carregar histórico de vendas",
-                variant: "destructive",
-            });
+
         } finally {
             setLoading(false);
         }

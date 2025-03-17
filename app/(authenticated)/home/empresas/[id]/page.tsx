@@ -144,7 +144,7 @@ const EmpresaPage: React.FC = () => {
         </div>
         <div className="flex gap-4">
           <Button onClick={() => setOpenDialog(true)}>Novo Usuário</Button>
-          {!company?.Advisor?.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Novo Assessor</Button>)}
+          {!company?.Advisor?.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Atribuir Assessor</Button>)}
           <Button variant={'destructive'} onClick={() => setOpenDeleteDialog(true)}>Deletar Empresa</Button>
         </div>
       </div>
@@ -188,7 +188,7 @@ const EmpresaPage: React.FC = () => {
       <Dialog open={openAccessorDialog} onOpenChange={setOpenAccessorDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Atribuir Novo Assessor</DialogTitle>
+            <DialogTitle>Atribuir Assessor</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitAccessor(onSubmitAccessor)} className="space-y-4">
             <div>
