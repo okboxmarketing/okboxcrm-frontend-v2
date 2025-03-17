@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import ChatMainWithContext from "@/components/atendimento/chat-main";
 import ChatSidebarWithContext from "@/components/atendimento/chat-sidebar";
@@ -30,7 +30,9 @@ const ChatContent = () => {
 export default function Chat() {
   return (
     <ChatProvider>
-      <ChatContent />
+      <Suspense fallback={<div></div>}>
+        <ChatContent />
+      </Suspense>
     </ChatProvider>
   );
 }

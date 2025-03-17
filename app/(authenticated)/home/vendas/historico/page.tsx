@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
 import { Sale } from "@/lib/types";
 import { getSales } from "@/service/saleService";
 
@@ -11,7 +10,6 @@ const SalesHistoryPage: React.FC = () => {
     const [sales, setSales] = useState<Sale[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedSale, setExpandedSale] = useState<string | null>(null);
-    const { toast } = useToast();
 
     const fetchSales = async () => {
         setLoading(true);

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
 import { getLosses } from "@/service/lossService";
 import { Loss } from "@/lib/types";
 
@@ -11,7 +10,6 @@ const LossHistoryPage: React.FC = () => {
     const [losses, setLosses] = useState<Loss[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedLoss, setExpandedLoss] = useState<string | null>(null);
-    const { toast } = useToast();
 
     const fetchLosses = async () => {
         setLoading(true);

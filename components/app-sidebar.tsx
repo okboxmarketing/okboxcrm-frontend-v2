@@ -12,7 +12,6 @@ import {
   MessageCircle,
   MoveDownRight,
   ShoppingBag,
-  Settings,
   UserCheck,
   Building,
 } from "lucide-react";
