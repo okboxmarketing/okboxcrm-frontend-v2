@@ -102,6 +102,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: "Histórico", url: "/home/vendas/historico", roles: ["USER", "ADMIN", "ADVISOR"] },
           { title: "Produtos", url: "/home/vendas/produtos", roles: ["USER", "ADMIN"] },
         ],
+        roles: ["USER", "ADMIN", "ADVISOR"]
       },
       {
         title: "Perdas",
@@ -111,6 +112,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: "Histórico", url: "/home/perdas/historico", roles: ["USER", "ADMIN", "ADVISOR"] },
           { title: "Motivos", url: "/home/perdas/motivos", roles: ["USER", "ADMIN"] },
         ],
+        roles: ["USER", "ADMIN", "ADVISOR"]
       },
     ],
     projects: [

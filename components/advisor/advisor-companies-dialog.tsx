@@ -40,7 +40,7 @@ export function AdvisorCompaniesDialog({
                 setLoading(true);
                 const data = await getMyCompanies();
                 setCompanies(data);
-                
+
                 // Set active company from user context
                 if (user?.companyId) {
                     setActiveCompanyId(user.companyId);
@@ -66,16 +66,16 @@ export function AdvisorCompaniesDialog({
             setActivating(companyId);
             await setActiveCompany(companyId);
             setActiveCompanyId(companyId);
-            
+
             // Refresh user context to get updated token
             if (refreshUser) {
                 await refreshUser();
             }
-            
+
             toast({
                 description: "Empresa ativada com sucesso!",
             });
-            
+
             // Close dialog and refresh page
             onOpenChange(false);
             router.refresh();
@@ -138,10 +138,10 @@ export function AdvisorCompaniesDialog({
                                     ) : activeCompanyId === company.id ? (
                                         <>
                                             <CheckCircle size={16} />
-                                            Ativa
+                                            Acessando
                                         </>
                                     ) : (
-                                        "Ativar"
+                                        "Acessar"
                                     )}
                                 </Button>
                             </div>

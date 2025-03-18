@@ -30,7 +30,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
         ]);
 
         const filteredSteps = steps.filter(step =>
-          step.name !== "Perdido" && step.name !== "Vendido" && step.name !== "Com Contato" && step.name !== "Sem Contato"
+          step.name !== "Perdido" && step.name !== "Vendido" && step.name !== "Contato Feito" && step.name !== "Sem Contato"
         );
 
         setKanbanSteps(filteredSteps);

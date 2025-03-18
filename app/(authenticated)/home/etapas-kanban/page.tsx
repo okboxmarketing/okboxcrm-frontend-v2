@@ -122,7 +122,7 @@ const KanbanStepsPage: React.FC = () => {
                 <TableCell>{step.ticketCount}</TableCell>
                 <TableCell className="flex gap-2">
                   <Button
-                    disabled={step.name === "Sem Contato" || step.name === "Com Contato" || step.name === "Vendido" || step.name === "Perdido"}
+                    disabled={step.name === "Sem Contato" || step.name === "Contato Feito" || step.name === "Vendido" || step.name === "Perdido"}
                     onClick={() => {
                       setStepToEdit(step);
                       setEditStepName(step.name);
@@ -134,7 +134,7 @@ const KanbanStepsPage: React.FC = () => {
                   </Button>
                   <Button
                     variant="destructive"
-                    disabled={step.name === "Sem Contato" || step.name === "Com Contato" || step.name === "Vendido" || step.name === "Perdido"}
+                    disabled={step.name === "Sem Contato" || step.name === "Contato Feito" || step.name === "Vendido" || step.name === "Perdido"}
                     onClick={() => {
                       setStepToDelete(step);
                       setConfirmDialogOpen(true);
