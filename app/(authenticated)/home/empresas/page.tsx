@@ -121,7 +121,7 @@ const CadastroPage: React.FC = () => {
 
               <TableCell>{company.name}</TableCell>
               <TableCell>{company.Advisor?.name || "Nenhum"}</TableCell>
-              <TableCell className="flex items-center gap-2"><Users size={14} />{company._count.users}</TableCell>
+              <TableCell className="flex items-center gap-2"><Users size={14} />{company._count?.users || company.userCount}</TableCell>
             </TableRow>
           ))}
         </TableBody>

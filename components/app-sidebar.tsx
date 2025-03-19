@@ -64,7 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "#",
         icon: PieChart,
         isActive: true,
-        roles: ["USER", "ADMIN"],
+        roles: ["USER", "ADMIN", "ADVISOR"],
       },
       {
         title: "Atendimento",
@@ -92,7 +92,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/home/etapas-kanban",
         icon: Cone,
         isActive: true,
-        roles: ["USER", "ADMIN"],
+        roles: ["USER", "ADMIN", "ADVISOR"],
       },
       {
         title: "Vendas",
@@ -156,10 +156,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="flex flex-col items-center space-y-2">
         <div className="w-200 h-20">
           <Image src="/logo.png" width={200} height={20} alt="Logo" />
         </div>
+        <p className="justify-center">{companyName && companyName || ""} </p>
       </SidebarHeader>
       <SidebarContent>
         {user?.userRole !== "MASTER" && <NavMain items={data.navMain} userRole={user?.userRole} />}

@@ -39,6 +39,7 @@ export interface Company {
   advisorId: string | null;
   createdAt: string;
   updatedAt: string;
+  userCount?: number;
   Advisor: {
     id: string;
     name: string;

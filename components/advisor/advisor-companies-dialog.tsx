@@ -122,7 +122,7 @@ export function AdvisorCompaniesDialog({
                                     <div className="text-left">
                                         <p className="font-medium">{company.name}</p>
                                         <p className="text-sm text-gray-500">
-                                            {company._count?.users || 0} usuários
+                                            {company.userCount || 0} usuários
                                         </p>
                                     </div>
                                 </div>
