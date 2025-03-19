@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/authContext";
 import { findMyCompany } from "@/service/companyService";
-import { Badge } from "./ui/badge";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
