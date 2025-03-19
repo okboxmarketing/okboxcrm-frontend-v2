@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { Image as ImageIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useChatContext } from "@/contexts/ChatContext";
+import { Badge } from "../ui/badge";
 
 const ChatSidebarWithContext: React.FC = () => {
   const { tickets, selectedChat, setSelectedChat, tab, setTab, fetchTickets } = useChatContext();
@@ -111,8 +112,13 @@ const ChatSidebarWithContext: React.FC = () => {
       </div>
       <Tabs value={tab} onValueChange={(value) => setTab(value as TicketStatusEnum)} className="flex-1">
         <TabsList className="grid grid-cols-2">
-          <TabsTrigger value="OPEN">ATENDENDO ({sortedOpenTickets.length})</TabsTrigger>
-          <TabsTrigger value="PENDING">AGUARDANDO ({sortedPendingTickets.length})</TabsTrigger>
+          <TabsTrigger value="OPEN" className="gap-2">ATENDENDO <Badge>{sortedOpenTickets.length}</Badge></TabsTrigger>
+          <TabsTrigger value="PENDING" className="gap-2">
+            AGUARDANDO
+            {sortedPendingTickets.length > 0 && (
+              <Badge variant={"destructive"}>{sortedPendingTickets.length}</Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="PENDING">
           <div className="overflow-y-auto">
@@ -143,9 +149,9 @@ const ChatSidebarWithContext: React.FC = () => {
                     {renderLastMessage(ticket.lastMessage)}
                   </p>
                 </div>
-                <Button className="rounded" onClick={handleAcceptTicket}>
-                  <Check />
-                </Button>
+                <button className="rounded" onClick={handleAcceptTicket}>
+                  <Badge className="bg-green-500 hover:bg-green-500/70">ACEITAR</Badge>
+                </button>
               </div>
             ))}
           </div>

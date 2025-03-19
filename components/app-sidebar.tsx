@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/authContext";
 import { findMyCompany } from "@/service/companyService";
+import { Badge } from "./ui/badge";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
@@ -160,7 +161,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <div className="w-200 h-20">
           <Image src="/logo.png" width={200} height={20} alt="Logo" />
         </div>
-        <p className="justify-center">{companyName && companyName || ""} </p>
+        <Badge className="justify-center">{companyName && companyName || ""} </Badge>
       </SidebarHeader>
       <SidebarContent>
         {user?.userRole !== "MASTER" && <NavMain items={data.navMain} userRole={user?.userRole} />}
