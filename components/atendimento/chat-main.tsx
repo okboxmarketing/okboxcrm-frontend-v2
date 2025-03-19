@@ -5,10 +5,12 @@ import { useChatContext } from "@/contexts/ChatContext";
 import ChatBody from "./chatComponents/chat-body";
 import ChatInputWithContext from "./chatComponents/chat-input";
 import ChatHeader from "./chatComponents/chat-header";
+import { useAuth } from "@/context/authContext";
 
 const ChatMainWithContext: React.FC = () => {
   const { selectedChat } = useChatContext();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -32,7 +34,7 @@ const ChatMainWithContext: React.FC = () => {
         <>
           <ChatHeader />
           <ChatBody onSelectImage={(url) => setSelectedImage(url)} />
-          {selectedChat.status !== "PENDING" && <ChatInputWithContext />}
+          {selectedChat.status !== "PENDING" && user.userRole !== "ADVISOR" && <ChatInputWithContext />}
         </>
       ) : (
         <div className="flex-1 flex items-center justify-center">

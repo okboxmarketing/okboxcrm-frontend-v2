@@ -17,6 +17,7 @@ import { createLoss } from "@/service/lossService";
 import { getLossReasons } from "@/service/lossService";
 import { getProducts } from "@/service/productService";
 import { LossReason } from "@/lib/types";
+import { useAuth } from "@/context/authContext";
 
 type Products = {
   id: string;
@@ -44,6 +45,8 @@ const ChatHeader: React.FC = () => {
     reasonId: "",
     description: ""
   });
+
+  const { user } = useAuth()
 
   // Fetch products for sale dialog
   const fetchProducts = async () => {
@@ -206,13 +209,13 @@ const ChatHeader: React.FC = () => {
           )}
         </div>
       </div>
-      {selectedChat.status !== "PENDING" && (
+      {selectedChat.status !== "PENDING" && user.userRole !== "ADVISOR" && (
         <div className="flex items-center gap-4">
           <MoveTicketSelect ticketId={selectedChat.id} fetchTickets={fetchTickets} />
-          <Button onClick={handleOpenSaleDialog}>
+          <Button onClick={handleOpenSaleDialog} className="bg-green-500 hover:bg-green-500/70">
             <ShoppingCart />
           </Button>
-          <Button onClick={handleOpenLossDialog}>
+          <Button onClick={handleOpenLossDialog} className="bg-red-500 hover:bg-red-500/70">
             <MoveDownRight />
           </Button>
         </div>

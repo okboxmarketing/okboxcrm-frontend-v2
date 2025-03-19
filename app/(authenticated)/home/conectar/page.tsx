@@ -136,8 +136,8 @@ const ConectarPage: React.FC = () => {
               {isLoading ? "Carregando..." : status}
             </p>
           </div>
-          <p>Nome</p>
-          <p>Foto do User</p>
+          {/* <p>Nome</p>
+          <p>Foto do User</p> */}
         </div>
 
         {isLoading ? (

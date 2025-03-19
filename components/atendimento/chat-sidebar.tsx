@@ -13,15 +13,12 @@ import { Image as ImageIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useChatContext } from "@/contexts/ChatContext";
 import { Badge } from "../ui/badge";
+import { useAuth } from "@/context/authContext";
 
 const ChatSidebarWithContext: React.FC = () => {
   const { tickets, selectedChat, setSelectedChat, tab, setTab, fetchTickets } = useChatContext();
   const [showMyTickets, setShowMyTickets] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setUserId(localStorage.getItem("userId"));
-  }, []);
+  const { user } = useAuth();
 
   const handleAcceptTicket = async () => {
     if (!selectedChat) return;
@@ -32,6 +29,7 @@ const ChatSidebarWithContext: React.FC = () => {
       fetchTickets();
     } catch (error) {
       console.error("Erro ao aceitar ticket:", error);
+      toast({ description: "Erro ao aceitar ticket", variant: "destructive" });
     }
   };
 
@@ -39,7 +37,7 @@ const ChatSidebarWithContext: React.FC = () => {
   const pendingTickets = tickets.filter(ticket => ticket.status === "PENDING");
 
   const filteredOpenTickets = showMyTickets
-    ? openTickets.filter(ticket => ticket.responsibleId === userId)
+    ? openTickets.filter(ticket => ticket.responsibleId === user?.userId)
     : openTickets;
 
   const sortedPendingTickets = [...pendingTickets].sort(
@@ -93,16 +91,19 @@ const ChatSidebarWithContext: React.FC = () => {
     <div className="w-80 bg-white border-r flex flex-col overflow-y-auto">
       <div className="p-4 border-b flex items-center">
         <h1 className="text-xl font-semibold">Atendimento</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <Switch
-            id="myTicketsSwitch"
-            checked={showMyTickets}
-            onCheckedChange={(checked: boolean) => setShowMyTickets(checked)}
-          />
-          <label htmlFor="myTicketsSwitch" className="text-sm">
-            Meus Tickets
-          </label>
-        </div>
+        {user?.userRole != "ADVISOR" && (
+          <div className="ml-auto flex items-center gap-2">
+            <Switch
+              id="myTicketsSwitch"
+              checked={showMyTickets}
+              onCheckedChange={(checked: boolean) => setShowMyTickets(checked)}
+            />
+            <label htmlFor="myTicketsSwitch" className="text-sm">
+              Meus Tickets
+            </label>
+          </div>
+        )
+        }
       </div>
       <div className="p-4 border-b">
         <div className="relative">
@@ -149,9 +150,11 @@ const ChatSidebarWithContext: React.FC = () => {
                     {renderLastMessage(ticket.lastMessage)}
                   </p>
                 </div>
-                <button className="rounded" onClick={handleAcceptTicket}>
-                  <Badge className="bg-green-500 hover:bg-green-500/70">ACEITAR</Badge>
-                </button>
+                {user?.userRole != "ADVISOR" && (
+                  <button className="rounded" onClick={handleAcceptTicket}>
+                    <Badge className="bg-green-500 hover:bg-green-500/70">ACEITAR</Badge>
+                  </button>
+                )}
               </div>
             ))}
           </div>

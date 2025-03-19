@@ -18,7 +18,6 @@ interface MoveTicketSelectProps {
 const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets }) => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedStep, setSelectedStep] = useState<string>("");
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,8 +37,6 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
       } catch (error) {
         console.log(error);
         toast({ description: "Erro ao carregar etapas do Kanban" });
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -67,7 +64,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
   return (
     <Select onValueChange={handleMoveTicket} value={selectedStep}>
       <SelectTrigger className="bg-white">
-        <SelectValue placeholder={loading ? "Carregando..." : "Selecione a Etapa"} className="w-1/2" />
+        <SelectValue placeholder="Selecione a Etapa" className="w-1/2" />
       </SelectTrigger>
       <SelectContent>
         {kanbanSteps.map((step) => (

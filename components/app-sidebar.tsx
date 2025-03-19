@@ -72,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/home/atendimento",
         icon: MessageCircle,
         isActive: true,
-        roles: ["USER", "ADMIN"],
+        roles: ["USER", "ADMIN", "ADVISOR"],
       },
       {
         title: "Kanban",
@@ -161,7 +161,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <div className="w-200 h-20">
           <Image src="/logo.png" width={200} height={20} alt="Logo" />
         </div>
-        <Badge className="justify-center">{companyName && companyName || ""} </Badge>
       </SidebarHeader>
       <SidebarContent>
         {user?.userRole !== "MASTER" && <NavMain items={data.navMain} userRole={user?.userRole} />}
@@ -170,7 +169,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         )}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={data.user} companyName={companyName} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

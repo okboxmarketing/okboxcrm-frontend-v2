@@ -125,8 +125,8 @@ const EmpresaPage: React.FC = () => {
   const handleDeleteCompany = async () => {
     setTransitionDeleteCompany(async () => {
       await deleteCompany(companyId!);
-      toast({ description: "Empresa deletada com sucesso!" });
       router.push("/home/empresas");
+      toast({ description: "Empresa deletada com sucesso!" });
     });
   }
 
