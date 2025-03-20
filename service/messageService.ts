@@ -17,3 +17,7 @@ export const sendMediaMessage = async (params: SendMediaParams) => {
   console.log("Sending Media: ", params)
   await apiHelper.post('/message/media', params);
 }
+
+export const sendAudioMessage = async (remoteJId: string, media: string) => {
+  await apiHelper.post('/message/audio', { remoteJId, media });
+}
