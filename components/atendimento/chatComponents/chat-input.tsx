@@ -21,14 +21,13 @@ const ChatInputWithContext: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [audioRecorder, setAudioRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const onSubmit = async (data: FormData) => {
     if (audioBlob && selectedChat) {
-      await handleSendAudio(data.text);
+      await handleSendAudio();
     } else if (selectedFile) {
       await handleSendMedia(data.text);
     } else if (data.text.trim()) {
@@ -123,7 +122,7 @@ const ChatInputWithContext: React.FC = () => {
     }
   };
 
-  const handleSendAudio = async (caption: string = "") => {
+  const handleSendAudio = async () => {
     if (!audioBlob || !selectedChat) return;
     setIsUploading(true);
 
@@ -212,7 +211,6 @@ const ChatInputWithContext: React.FC = () => {
         // Criar um blob de áudio no formato webm (será convertido para MP3 no envio)
         const blob = new Blob(chunks, { type: 'audio/webm' });
         setAudioBlob(blob);
-        setAudioChunks([]);
 
         // Limpar qualquer arquivo selecionado previamente
         setSelectedFile(null);
@@ -225,7 +223,6 @@ const ChatInputWithContext: React.FC = () => {
         setPreviewUrl(audioUrl);
       };
 
-      setAudioChunks([]);
       recorder.start();
       setIsRecording(true);
     } catch (error) {
