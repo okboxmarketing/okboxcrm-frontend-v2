@@ -52,6 +52,7 @@ const ChatSidebarWithContext: React.FC = () => {
   );
 
   const renderLastMessage = (lastMessage: Ticket["lastMessage"]) => {
+    console.log("LASTMESSAGEEE:", lastMessage);
     if (!lastMessage) return null;
     const checkIcon = lastMessage.fromMe && <Check className="h-4 w-4 text-gray-400" />;
     switch (lastMessage.mediaType) {
