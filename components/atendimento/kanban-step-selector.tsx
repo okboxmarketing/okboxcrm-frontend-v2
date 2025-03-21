@@ -29,7 +29,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
         ]);
 
         const filteredSteps = steps.filter(step =>
-          step.name !== "Perdido" && step.name !== "Vendido" && step.name !== "Contato Feito" && step.name !== "Sem Contato"
+          step.name !== "Perdido" && step.name !== "Vendido"
         );
 
         setKanbanSteps(filteredSteps);
@@ -51,7 +51,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
       await moveTicket(ticketId, stepId.toString());
       setSelectedStep(value);
       toast({ description: "Ticket movido com sucesso!" });
-      fetchTickets()
+      fetchTickets();
     } catch (error) {
       console.log(error);
       toast({
@@ -68,8 +68,11 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
       </SelectTrigger>
       <SelectContent>
         {kanbanSteps.map((step) => (
-          <SelectItem key={step.id} value={step.id.toString()}>
-            <p className={`font-bold`} style={{ color: step.color }}>
+          <SelectItem
+            key={step.id}
+            value={step.id.toString()}
+            disabled={step.name === "Sem Contato" || step.name === "Contato Feito"}>
+            <p className="font-bold" style={{ color: step.color }}>
               {step.name}
             </p>
           </SelectItem>
