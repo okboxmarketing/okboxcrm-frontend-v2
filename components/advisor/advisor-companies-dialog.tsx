@@ -78,7 +78,7 @@ export function AdvisorCompaniesDialog({
 
             // Close dialog and refresh page
             onOpenChange(false);
-            router.refresh();
+            router.push('/home/atendimento');
         } catch (error) {
             console.error("Erro ao ativar empresa:", error);
             toast({

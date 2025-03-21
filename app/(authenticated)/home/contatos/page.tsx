@@ -66,11 +66,18 @@ const ContatosPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex items-center gap-4  mb-4">
-        <h1 className="text-2xl font-bold">Meus Contatos</h1>
-        <Badge className="bg-black text-white px-3 py-1 text-sm">
-          {totalContacts}
-        </Badge>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Meus Contatos</h1>
+          <Badge className="bg-black text-white px-3 py-1 text-sm">
+            {totalContacts}
+          </Badge>
+        </div>
+        <div >
+          <Button disabled={syncLoading} onClick={handleSyncContacts}>
+            {syncLoading ? "Sincronizando..." : "Sincronizar Contatos"}
+          </Button>
+        </div>
       </div>
       {loading ? (
         <p className="text-center text-gray-500">Carregando contatos...</p>
