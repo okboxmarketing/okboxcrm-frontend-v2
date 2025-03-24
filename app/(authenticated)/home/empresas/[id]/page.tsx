@@ -30,7 +30,6 @@ const EmpresaPage: React.FC = () => {
   const { toast } = useToast();
 
 
-  const [loadingAssignAdvisor, setTransitionAssignAdvisor] = useTransition();
   const [loadingDeleteCompany, setTransitionDeleteCompany] = useTransition();
 
 
@@ -93,22 +92,20 @@ const EmpresaPage: React.FC = () => {
   };
 
   const onSubmitAdvisor = async (advisorEmail: string) => {
-    setTransitionAssignAdvisor(async () => {
-      try {
-        await assignAccessorToCompany(advisorEmail, companyId!);
-        toast({ description: "Assessor atribuído com sucesso!" });
-        setOpenAdvisorDialog(false);
-        setCompany(await findCompanyById(companyId!));
-      } catch (error) {
-        if (error instanceof Error) {
-          toast({
-            description: error.message,
-            variant: "destructive"
-          })
+    try {
+      await assignAccessorToCompany(advisorEmail, companyId!);
+      toast({ description: "Assessor atribuído com sucesso!" });
+      setOpenAdvisorDialog(false);
+      setCompany(await findCompanyById(companyId!));
+    } catch (error) {
+      if (error instanceof Error) {
+        toast({
+          description: error.message,
+          variant: "destructive"
+        })
 
-        }
       }
-    });
+    }
   };
 
   const handleDeleteCompany = async () => {
