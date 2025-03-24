@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { User } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
 export default function AdvisorsPage() {
   const [open, setOpen] = useState(false);
@@ -35,6 +36,7 @@ export default function AdvisorsPage() {
     password: "",
   });
   const [advisors, setAdvisors] = useState<User[]>([]);
+  const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -154,13 +156,16 @@ export default function AdvisorsPage() {
         </TableHeader>
         <TableBody>
           {advisors.map((advisor) => (
-            <TableRow key={advisor.id}>
+            <TableRow
+              key={advisor.id}
+              className="cursor-pointer hover:bg-gray-100"
+              onClick={() => router.push(`/home/assessores/${advisor.id}`)}>
               <TableCell>{advisor.name}</TableCell>
               <TableCell>{advisor.email}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-    </div>
+    </div >
   );
 }
