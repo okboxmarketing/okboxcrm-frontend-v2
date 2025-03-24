@@ -71,7 +71,9 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  AdvisorOf?: (Company & { _count?: { users: number } })[];
 }
+
 
 export interface AuthUser {
   userId: string;

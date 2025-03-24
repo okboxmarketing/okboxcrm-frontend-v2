@@ -10,13 +10,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Company, User } from "@/lib/types";
 
 export default function AdvisorDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
   const { toast } = useToast();
 
-  const [advisor, setAdvisor] = useState<any>(null);
+  const [advisor, setAdvisor] = useState<User>();
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -164,7 +165,7 @@ export default function AdvisorDetailsPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {advisor.AdvisorOf.map((company: any) => (
+          {advisor?.AdvisorOf?.map((company: Company) => (
             <TableRow key={company.id}
               className="cursor-pointer hover:bg-gray-100"
               onClick={() => router.push(`/home/empresas/${company.id}`)}>
