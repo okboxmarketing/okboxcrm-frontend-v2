@@ -14,35 +14,25 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userSchema, UserSchemaType } from "@/schema/userSchema";
 import { useToast } from "@/hooks/use-toast";
-import { assignAccessorSchema } from "@/schema/companySchema";
 import { Company, User } from "@/lib/types";
+import { getAdvisors } from "@/service/advisorService";
 
 const EmpresaPage: React.FC = () => {
   const pathname = usePathname();
   const companyId = pathname.split("/").pop();
+  const [advisors, setAdvisors] = useState<User[]>([]);
   const [company, setCompany] = useState<Company>();
   const [openDialog, setOpenDialog] = useState(false);
-  const [openAccessorDialog, setOpenAccessorDialog] = useState(false);
+  const [openAdvisorDialog, setOpenAdvisorDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [loadingCreateUser, setTransition] = useTransition();
   const router = useRouter();
   const { toast } = useToast();
 
 
-  const [loadingAssignAccessor, setTransitionAssignAccessor] = useTransition();
+  const [loadingAssignAdvisor, setTransitionAssignAdvisor] = useTransition();
   const [loadingDeleteCompany, setTransitionDeleteCompany] = useTransition();
 
-  const {
-    register: registerAccessor,
-    handleSubmit: handleSubmitAccessor,
-    reset: resetAccessorForm,
-    formState: { errors: errorsAccessor },
-  } = useForm<{ accessorEmail: string }>({
-    resolver: zodResolver(assignAccessorSchema),
-    defaultValues: {
-      accessorEmail: "",
-    },
-  });
 
   const {
     register,
@@ -102,13 +92,12 @@ const EmpresaPage: React.FC = () => {
     });
   };
 
-  const onSubmitAccessor = async (data: { accessorEmail: string }) => {
-    setTransitionAssignAccessor(async () => {
+  const onSubmitAdvisor = async (advisorEmail: string) => {
+    setTransitionAssignAdvisor(async () => {
       try {
-        await assignAccessorToCompany(data.accessorEmail, companyId!);
+        await assignAccessorToCompany(advisorEmail, companyId!);
         toast({ description: "Assessor atribuído com sucesso!" });
-        resetAccessorForm();
-        setOpenAccessorDialog(false);
+        setOpenAdvisorDialog(false);
         setCompany(await findCompanyById(companyId!));
       } catch (error) {
         if (error instanceof Error) {
@@ -130,6 +119,12 @@ const EmpresaPage: React.FC = () => {
     });
   }
 
+  const handleAdvisorModal = async () => {
+    const data = await getAdvisors()
+    setAdvisors(data);
+    setOpenAdvisorDialog(true);
+  }
+
 
   return (
     <div className="container mx-auto p-6">
@@ -144,7 +139,7 @@ const EmpresaPage: React.FC = () => {
         </div>
         <div className="flex gap-4">
           <Button onClick={() => setOpenDialog(true)}>Novo Usuário</Button>
-          {!company?.Advisor?.email && (<Button onClick={() => setOpenAccessorDialog(true)}>Atribuir Assessor</Button>)}
+          {!company?.Advisor?.email && (<Button onClick={() => handleAdvisorModal()}>Atribuir Assessor</Button>)}
           <Button variant={'destructive'} onClick={() => setOpenDeleteDialog(true)}>Deletar Empresa</Button>
         </div>
       </div>
@@ -185,26 +180,35 @@ const EmpresaPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openAccessorDialog} onOpenChange={setOpenAccessorDialog}>
+      <Dialog open={openAdvisorDialog} onOpenChange={setOpenAdvisorDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Atribuir Assessor</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitAccessor(onSubmitAccessor)} className="space-y-4">
-            <div>
-              <Label>Email do Assessor</Label>
-              <Input type="email" {...registerAccessor("accessorEmail")} placeholder="Digite o email do assessor" />
-              {errorsAccessor.accessorEmail && <p className="text-red-500">{errorsAccessor.accessorEmail.message}</p>}
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpenAccessorDialog(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" isLoading={loadingAssignAccessor}>
-                Atribuir
-              </Button>
-            </DialogFooter>
-          </form>
+          <div className="space-y-4">
+            {(advisors && advisors?.length > 0) ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Atribuir</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {advisors.map((advisor: User) => (
+                    <TableRow key={advisor.id} className="hover:bg-gray-100">
+                      <TableCell>{advisor.name}</TableCell>
+                      <TableCell>{advisor.email}</TableCell>
+                      <TableCell><Button onClick={() => onSubmitAdvisor(advisor.email)}>Atribuir</Button></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-center text-gray-500">Nenhum assessor cadastrado.</p>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

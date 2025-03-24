@@ -7,9 +7,4 @@ export const companySchema = z.object({
     .nonempty("O nome da empresa é obrigatório"),
 });
 
-export const assignAccessorSchema = z.object({
-  accessorEmail: z.string().email("Email inválido"),
-});
-
-
 export type CompanySchemaType = z.infer<typeof companySchema>;
