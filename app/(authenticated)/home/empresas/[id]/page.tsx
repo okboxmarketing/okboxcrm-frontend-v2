@@ -29,9 +29,7 @@ const EmpresaPage: React.FC = () => {
   const router = useRouter();
   const { toast } = useToast();
 
-
   const [loadingDeleteCompany, setTransitionDeleteCompany] = useTransition();
-
 
   const {
     register,
