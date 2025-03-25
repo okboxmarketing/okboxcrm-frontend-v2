@@ -19,19 +19,6 @@ const ChatSidebarWithContext: React.FC = () => {
   const [showMyTickets, setShowMyTickets] = useState(false);
   const { user } = useAuth();
 
-  const handleAcceptTicket = async () => {
-    if (!selectedChat) return;
-    try {
-      await acceptTicket(selectedChat.id);
-      toast({ description: "Ticket aceito com sucesso" });
-      setTab("OPEN");
-      fetchTickets();
-    } catch (error) {
-      console.error("Erro ao aceitar ticket:", error);
-      toast({ description: "Erro ao aceitar ticket", variant: "destructive" });
-    }
-  };
-
   const openTickets = tickets.filter(ticket => ticket.status === "OPEN");
   const pendingTickets = tickets.filter(ticket => ticket.status === "PENDING");
 
@@ -151,7 +138,22 @@ const ChatSidebarWithContext: React.FC = () => {
                   </p>
                 </div>
                 {user?.userRole != "ADVISOR" && (
-                  <button className="rounded" onClick={handleAcceptTicket}>
+                  <button
+                    className="rounded"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        await acceptTicket(ticket.id);
+                        toast({ description: "Ticket aceito com sucesso" });
+                        setTab("OPEN");
+                        setSelectedChat(ticket);
+                        await fetchTickets();
+                      } catch (error) {
+                        console.error("Erro ao aceitar ticket:", error);
+                        toast({ description: "Erro ao aceitar ticket", variant: "destructive" });
+                      }
+                    }}
+                  >
                     <Badge className="bg-green-500 hover:bg-green-500/70">ACEITAR</Badge>
                   </button>
                 )}
