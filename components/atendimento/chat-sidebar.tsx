@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, Mic, Search, Video } from "lucide-react";
 import { MediaEnum, Ticket, TicketStatusEnum } from "@/lib/types";
 import { formatMessageTime, getContrastColor } from "@/lib/utils";
@@ -86,47 +86,54 @@ const ChatSidebarWithContext: React.FC = () => {
   };
 
   return (
-    <div className="w-80 bg-white border-r flex flex-col overflow-y-auto">
-      <div className="p-4 border-b flex items-center">
-        <h1 className="text-xl font-semibold">Atendimento</h1>
-        {user?.userRole != "ADVISOR" && (
-          <div className="ml-auto flex items-center gap-2">
-            <Switch
-              id="myTicketsSwitch"
-              checked={showMyTickets}
-              onCheckedChange={(checked: boolean) => setShowMyTickets(checked)}
-            />
-            <label htmlFor="myTicketsSwitch" className="text-sm">
-              Meus Tickets
-            </label>
-          </div>
-        )}
-      </div>
-      <div className="p-4 border-b">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-          <Input
-            className="pl-9 bg-gray-50"
-            placeholder="Pesquisar ticket..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+    <div className="w-80 bg-white border-r flex flex-col h-full">
+      {/* Fixed header section */}
+      <div className="flex flex-col">
+        <div className="p-4 border-b flex items-center">
+          <h1 className="text-xl font-semibold">Atendimento</h1>
+          {user?.userRole != "ADVISOR" && (
+            <div className="ml-auto flex items-center gap-2">
+              <Switch
+                id="myTicketsSwitch"
+                checked={showMyTickets}
+                onCheckedChange={(checked: boolean) => setShowMyTickets(checked)}
+              />
+              <label htmlFor="myTicketsSwitch" className="text-sm">
+                Meus Tickets
+              </label>
+            </div>
+          )}
         </div>
+        <div className="p-4 border-b">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+            <Input
+              className="pl-9 bg-gray-50"
+              placeholder="Pesquisar ticket..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        <Tabs value={tab} onValueChange={(value) => setTab(value as TicketStatusEnum)}>
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="OPEN" className="gap-2">
+              ATENDENDO <Badge>{sortedOpenTickets.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="PENDING" className="gap-2">
+              AGUARDANDO
+              {sortedPendingTickets.length > 0 && (
+                <Badge variant={"destructive"}>{sortedPendingTickets.length}</Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
-      <Tabs value={tab} onValueChange={(value) => setTab(value as TicketStatusEnum)} className="flex-1">
-        <TabsList className="grid grid-cols-2">
-          <TabsTrigger value="OPEN" className="gap-2">
-            ATENDENDO <Badge>{sortedOpenTickets.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="PENDING" className="gap-2">
-            AGUARDANDO
-            {sortedPendingTickets.length > 0 && (
-              <Badge variant={"destructive"}>{sortedPendingTickets.length}</Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="PENDING">
-          <div className="overflow-y-auto">
+
+      {/* Scrollable content section */}
+      <div className="flex-1 overflow-y-auto">
+        {tab === "PENDING" && (
+          <div>
             {sortedPendingTickets.map(ticket => (
               <div
                 key={ticket.id}
@@ -180,9 +187,10 @@ const ChatSidebarWithContext: React.FC = () => {
               </div>
             ))}
           </div>
-        </TabsContent>
-        <TabsContent value="OPEN">
-          <div className="overflow-y-auto">
+        )}
+
+        {tab === "OPEN" && (
+          <div>
             {sortedOpenTickets.map(ticket => (
               <div
                 key={ticket.id}
@@ -235,8 +243,8 @@ const ChatSidebarWithContext: React.FC = () => {
               </div>
             ))}
           </div>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </div>
   );
 };

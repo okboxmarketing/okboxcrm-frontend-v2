@@ -4,7 +4,6 @@ import { connect, createInstance, getStatus } from '@/service/whaInstanceService
 import React, { useEffect, useState, useTransition } from 'react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { syncContacts } from '@/service/contactService';
 import { io } from 'socket.io-client';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -53,7 +52,6 @@ const ConectarPage: React.FC = () => {
       if (status === "open") {
         setStatus("Conectado");
         setBase64(undefined);
-        handleSyncContacts();
       }
       if (status === "connecting") setStatus("Conectando");
     });
@@ -62,20 +60,6 @@ const ConectarPage: React.FC = () => {
       socket.disconnect();
     };
   }, []);
-
-  const handleSyncContacts = async () => {
-    try {
-      await syncContacts();
-      toast({ title: "Contatos sincronizados", description: "Os contatos foram sincronizados com sucesso!" });
-    } catch (err) {
-      console.log(err);
-      toast({
-        title: "Erro ao sincronizar contatos",
-        description: "Ocorreu um erro ao sincronizar os contatos. Tente novamente mais tarde.",
-        variant: "destructive",
-      })
-    };
-  }
 
   const handleConnect = async () => {
     setGeneratingQRCode(async () => {

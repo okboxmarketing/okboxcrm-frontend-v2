@@ -34,7 +34,7 @@ const ChatMainWithContext: React.FC = () => {
         <>
           <ChatHeader />
           <ChatBody onSelectImage={(url) => setSelectedImage(url)} />
-          {selectedChat.status !== "PENDING" && user?.userRole !== "ADVISOR" && <ChatInputWithContext />}
+          {user?.userRole !== "ADVISOR" && <ChatInputWithContext />}
         </>
       ) : (
         <div className="flex-1 flex items-center justify-center">

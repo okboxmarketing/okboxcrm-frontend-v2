@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ interface FormData {
   text: string;
 }
 
+
+
 const ChatInputWithContext: React.FC = () => {
   const { sendMessage, selectedChat } = useChatContext();
   const { register, handleSubmit, reset } = useForm<FormData>();
@@ -23,6 +25,15 @@ const ChatInputWithContext: React.FC = () => {
   const [audioRecorder, setAudioRecorder] = useState<MediaRecorder | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
+
+
+  useEffect(() => {
+    if (textInputRef.current) {
+      textInputRef.current.focus();
+    }
+  }, [selectedChat]);
+
   const { toast } = useToast();
 
   const onSubmit = async (data: FormData) => {
@@ -310,6 +321,8 @@ const ChatInputWithContext: React.FC = () => {
             placeholder={selectedFile || audioBlob ? "Adicionar legenda (opcional)..." : "Escreva aqui..."}
             autoComplete="off"
             disabled={isUploading || isRecording}
+            ref={textInputRef}
+
           />
           <Button
             type="submit"
