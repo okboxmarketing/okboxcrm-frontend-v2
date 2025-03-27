@@ -17,20 +17,26 @@ import { useAuth } from "@/context/authContext";
 const ChatSidebarWithContext: React.FC = () => {
   const { tickets, selectedChat, setSelectedChat, tab, setTab, fetchTickets } = useChatContext();
   const [showMyTickets, setShowMyTickets] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
+
+  const searchTickets = (ticket: Ticket) => {
+    const lowercaseSearch = searchTerm.toLowerCase();
+
+    const matchesContactName = ticket.Contact.name.toLowerCase().includes(lowercaseSearch);
+
+    return matchesContactName
+  };
 
   const openTickets = tickets.filter(ticket => ticket.status === "OPEN");
   const pendingTickets = tickets.filter(ticket => ticket.status === "PENDING");
 
-  const filteredOpenTickets = showMyTickets
-    ? openTickets.filter(ticket => ticket.responsibleId === user?.userId)
-    : openTickets;
-
-  const sortedPendingTickets = [...pendingTickets].sort(
-    (a, b) =>
-      new Date(b.lastMessage?.createdAt || 0).getTime() -
-      new Date(a.lastMessage?.createdAt || 0).getTime()
+  const filteredOpenTickets = openTickets.filter(ticket =>
+    (showMyTickets ? ticket.responsibleId === user?.userId : true) &&
+    searchTickets(ticket)
   );
+
+  const filteredPendingTickets = pendingTickets.filter(searchTickets);
 
   const sortedOpenTickets = [...filteredOpenTickets].sort(
     (a, b) =>
@@ -38,8 +44,13 @@ const ChatSidebarWithContext: React.FC = () => {
       new Date(a.lastMessage?.createdAt || 0).getTime()
   );
 
+  const sortedPendingTickets = [...filteredPendingTickets].sort(
+    (a, b) =>
+      new Date(b.lastMessage?.createdAt || 0).getTime() -
+      new Date(a.lastMessage?.createdAt || 0).getTime()
+  );
+
   const renderLastMessage = (lastMessage: Ticket["lastMessage"]) => {
-    console.log("LASTMESSAGEEE:", lastMessage);
     if (!lastMessage) return null;
     const checkIcon = lastMessage.fromMe && <Check className="h-4 w-4 text-gray-400" />;
     switch (lastMessage.mediaType) {
@@ -89,18 +100,24 @@ const ChatSidebarWithContext: React.FC = () => {
               Meus Tickets
             </label>
           </div>
-        )
-        }
+        )}
       </div>
       <div className="p-4 border-b">
         <div className="relative">
           <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-          <Input className="pl-9 bg-gray-50" placeholder="Pesquisar..." />
+          <Input
+            className="pl-9 bg-gray-50"
+            placeholder="Pesquisar ticket..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
       <Tabs value={tab} onValueChange={(value) => setTab(value as TicketStatusEnum)} className="flex-1">
         <TabsList className="grid grid-cols-2">
-          <TabsTrigger value="OPEN" className="gap-2">ATENDENDO <Badge>{sortedOpenTickets.length}</Badge></TabsTrigger>
+          <TabsTrigger value="OPEN" className="gap-2">
+            ATENDENDO <Badge>{sortedOpenTickets.length}</Badge>
+          </TabsTrigger>
           <TabsTrigger value="PENDING" className="gap-2">
             AGUARDANDO
             {sortedPendingTickets.length > 0 && (
@@ -133,7 +150,10 @@ const ChatSidebarWithContext: React.FC = () => {
                       {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
                     </span>
                   </div>
-                  <p className={`text-sm truncate flex items-center gap-2 ${selectedChat?.id !== ticket.id ? "font-bold" : "font-normal"}`}>
+                  <p
+                    className={`text-sm truncate flex items-center gap-2 ${selectedChat?.id !== ticket.id ? "font-bold" : "font-normal"
+                      }`}
+                  >
                     {renderLastMessage(ticket.lastMessage)}
                   </p>
                 </div>
