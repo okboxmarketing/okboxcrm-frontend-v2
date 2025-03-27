@@ -3,7 +3,7 @@ import React, { useEffect, useState, useTransition } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Trash } from "lucide-react";
+import { MessageCircle, Search, Trash } from "lucide-react";
 import { getContacts, syncContacts, createContact, findContact, deleteContact } from "@/service/contactService";
 import { Contact } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { IMaskInput } from "react-imask";
+import { createTicket } from "@/service/ticketsService";
+import { useRouter } from "next/navigation";
 
 const ContatosPage: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -41,6 +43,7 @@ const ContatosPage: React.FC = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   const handleCreateContact = async () => {
     try {
@@ -119,6 +122,15 @@ const ContatosPage: React.FC = () => {
       setPhone("");
     }
   };
+
+  const handleCreateTicket = async (remoteJid: string) => {
+    try {
+      const ticketId = await createTicket(remoteJid);
+      router.push(`/home/atendimento?ticketId=${ticketId}`);
+    } catch {
+      console.log("Error creating ticket");
+    }
+  }
 
   useEffect(() => {
     fetchContacts(page);
@@ -226,7 +238,10 @@ const ContatosPage: React.FC = () => {
                     </TableCell>
                     <TableCell>{contact.name}</TableCell>
                     <TableCell>{contact.phone}</TableCell>
-                    <TableCell>
+                    <TableCell className="flex items-center gap-2">
+                      <button>
+                        <MessageCircle onClick={() => handleCreateTicket(contact.remoteJid)} />
+                      </button>
                       <Button variant="destructive" size="sm" onClick={() => handleDeleteContact(contact.id)}>
                         <Trash className="w-4 h-4" />
                       </Button>
