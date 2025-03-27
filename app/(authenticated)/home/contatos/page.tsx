@@ -1,14 +1,12 @@
-"use client"
-
-import type React from "react"
-import { useEffect, useState, useTransition } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Trash } from 'lucide-react'
-import { getContacts, syncContacts } from "@/service/contactService"
-import type { Contact } from "@/lib/types"
-import { toast } from "@/hooks/use-toast"
+'use client'
+import React, { useEffect, useState, useTransition } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, Trash } from "lucide-react";
+import { getContacts, syncContacts, createContact, findContact, deleteContact } from "@/service/contactService";
+import { Contact } from "@/lib/types";
+import { toast } from "@/hooks/use-toast";
 import {
   Pagination,
   PaginationContent,
@@ -17,52 +15,132 @@ import {
   PaginationPrevious,
   PaginationNext,
   PaginationEllipsis,
-} from "@/components/ui/pagination"
-import { Badge } from "@/components/ui/badge"
+} from "@/components/ui/pagination";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { IMaskInput } from "react-imask";
 
 const ContatosPage: React.FC = () => {
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [isFetched, setIsFetched] = useState(false)
-  const [syncLoading, setTransition] = useTransition()
-  const [totalContacts, setTotalContacts] = useState(0)
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [isFetched, setIsFetched] = useState(false);
+  const [syncLoading, setTransition] = useTransition();
+  const [totalContacts, setTotalContacts] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const fetchContacts = async (currentPage = 1) => {
-    setLoading(true)
+  const handleCreateContact = async () => {
     try {
-      const { data, totalPages, total } = await getContacts(currentPage)
-      setTotalContacts(total)
-      setContacts(data)
-      setTotalPages(totalPages)
+      const cleanedPhone = phone.replace(/\D/g, "")
+      await createContact(cleanedPhone, name);
+      toast({ description: "Contato criado com sucesso!" });
+      fetchContacts(page);
+      setOpen(false);
+      setName("");
+      setPhone("");
     } catch (err) {
-      console.error(err)
+      if (err instanceof Error) {
+        toast({ description: err.message, variant: "destructive" });
+      }
+    }
+  };
+
+  const findContacts = async (name: string) => {
+    if (name.length === 0) {
+      return fetchContacts(page);
+    }
+    setLoading(true);
+    try {
+      const contacts = await findContact(name);
+      setContacts(contacts);
+    } catch (err) {
+      console.error(err);
     } finally {
-      setLoading(false)
-      setIsFetched(true)
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+
+    const timeout = setTimeout(() => {
+      findContacts(name);
+    }, 500);
+    setDebounceTimeout(timeout);
+
+    return () => clearTimeout(timeout);
+  }, [name]);
+
+  const handleSubmitSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    findContacts(name);
+  };
+
+  const handleDeleteContact = async (id: string) => {
+    try {
+      await deleteContact(id);
+      fetchContacts(page);
+      toast({ description: "Contato deletado com sucesso!" });
+    } catch (err) {
+      if (err instanceof Error) {
+        toast({ description: err.message, variant: "destructive" });
+      }
     }
   }
 
+  const fetchContacts = async (currentPage = 1) => {
+    setLoading(true);
+    try {
+      const { data, totalPages, total } = await getContacts(currentPage);
+      setTotalContacts(total);
+      setContacts(data);
+      setTotalPages(totalPages);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setIsFetched(true);
+      setName("");
+      setPhone("");
+    }
+  };
+
   useEffect(() => {
-    fetchContacts(page)
-  }, [page])
+    fetchContacts(page);
+  }, [page]);
 
   const handleSyncContacts = async () => {
     setTransition(async () => {
       try {
-        await syncContacts()
-        fetchContacts(page)
-        toast({ description: "Contatos sincronizados com sucesso!" })
+        await syncContacts();
+        fetchContacts(page);
+        toast({ description: "Contatos sincronizados com sucesso!" });
       } catch (error) {
-        console.error(error)
-        toast({
-          description: "Erro ao sincronizar contatos",
-          variant: "destructive",
-        })
+        console.error(error);
+        if (error instanceof Error) {
+          toast({
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       }
-    })
-  }
+    });
+  };
 
   return (
     <div className="container mx-auto p-6">
@@ -73,12 +151,56 @@ const ContatosPage: React.FC = () => {
             {totalContacts}
           </Badge>
         </div>
-        <div >
+        <form onSubmit={handleSubmitSearch} className="flex items-center">
+          <Input
+            placeholder="Pesquisar contato"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="rounded-r-none"
+          />
+          <Button type="submit" className="rounded-l-none">
+            <Search />
+          </Button>
+        </form>
+
+        <div className="flex items-center gap-4">
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>Novo Contato</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Adicionar Contato</DialogTitle>
+                <DialogDescription>Insira o nome e telefone</DialogDescription>
+              </DialogHeader>
+
+              <div className="flex flex-col gap-4 py-4">
+                <Input
+                  placeholder="Nome"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <IMaskInput
+                  mask="+55 (00) 00000-0000"
+                  value={phone}
+                  onAccept={(value: string) => setPhone(value)}
+                  unmask={false}
+                  placeholder="(__) _____-____"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                />
+              </div>
+              <DialogFooter>
+                <Button onClick={handleCreateContact}>Salvar</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <Button disabled={syncLoading} onClick={handleSyncContacts}>
             {syncLoading ? "Sincronizando..." : "Sincronizar Contatos"}
           </Button>
         </div>
       </div>
+
       {loading ? (
         <p className="text-center text-gray-500">Carregando contatos...</p>
       ) : contacts.length > 0 ? (
@@ -105,7 +227,7 @@ const ContatosPage: React.FC = () => {
                     <TableCell>{contact.name}</TableCell>
                     <TableCell>{contact.phone}</TableCell>
                     <TableCell>
-                      <Button variant="destructive" size="sm" onClick={() => console.log("delete")}>
+                      <Button variant="destructive" size="sm" onClick={() => handleDeleteContact(contact.id)}>
                         <Trash className="w-4 h-4" />
                       </Button>
                     </TableCell>
@@ -115,7 +237,6 @@ const ContatosPage: React.FC = () => {
             </Table>
           </div>
 
-          {/* Componente de paginação */}
           <div className="flex justify-center mt-6">
             <Pagination>
               <PaginationContent>
@@ -161,7 +282,7 @@ const ContatosPage: React.FC = () => {
         )
       )}
     </div>
-  )
-}
+  );
+};
 
-export default ContatosPage
+export default ContatosPage;

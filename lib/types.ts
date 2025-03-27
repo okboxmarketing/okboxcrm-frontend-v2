@@ -2,6 +2,7 @@ export interface Contact {
   id: string,
   pictureUrl: string,
   name: string,
+  remoteJid: string,
   phone: string,
 }
 
