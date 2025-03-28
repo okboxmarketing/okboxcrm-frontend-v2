@@ -37,11 +37,12 @@ const ChatInputWithContext: React.FC = () => {
   const { toast } = useToast();
 
   const onSubmit = async (data: FormData) => {
+    console.log("data: ", data)
     if (audioBlob && selectedChat) {
       await handleSendAudio();
     } else if (selectedFile) {
       await handleSendMedia(data.text);
-    } else if (data.text.trim()) {
+    } else if (data.text && data.text.trim()) {
       reset();
       await sendMessage(data.text);
     }
@@ -317,11 +318,14 @@ const ChatInputWithContext: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex gap-2">
           <Input
             {...register("text")}
+            ref={(e) => {
+              register("text").ref(e);
+              textInputRef.current = e;
+            }}
             className="flex-1 border-0 bg-transparent focus-visible:ring-0"
             placeholder={selectedFile || audioBlob ? "Adicionar legenda (opcional)..." : "Escreva aqui..."}
             autoComplete="off"
             disabled={isUploading || isRecording}
-            ref={textInputRef}
 
           />
           <Button
