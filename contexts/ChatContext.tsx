@@ -135,56 +135,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     });
 
     socket.on("messageSent", (payload: { contactId: string; message: string; status: string, mediaType: MediaEnum }) => {
-      // Verificar se existe uma mensagem temporária com o mesmo conteúdo
-      setMessages((prev) => {
-        // Encontrar mensagem temporária com o mesmo conteúdo
-        const tempMessageIndex = prev.findIndex(
-          (msg) =>
-            msg.data.key.fromMe &&
-            msg.data.message.conversation === payload.message &&
-            msg.contactId === payload.contactId &&
-            msg.data.key.id.startsWith('temp-')
-        );
-
-        // Se encontrou uma mensagem temporária, atualiza seu status
-        if (tempMessageIndex !== -1) {
-          const updatedMessages = [...prev];
-          updatedMessages[tempMessageIndex] = {
-            ...updatedMessages[tempMessageIndex],
-            data: {
-              ...updatedMessages[tempMessageIndex].data,
-              status: payload.status,
-              key: {
-                ...updatedMessages[tempMessageIndex].data.key,
-                // Manter o ID temporário para identificação
-                id: updatedMessages[tempMessageIndex].data.key.id
-              }
-            }
-          };
-          return updatedMessages;
-        }
-
-        // Se não encontrou, adiciona a nova mensagem
-        const newPayload: NewMessagePayload = {
-          contactId: payload.contactId,
-          data: {
-            key: {
-              fromMe: true,
-              id: `server-${Date.now()}`, // ID único para mensagens do servidor
-              remoteJid: payload.contactId,
-            },
-            message: { conversation: payload.message },
-            messageTimestamp: Date.now(),
-            instanceId: "",
-            pushName: "",
-            status: payload.status,
-            messageType: ""
-          },
-          mediaType: payload.mediaType,
-        };
-
-        return [...prev, newPayload];
-      });
+      // No need to update temporary messages since we're removing that functionality
     });
 
     return () => {
@@ -194,32 +145,12 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   const sendMessage = async (text: string) => {
     if (!selectedChat) return;
-    const tempMessageId = `temp-${Date.now()}`;
-
-    const tempMessage: NewMessagePayload = {
-      contactId: selectedChat.Contact.remoteJid,
-      data: {
-        key: {
-          fromMe: true,
-          id: tempMessageId,
-          remoteJid: selectedChat.Contact.remoteJid,
-        },
-        message: { conversation: text },
-        messageType: "conversation",
-        messageTimestamp: Date.now(),
-        instanceId: "",
-        pushName: "",
-        status: "PENDING", // Mensagem começa como pendente
-      },
-      mediaType: MediaEnum.TEXT,
-    };
-
-    setMessages((prev) => [...prev, tempMessage]);
 
     try {
+      // Send the message directly without creating a temporary message first
       await sendTextMessage(selectedChat.Contact.remoteJid, text);
 
-      // Atualizar o lastMessage do ticket selecionado
+      // Update ticket information as before
       setTickets((prevTickets) =>
         prevTickets.map((ticket) => {
           if (ticket.id === selectedChat.id) {
@@ -255,8 +186,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
-      // Remover a mensagem temporária apenas em caso de erro
-      setMessages((prev) => prev.filter((msg) => msg.data.key.id !== tempMessageId));
       toast({
         description: "Erro ao enviar mensagem",
         variant: "destructive",
