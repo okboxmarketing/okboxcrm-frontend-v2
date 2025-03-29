@@ -135,7 +135,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     });
 
     socket.on("messageSent", (payload: { contactId: string; message: string; status: string, mediaType: MediaEnum }) => {
-      // No need to update temporary messages since we're removing that functionality
     });
 
     return () => {
@@ -147,7 +146,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     if (!selectedChat) return;
 
     try {
-      // Send the message directly without creating a temporary message first
       await sendTextMessage(selectedChat.Contact.remoteJid, text);
 
       // Update ticket information as before
@@ -191,14 +189,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         variant: "destructive",
       });
     }
-  };
-
-  // Add this to the existing sendMessage function or create a new one for media
-  const sendMediaMessage = async (file: File, caption: string = "") => {
-    if (!selectedChat) return;
-
-    // Implementation would be similar to the one in the chat-input component
-    // This would be an alternative approach if you want to handle media uploads at the context level
   };
 
   // Make sure to expose this function in the context value

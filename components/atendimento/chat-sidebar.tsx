@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, Mic, Search, Video } from "lucide-react";
-import { MediaEnum, Ticket, TicketStatusEnum } from "@/lib/types";
+import { KanbanStep, MediaEnum, Ticket, TicketStatusEnum } from "@/lib/types";
 import { formatMessageTime, getContrastColor } from "@/lib/utils";
 import { acceptTicket } from "@/service/ticketsService";
 import { toast } from "@/hooks/use-toast";
@@ -13,12 +13,28 @@ import { Switch } from "@/components/ui/switch";
 import { useChatContext } from "@/contexts/ChatContext";
 import { Badge } from "../ui/badge";
 import { useAuth } from "@/context/authContext";
+import { getKanbanSteps } from "@/service/kanbanStepsService";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 const ChatSidebarWithContext: React.FC = () => {
   const { tickets, selectedChat, setSelectedChat, tab, setTab, fetchTickets } = useChatContext();
   const [showMyTickets, setShowMyTickets] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
+  const [selectedKanbanStep, setSelectedKanbanStep] = useState<string>("all");
   const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchKanbanData = async () => {
+      try {
+        const data = await getKanbanSteps();
+        setKanbanSteps(data);
+      } catch (error) {
+        console.error("Error fetching kanban data:", error);
+      }
+    };
+    fetchKanbanData();
+  }, [])
 
   const searchTickets = (ticket: Ticket) => {
     const lowercaseSearch = searchTerm.toLowerCase();
@@ -33,7 +49,8 @@ const ChatSidebarWithContext: React.FC = () => {
 
   const filteredOpenTickets = openTickets.filter(ticket =>
     (showMyTickets ? ticket.responsibleId === user?.userId : true) &&
-    searchTickets(ticket)
+    searchTickets(ticket) &&
+    (selectedKanbanStep !== "all" ? ticket.KanbanStep.id === parseInt(selectedKanbanStep) : true)
   );
 
   const filteredPendingTickets = pendingTickets.filter(searchTickets);
@@ -85,9 +102,18 @@ const ChatSidebarWithContext: React.FC = () => {
     }
   };
 
+  const handleFilterTickets = (value: string) => {
+    setSelectedKanbanStep(value);
+
+    if (value === "all") {
+      // If "all" is selected, we can keep the "my tickets" filter as is
+    } else {
+      setShowMyTickets(false);
+    }
+  };
+
   return (
     <div className="w-80 bg-white border-r flex flex-col h-full">
-      {/* Fixed header section */}
       <div className="flex flex-col">
         <div className="p-4 border-b flex items-center">
           <h1 className="text-xl font-semibold">Atendimento</h1>
@@ -114,6 +140,29 @@ const ChatSidebarWithContext: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {tab === "OPEN" && (
+            <div className="pt-4">
+              <Select onValueChange={handleFilterTickets} value={selectedKanbanStep}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Filtrar por Etapa" className="w-1/2" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as Etapas</SelectItem>
+                  {kanbanSteps
+                    .filter(step => step.name !== "Contato Feito" && step.name !== "Sem Contato")
+                    .map((step) => (
+                      <SelectItem
+                        key={step.id}
+                        value={step.id.toString()}>
+                        <p className="font-bold" style={{ color: step.color }}>
+                          {step.name}
+                        </p>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <Tabs value={tab} onValueChange={(value) => setTab(value as TicketStatusEnum)}>
           <TabsList className="grid grid-cols-2">
