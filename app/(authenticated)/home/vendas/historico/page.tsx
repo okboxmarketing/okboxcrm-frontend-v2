@@ -5,11 +5,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Sale } from "@/lib/types";
 import { getSales } from "@/service/saleService";
+import { DateRange } from "react-day-picker";
+import { format, isWithinInterval, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const SalesHistoryPage: React.FC = () => {
     const [sales, setSales] = useState<Sale[]>([]);
+    const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedSale, setExpandedSale] = useState<string | null>(null);
+    // Add state for filters
+    const [date, setDate] = useState<DateRange | undefined>();
+    const [searchTerm, setSearchTerm] = useState("");
 
     const fetchSales = async () => {
         setLoading(true);
@@ -17,10 +34,10 @@ const SalesHistoryPage: React.FC = () => {
             const data = await getSales();
             if (data) {
                 setSales(data);
+                setFilteredSales(data);
             }
         } catch (error) {
             console.error("Erro ao carregar vendas:", error);
-
         } finally {
             setLoading(false);
         }
@@ -29,6 +46,50 @@ const SalesHistoryPage: React.FC = () => {
     useEffect(() => {
         fetchSales();
     }, []);
+
+    // Add effect to filter sales when filters change
+    useEffect(() => {
+        filterSales();
+    }, [date, searchTerm, sales]);
+
+    // Add filter function
+    const filterSales = () => {
+        let filtered = [...sales];
+
+        // Filter by date range
+        if (date?.from && date?.to) {
+            filtered = filtered.filter(sale => {
+                const saleDate = parseISO(sale.createdAt);
+
+                // Create start date at beginning of day (00:00:00)
+                const startDate = new Date(date.from!);
+                startDate.setHours(0, 0, 0, 0);
+
+                // Create end date at end of day (23:59:59)
+                const endDate = new Date(date.to!);
+                endDate.setHours(23, 59, 59, 999);
+
+                return isWithinInterval(saleDate, {
+                    start: startDate,
+                    end: endDate
+                });
+            });
+        }
+
+        // Filter by search term (client name, responsible, or ticket ID)
+        if (searchTerm.trim() !== "") {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(sale =>
+                sale.Ticket.Contact.name.toLowerCase().includes(term) ||
+                (sale.Ticket.Responsible?.name || "").toLowerCase().includes(term) ||
+                sale.SaleItems.some(item =>
+                    item.Product.name.toLowerCase().includes(term)
+                )
+            );
+        }
+
+        setFilteredSales(filtered);
+    };
 
     const toggleSaleDetails = (saleId: string) => {
         if (expandedSale === saleId) {
@@ -55,6 +116,12 @@ const SalesHistoryPage: React.FC = () => {
         });
     };
 
+    // Add function to clear filters
+    const clearFilters = () => {
+        setDate(undefined);
+        setSearchTerm("");
+    };
+
     return (
         <div className="container mx-auto p-6">
             <div className="flex items-center justify-between mb-4">
@@ -63,13 +130,69 @@ const SalesHistoryPage: React.FC = () => {
                     <p className="text-black/40">Visualize todas as vendas realizadas</p>
                 </div>
                 <Badge className="bg-black text-white px-3 py-1 text-sm">
-                    {sales.length}
+                    {filteredSales.length}
                 </Badge>
+            </div>
+
+            {/* Add filters section */}
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                        <Input
+                            placeholder="Buscar por cliente, responsável ou produto..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10"
+                        />
+                    </div>
+                </div>
+                <div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-[300px] justify-start text-left font-normal",
+                                    !date && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {date?.from ? (
+                                    date.to ? (
+                                        <>
+                                            {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                                            {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
+                                        </>
+                                    ) : (
+                                        format(date.from, "dd/MM/yyyy", { locale: ptBR })
+                                    )
+                                ) : (
+                                    <span>Selecione um período</span>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                initialFocus
+                                mode="range"
+                                defaultMonth={date?.from}
+                                selected={date}
+                                onSelect={setDate}
+                                numberOfMonths={2}
+                                locale={ptBR}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <Button variant="outline" onClick={clearFilters}>
+                    Limpar Filtros
+                </Button>
             </div>
 
             {loading ? (
                 <p className="text-center text-gray-500">Carregando vendas...</p>
-            ) : sales.length > 0 ? (
+            ) : filteredSales.length > 0 ? (
                 <div className="space-y-6">
                     <Table>
                         <TableHeader>
@@ -82,7 +205,7 @@ const SalesHistoryPage: React.FC = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sales.map((sale) => (
+                            {filteredSales.map((sale) => (
                                 <>
                                     <TableRow
                                         key={sale.id}
@@ -131,7 +254,7 @@ const SalesHistoryPage: React.FC = () => {
                 </div>
             ) : (
                 <div className="text-center text-gray-500 py-8">
-                    <p>Nenhuma venda encontrada.</p>
+                    <p>Nenhuma venda encontrada com os filtros aplicados.</p>
                 </div>
             )}
         </div>
