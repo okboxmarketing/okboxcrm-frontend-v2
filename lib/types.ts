@@ -128,6 +128,7 @@ export interface Ticket {
     createdAt: string;
     mediaType: MediaEnum;
     fromMe: boolean;
+    read: boolean
   }
 }
 

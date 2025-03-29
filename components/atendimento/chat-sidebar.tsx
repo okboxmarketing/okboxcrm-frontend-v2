@@ -102,11 +102,14 @@ const ChatSidebarWithContext: React.FC = () => {
     }
   };
 
+  const isUnreadMessage = (lastMessage: Ticket["lastMessage"]) => {
+    return lastMessage && !lastMessage.fromMe && lastMessage.read === false;
+  };
+
   const handleFilterTickets = (value: string) => {
     setSelectedKanbanStep(value);
 
     if (value === "all") {
-      // If "all" is selected, we can keep the "my tickets" filter as is
     } else {
       setShowMyTickets(false);
     }
@@ -167,7 +170,14 @@ const ChatSidebarWithContext: React.FC = () => {
         <Tabs value={tab} onValueChange={(value) => setTab(value as TicketStatusEnum)}>
           <TabsList className="grid grid-cols-2">
             <TabsTrigger value="OPEN" className="gap-2">
-              ATENDENDO <Badge>{sortedOpenTickets.length}</Badge>
+              ATENDENDO {
+                (() => {
+                  const unreadCount = sortedOpenTickets.filter(ticket =>
+                    isUnreadMessage(ticket.lastMessage)
+                  ).length;
+                  return unreadCount > 0 ? <Badge>{unreadCount}</Badge> : null;
+                })()
+              }
             </TabsTrigger>
             <TabsTrigger value="PENDING" className="gap-2">
               AGUARDANDO
@@ -179,7 +189,6 @@ const ChatSidebarWithContext: React.FC = () => {
         </Tabs>
       </div>
 
-      {/* Scrollable content section */}
       <div className="flex-1 overflow-y-auto">
         {tab === "PENDING" && (
           <div>
@@ -201,15 +210,20 @@ const ChatSidebarWithContext: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center">
-                    <p className="font-medium truncate">{ticket.Contact.name}</p>
+                    <p className={`font-medium truncate ${isUnreadMessage(ticket.lastMessage) ? "font-bold text-black" : "font-normal text-gray-500"
+                      }`}>{ticket.Contact.name}</p>
                     <span className="text-xs text-gray-500">
                       {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
                     </span>
                   </div>
                   <p
-                    className={`text-sm truncate flex items-center gap-2 ${selectedChat?.id !== ticket.id ? "font-bold" : "font-normal"
+                    key={`message-${ticket.id}-${ticket.lastMessage?.read}`}
+                    className={`text-sm truncate flex items-center gap-2 ${isUnreadMessage(ticket.lastMessage) ? "font-bold text-black" : "font-normal text-gray-500"
                       }`}
                   >
+                    {isUnreadMessage(ticket.lastMessage) && (
+                      <span className="h-2 w-2 bg-black rounded-full flex-shrink-0"></span>
+                    )}
                     {renderLastMessage(ticket.lastMessage)}
                   </p>
                 </div>
@@ -259,13 +273,20 @@ const ChatSidebarWithContext: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center">
-                      <p className="font-medium truncate">{ticket.Contact.name}</p>
+                      <p className={`font-medium truncate ${isUnreadMessage(ticket.lastMessage) ? "font-bold text-black" : "font-normal text-gray-500"
+                        }`}>{ticket.Contact.name}</p>
                       <span className="text-xs text-gray-500">
                         {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500 truncate flex items-center gap-2">
-                      {renderLastMessage(ticket.lastMessage)}
+                    <p className={`text-sm  truncate flex items-center gap-2 justify-between ${isUnreadMessage(ticket.lastMessage) ? "font-bold text-black" : "font-normal text-gray-500"
+                      }`}>
+                      <div className="flex items-center gap-2">
+                        {renderLastMessage(ticket.lastMessage)}
+                      </div>
+                      {isUnreadMessage(ticket.lastMessage) && (
+                        <span className="h-4 w-4 bg-red-500 rounded-full flex-shrink-0"></span>
+                      )}
                     </p>
                   </div>
                 </div>
