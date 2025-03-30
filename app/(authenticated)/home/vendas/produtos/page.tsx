@@ -14,7 +14,7 @@ import { getProducts, createProduct, updateProduct, deleteProduct } from "@/serv
 interface Product {
   id: string;
   name: string;
-  price: number;
+  price?: number; // Make price optional
   createdAt: string;
 }
 
@@ -26,7 +26,6 @@ const ProductsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    price: 0,
   });
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { toast } = useToast();
@@ -55,16 +54,15 @@ const ProductsPage = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ 
-      ...prev, 
-      [name]: name === "price" ? parseFloat(value) || 0 : value 
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "price" ? parseFloat(value) || 0 : value
     }));
   };
 
   const resetForm = () => {
     setFormData({
       name: "",
-      price: 0,
     });
     setIsEditing(false);
     setSelectedProduct(null);
@@ -80,7 +78,6 @@ const ProductsPage = () => {
     setSelectedProduct(product);
     setFormData({
       name: product.name,
-      price: product.price,
     });
     setOpenDialog(true);
   };
@@ -148,13 +145,6 @@ const ProductsPage = () => {
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -185,7 +175,6 @@ const ProductsPage = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>Preço</TableHead>
               <TableHead>Data de Criação</TableHead>
               <TableHead>Ações</TableHead>
             </TableRow>
@@ -194,7 +183,6 @@ const ProductsPage = () => {
             {products.map((product) => (
               <TableRow key={product.id} className="hover:bg-gray-100">
                 <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{formatCurrency(product.price)}</TableCell>
                 <TableCell>{formatDate(product.createdAt)}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
@@ -248,20 +236,7 @@ const ProductsPage = () => {
                 className="col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="price" className="text-right">
-                Preço
-              </Label>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
+            {/* Price field removed */}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenDialog(false)}>

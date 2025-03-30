@@ -22,9 +22,8 @@ import { useAuth } from "@/context/authContext";
 type Products = {
   id: string;
   name: string;
-  price: number;
+  price?: number;
 };
-
 
 const ChatHeader: React.FC = () => {
   const { selectedChat, fetchTickets } = useChatContext();
@@ -34,8 +33,8 @@ const ChatHeader: React.FC = () => {
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
   const [products, setProducts] = useState<Products[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<{ id: string, quantity: number, price: number }[]>([]);
-  const [currentProduct, setCurrentProduct] = useState<{ id: string, quantity: string }>(
-    { id: "", quantity: "1" }
+  const [currentProduct, setCurrentProduct] = useState<{ id: string, quantity: string, price: string }>(
+    { id: "", quantity: "1", price: "" }
   );
 
   // Loss dialog state
@@ -85,7 +84,7 @@ const ChatHeader: React.FC = () => {
   const handleOpenSaleDialog = () => {
     fetchProducts();
     setSelectedProducts([]);
-    setCurrentProduct({ id: "", quantity: "1" });
+    setCurrentProduct({ id: "", quantity: "1", price: "" });
     setSaleDialogOpen(true);
   };
 
@@ -98,7 +97,7 @@ const ChatHeader: React.FC = () => {
 
   // Handle adding product to sale
   const handleAddProduct = () => {
-    if (!currentProduct.id || parseInt(currentProduct.quantity) <= 0) return;
+    if (!currentProduct.id || parseInt(currentProduct.quantity) <= 0 || !currentProduct.price) return;
 
     const product = products.find(p => p.id === currentProduct.id);
     if (!product) return;
@@ -108,11 +107,11 @@ const ChatHeader: React.FC = () => {
       {
         id: product.id,
         quantity: parseInt(currentProduct.quantity),
-        price: product.price
+        price: parseFloat(currentProduct.price)
       }
     ]);
 
-    setCurrentProduct({ id: "", quantity: "1" });
+    setCurrentProduct({ id: "", quantity: "1", price: "" });
   };
 
   // Handle removing product from sale
@@ -127,6 +126,7 @@ const ChatHeader: React.FC = () => {
     if (!selectedChat || selectedProducts.length === 0) return;
 
     try {
+      console.log("SaleData: ", selectedProducts);
       const saleData = {
         ticketId: selectedChat.id,
         items: selectedProducts.map(item => ({
@@ -135,13 +135,14 @@ const ChatHeader: React.FC = () => {
           unitPrice: item.price
         }))
       };
-
+  
+      console.log("Formatted sale data being sent to API:", saleData);
       await createSale(saleData);
-
+  
       toast({
         description: "Venda registrada com sucesso!",
       });
-
+  
       setSaleDialogOpen(false);
       fetchTickets();
     } catch (error) {
@@ -242,10 +243,7 @@ const ChatHeader: React.FC = () => {
                 <SelectContent>
                   {products.map((product) => (
                     <SelectItem key={product.id} value={product.id}>
-                      {product.name} - {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL'
-                      }).format(product.price)}
+                      {product.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -262,6 +260,21 @@ const ChatHeader: React.FC = () => {
                 value={currentProduct.quantity}
                 onChange={(e) => setCurrentProduct({ ...currentProduct, quantity: e.target.value })}
                 className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="price" className="text-right">
+                Preço
+              </Label>
+              <Input
+                id="price"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={currentProduct.price}
+                onChange={(e) => setCurrentProduct({ ...currentProduct, price: e.target.value })}
+                className="col-span-3"
+                placeholder="Informe o preço para este produto"
               />
             </div>
             <div className="flex justify-end">

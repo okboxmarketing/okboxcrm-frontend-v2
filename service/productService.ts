@@ -3,7 +3,7 @@ import { apiHelper } from "@/lib/apiHelper";
 interface Product {
     id: string;
     name: string;
-    price: number;
+    price?: number;
     createdAt: string;
 }
 
@@ -25,7 +25,7 @@ export const getProductById = async (id: string) => {
     }
 };
 
-export const createProduct = async (product: { name: string; price: number }) => {
+export const createProduct = async (product: { name: string; price?: number }) => {
     try {
         return await apiHelper.post<Product>("/products", product);
     } catch (error) {
@@ -34,7 +34,7 @@ export const createProduct = async (product: { name: string; price: number }) =>
     }
 };
 
-export const updateProduct = async (id: string, product: { name: string; price: number }) => {
+export const updateProduct = async (id: string, product: { name: string; price?: number }) => {
     try {
         return await apiHelper.patch<Product>(`/products/${id}`, product);
     } catch (error) {
