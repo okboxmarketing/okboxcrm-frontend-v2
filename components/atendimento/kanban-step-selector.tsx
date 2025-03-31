@@ -20,26 +20,26 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
   const [selectedStep, setSelectedStep] = useState<string>("");
   const { toast } = useToast();
 
+  const fetchKanbanData = async () => {
+    try {
+      const [steps, currentStep] = await Promise.all([
+        getKanbanSteps(),
+        getKanbanStepByTicketId(ticketId),
+      ]);
+
+      const filteredSteps = steps.filter(step =>
+        step.name !== "Perdido" && step.name !== "Vendido"
+      );
+
+      setKanbanSteps(filteredSteps);
+      setSelectedStep(currentStep.id.toString());
+    } catch (error) {
+      console.log(error);
+      toast({ description: "Erro ao carregar etapas do Kanban" });
+    }
+  };
+
   useEffect(() => {
-    const fetchKanbanData = async () => {
-      try {
-        const [steps, currentStep] = await Promise.all([
-          getKanbanSteps(),
-          getKanbanStepByTicketId(ticketId),
-        ]);
-
-        const filteredSteps = steps.filter(step =>
-          step.name !== "Perdido" && step.name !== "Vendido"
-        );
-
-        setKanbanSteps(filteredSteps);
-        setSelectedStep(currentStep.id.toString());
-      } catch (error) {
-        console.log(error);
-        toast({ description: "Erro ao carregar etapas do Kanban" });
-      }
-    };
-
     fetchKanbanData();
   }, [ticketId]);
 

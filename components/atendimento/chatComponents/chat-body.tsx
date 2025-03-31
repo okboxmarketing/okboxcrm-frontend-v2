@@ -24,11 +24,11 @@ const renderMessageContent = (
   switch (msg.mediaType) {
     case MediaEnum.IMAGE:
       return (
-        <div className="relative">
+        <div className="relative max-w-full">
           <img
             src={msg.contentUrl}
             alt={fromMe ? "Imagem enviada" : "Imagem recebida"}
-            className="w-80 h-80 object-cover rounded-lg cursor-pointer"
+            className="max-w-full w-64 h-64 object-cover rounded-lg cursor-pointer"
             onClick={() => msg.contentUrl && onSelectImage(msg.contentUrl)}
           />
           <span className={`absolute bottom-1 right-2 text-xs ${fromMe ? "text-white" : "text-gray-500"}`}>
@@ -38,8 +38,8 @@ const renderMessageContent = (
       );
     case MediaEnum.AUDIO:
       return (
-        <div className="relative">
-          <audio controls className="w-[300px]">
+        <div className="relative max-w-full">
+          <audio controls className="max-w-full w-64">
             <source src={msg.contentUrl} type="audio/ogg" />
             Seu navegador não suporta áudio.
           </audio>
@@ -49,10 +49,9 @@ const renderMessageContent = (
         </div>
       );
     case MediaEnum.VIDEO:
-      console.log("URL DO VÍDEO: ", msg.contentUrl, msg.mediaType)
       return (
-        <div className="relative">
-          <video controls className="w-80 h-80 object-cover rounded-lg cursor-pointer">
+        <div className="relative max-w-full">
+          <video controls className="max-w-full w-64 h-64 object-cover rounded-lg cursor-pointer">
             <source src={msg.contentUrl} type="video/mp4" />
             Seu navegador não suporta vídeos.
           </video>
@@ -66,10 +65,10 @@ const renderMessageContent = (
       const fileName = msg.contentUrl?.split('/').pop() || "documento";
 
       return (
-        <div className="relative">
-          <div className={`p-4 rounded-lg ${fromMe ? "bg-black text-white" : "bg-white"} max-w-xs`}>
+        <div className="relative max-w-full">
+          <div className={`p-4 rounded-lg ${fromMe ? "bg-black text-white" : "bg-white"} w-full`}>
             <div className="flex items-center gap-2 mb-2">
-              <FileText className="h-6 w-6" />
+              <FileText className="h-6 w-6 flex-shrink-0" />
               <span className="text-sm font-medium truncate">{fileName}</span>
             </div>
             <Button
@@ -82,7 +81,7 @@ const renderMessageContent = (
                 }
               }}
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-4 w-4 flex-shrink-0" />
               <span>Baixar</span>
             </Button>
             <span className={`block mt-2 text-right text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>
@@ -95,9 +94,9 @@ const renderMessageContent = (
     default:
       const messageText = msg.data.message.conversation;
       return (
-        <div className="relative">
+        <div className="relative max-w-full">
           <p
-            className={`px-4 py-2 ${fromMe
+            className={`px-4 py-2 break-words ${fromMe
               ? "bg-black text-white rounded-l-xl rounded-t-xl"
               : "bg-white rounded-r-xl rounded-t-xl"}`}
           >
@@ -203,7 +202,7 @@ const ChatBody: React.FC<ChatBodyProps> = ({
     .filter((msg) => msg.contactId === selectedChat.Contact.remoteJid);
 
   return (
-    <div className="flex-1 overflow-y-auto pt-4 pb-4 px-4 space-y-2">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden pt-4 pb-4 px-4 space-y-2">
       {filteredMessages.map((msg, index) => {
         const fromMe = msg.data.key.fromMe;
         const prevMsg = index > 0 ? filteredMessages[index - 1] : null;
@@ -219,12 +218,12 @@ const ChatBody: React.FC<ChatBodyProps> = ({
               </div>
             )}
             <div
-              className={`flex items-start gap-3 ${fromMe ? "justify-end" : "justify-start"}`}
+              className={`flex ${fromMe ? "justify-end" : "justify-start"} w-full`}
             >
-              <div className="flex items-center gap-2">
+              <div className={`flex items-start gap-2 ${fromMe ? "flex-row" : "flex-row-reverse"} max-w-[70%]`}>
                 {renderMessageContent(msg, onSelectImage, fromMe)}
                 {fromMe && (
-                  <div className="flex items-center">
+                  <div className="flex items-center flex-shrink-0">
                     {msg.data.status === "PENDING" && (
                       <Check className="text-gray-400" size={16} />
                     )}
