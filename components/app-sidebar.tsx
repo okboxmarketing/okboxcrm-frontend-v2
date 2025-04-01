@@ -26,7 +26,7 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  SidebarTrigger,
+  // SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/authContext";
 import { findMyCompany } from "@/service/companyService";
@@ -35,7 +35,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
 
   const [companyName, setCompanyName] = React.useState<string>("");
-  const triggerOn = React.useState(false);
 
   React.useEffect(() => {
     const fetchCompany = async () => {
@@ -162,7 +161,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <div className="w-200 h-20">
           <Image src="/logo.png" width={200} height={20} alt="Logo" />
         </div>
-        <SidebarTrigger />
+        {/* <SidebarTrigger /> */}
       </SidebarHeader>
       <SidebarContent>
         {user?.userRole !== "MASTER" && <NavMain items={data.navMain} userRole={user?.userRole} />}
