@@ -98,6 +98,7 @@ export interface KanbanStep {
   companyId?: string;
   ticketCount: number;
   tickets: Ticket[];
+  position: number;
 }
 
 export interface Ticket {

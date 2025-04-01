@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { KanbanStep } from "@/lib/types";
 import { HexColorPicker } from "react-colorful";
+import { Plus } from "lucide-react";
 import { createKanbanStep, getKanbanSteps, removeKanbanStep, updateKanbanStep } from "@/service/kanbanStepsService";
 
 const KanbanStepsPage: React.FC = () => {
@@ -23,12 +24,16 @@ const KanbanStepsPage: React.FC = () => {
   const [stepToEdit, setStepToEdit] = useState<KanbanStep | null>(null);
   const [editStepName, setEditStepName] = useState("");
   const [editColor, setEditColor] = useState("#000000");
+  const [position, setPosition] = useState(0);
+  const [beforeStep, setBeforeStep] = useState<KanbanStep | null>(null);
+  const [afterStep, setAfterStep] = useState<KanbanStep | null>(null);
   const { toast } = useToast();
 
   const fetchKanbanSteps = async () => {
     try {
       const data = await getKanbanSteps();
-      setKanbanSteps(data);
+      const sortedData = [...data].sort((a, b) => a.position - b.position);
+      setKanbanSteps(sortedData);
     } catch (error) {
       console.log(error);
       toast({ description: "Erro ao carregar etapas do Kanban" });
@@ -41,20 +46,67 @@ const KanbanStepsPage: React.FC = () => {
     fetchKanbanSteps();
   }, []);
 
-  // Criação de nova etapa
+  const isStepCreationAllowed = (before: KanbanStep, after: KanbanStep) => {
+    if (before.name === "Sem Contato" && after.name === "Contato Feito") {
+      return false;
+    }
+
+    if ((before.name === "Perdido" && after.name === "Vendido") ||
+      (before.name === "Vendido" && after.name === "Perdido")) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const openCreateBetweenDialog = (beforeIndex: number) => {
+    const before = kanbanSteps[beforeIndex];
+    const after = kanbanSteps[beforeIndex + 1];
+
+    if (!isStepCreationAllowed(before, after)) {
+      toast({
+        description: `Não é permitido criar etapas entre "${before.name}" e "${after.name}"`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setBeforeStep(before);
+    setAfterStep(after);
+
+    const newPosition = calculatePositionBetween(before, after);
+    setPosition(newPosition);
+
+    setStepName("");
+    setColor("#000000");
+    setOpenDialog(true);
+  };
+
+  const calculatePositionBetween = (before: KanbanStep, after: KanbanStep) => {
+    if (!before || !after) {
+      if (!before) return (after?.position || 0) - 1;
+      if (!after) return (before?.position || 0) + 1;
+      return 0;
+    }
+
+    return (before.position + after.position) / 2;
+  };
+
   const handleCreateStep = async () => {
     if (!stepName.trim()) return;
 
     try {
-      await createKanbanStep(stepName, color);
+      console.log("aquii", stepName, color, position);
+      await createKanbanStep(stepName, color, position);
       toast({ description: "Etapa criada com sucesso!" });
       setStepName("");
       setColor("#000000");
+      setBeforeStep(null);
+      setAfterStep(null);
       setOpenDialog(false);
 
       // Recarrega as etapas
-      const updatedSteps = await getKanbanSteps();
-      setKanbanSteps(updatedSteps);
+      fetchKanbanSteps();
     } catch (error) {
       console.log(error);
       toast({ description: "Erro ao criar etapa" });
@@ -71,8 +123,7 @@ const KanbanStepsPage: React.FC = () => {
       setStepToEdit(null);
 
       // Recarrega as etapas
-      const updatedSteps = await getKanbanSteps();
-      setKanbanSteps(updatedSteps);
+      fetchKanbanSteps();
     } catch (error) {
       console.log(error);
       toast({ description: "Erro ao atualizar etapa" });
@@ -98,64 +149,109 @@ const KanbanStepsPage: React.FC = () => {
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Etapas do Kanban</h1>
-        <Button onClick={() => setOpenDialog(true)}>Nova Etapa</Button>
       </div>
 
       {/* Tabela de Etapas */}
       {kanbanSteps.length ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Cor</TableHead>
-              <TableHead>Tickets</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {kanbanSteps.map((step) => (
-              <TableRow key={step.id}>
-                <TableCell>{step.name}</TableCell>
-                <TableCell>
-                  <div className="w-6 h-6 rounded-full" style={{ backgroundColor: step.color }}></div>
-                </TableCell>
-                <TableCell>{step.ticketCount}</TableCell>
-                <TableCell className="flex gap-2">
-                  <Button
-                    disabled={step.name === "Sem Contato" || step.name === "Contato Feito" || step.name === "Vendido" || step.name === "Perdido"}
-                    onClick={() => {
-                      setStepToEdit(step);
-                      setEditStepName(step.name);
-                      setEditColor(step.color);
-                      setEditDialogOpen(true);
-                    }}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    disabled={step.name === "Sem Contato" || step.name === "Contato Feito" || step.name === "Vendido" || step.name === "Perdido"}
-                    onClick={() => {
-                      setStepToDelete(step);
-                      setConfirmDialogOpen(true);
-                    }}
-                  >
-                    Remover
-                  </Button>
-                </TableCell>
+        <div className="relative">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Cor</TableHead>
+                <TableHead>Tickets</TableHead>
+                <TableHead>Ações</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {kanbanSteps.map((step, index) => (
+                <>
+                  {/* Não mostrar botão para adicionar no início */}
+
+                  <TableRow key={step.id}>
+                    <TableCell>{step.name}</TableCell>
+                    <TableCell>
+                      <div className="w-6 h-6 rounded-full" style={{ backgroundColor: step.color }}></div>
+                    </TableCell>
+                    <TableCell>{step.ticketCount}</TableCell>
+                    <TableCell className="flex gap-2">
+                      <Button
+                        disabled={step.name === "Sem Contato" || step.name === "Contato Feito" || step.name === "Vendido" || step.name === "Perdido"}
+                        onClick={() => {
+                          setStepToEdit(step);
+                          setEditStepName(step.name);
+                          setEditColor(step.color);
+                          setEditDialogOpen(true);
+                        }}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        disabled={step.name === "Sem Contato" || step.name === "Contato Feito" || step.name === "Vendido" || step.name === "Perdido"}
+                        onClick={() => {
+                          setStepToDelete(step);
+                          setConfirmDialogOpen(true);
+                        }}
+                      >
+                        Remover
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Botão para adicionar após cada linha (exceto a última) */}
+                  {index < kanbanSteps.length - 1 && (
+                    (() => {
+                      const before = kanbanSteps[index];
+                      const after = kanbanSteps[index + 1];
+                      const isAllowed = isStepCreationAllowed(before, after);
+
+                      return (
+                        <TableRow
+                          className={`h-0 group hover:bg-gray-50 ${isAllowed ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                          onClick={() => isAllowed && openCreateBetweenDialog(index)}
+                        >
+                          <TableCell colSpan={4} className="p-0 h-2 relative">
+                            {isAllowed && (
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                <Button variant="ghost" size="sm" className="h-6 w-6 rounded-full p-0">
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })()
+                  )}
+
+                  {/* Não mostrar botão para adicionar no final */}
+                </>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       ) : (
-        <p className="text-center text-gray-500">Nenhuma etapa cadastrada.</p>
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">Nenhuma etapa cadastrada.</p>
+          <Button onClick={() => {
+            setPosition(0);
+            setOpenDialog(true);
+          }}>
+            Criar Primeira Etapa
+          </Button>
+        </div>
       )}
 
       {/* Dialog para criação de nova etapa */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nova Etapa do Kanban</DialogTitle>
+            <DialogTitle>
+              {beforeStep && afterStep
+                ? `Nova Etapa entre "${beforeStep.name}" e "${afterStep.name}"`
+                : "Nova Etapa do Kanban"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
