@@ -97,6 +97,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           });
 
           setMessages(formattedMessages);
+          fetchTickets()
         } catch (error) {
           console.error("Erro ao buscar mensagens:", error);
         }

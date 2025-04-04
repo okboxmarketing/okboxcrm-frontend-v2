@@ -105,7 +105,6 @@ const KanbanStepsPage: React.FC = () => {
       setAfterStep(null);
       setOpenDialog(false);
 
-      // Recarrega as etapas
       fetchKanbanSteps();
     } catch (error) {
       console.log(error);
@@ -113,7 +112,6 @@ const KanbanStepsPage: React.FC = () => {
     }
   };
 
-  // Atualização de uma etapa
   const handleEditStep = async () => {
     if (!stepToEdit) return;
     try {
@@ -122,7 +120,6 @@ const KanbanStepsPage: React.FC = () => {
       setEditDialogOpen(false);
       setStepToEdit(null);
 
-      // Recarrega as etapas
       fetchKanbanSteps();
     } catch (error) {
       console.log(error);
@@ -130,7 +127,6 @@ const KanbanStepsPage: React.FC = () => {
     }
   };
 
-  // Remoção de uma etapa
   const handleRemoveStep = async (stepId: number) => {
     try {
       await removeKanbanStep(stepId);
@@ -151,7 +147,6 @@ const KanbanStepsPage: React.FC = () => {
         <h1 className="text-2xl font-bold">Etapas do Kanban</h1>
       </div>
 
-      {/* Tabela de Etapas */}
       {kanbanSteps.length ? (
         <div className="relative">
           <Table>
@@ -166,8 +161,6 @@ const KanbanStepsPage: React.FC = () => {
             <TableBody>
               {kanbanSteps.map((step, index) => (
                 <>
-                  {/* Não mostrar botão para adicionar no início */}
-
                   <TableRow key={step.id}>
                     <TableCell>{step.name}</TableCell>
                     <TableCell>
@@ -199,7 +192,6 @@ const KanbanStepsPage: React.FC = () => {
                     </TableCell>
                   </TableRow>
 
-                  {/* Botão para adicionar após cada linha (exceto a última) */}
                   {index < kanbanSteps.length - 1 && (
                     (() => {
                       const before = kanbanSteps[index];
@@ -211,12 +203,11 @@ const KanbanStepsPage: React.FC = () => {
                           className={`h-0 group hover:bg-gray-50 ${isAllowed ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                           onClick={() => isAllowed && openCreateBetweenDialog(index)}
                         >
-                          <TableCell colSpan={4} className="p-0 h-2 relative">
+                          <TableCell colSpan={4} className="p-0 h-0">
                             {isAllowed && (
-                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                <Button variant="ghost" size="sm" className="h-6 w-6 rounded-full p-0">
-                                  <Plus className="h-4 w-4" />
-                                </Button>
+                              <div className="bg-gray-100 items-center font-bold flex gap-2 px-2 hover:bg-gray-50">
+                                <Plus size='14' />
+                                <p> Adicionar Etapa</p>
                               </div>
                             )}
                           </TableCell>
@@ -224,8 +215,6 @@ const KanbanStepsPage: React.FC = () => {
                       );
                     })()
                   )}
-
-                  {/* Não mostrar botão para adicionar no final */}
                 </>
               ))}
             </TableBody>
@@ -243,7 +232,6 @@ const KanbanStepsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Dialog para criação de nova etapa */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
           <DialogHeader>
@@ -283,7 +271,6 @@ const KanbanStepsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de confirmação para remoção da etapa */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>
