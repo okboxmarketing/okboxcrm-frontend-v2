@@ -44,7 +44,7 @@ const ChatSidebarWithContext: React.FC = () => {
     return matchesContactName
   };
 
-  const openTickets = tickets.filter(ticket => ticket.status === "OPEN");
+  const openTickets = tickets.filter(ticket => ticket.status === "OPEN" || ticket.status === "SOLD" || ticket.status === "LOSS");
   const pendingTickets = tickets.filter(ticket => ticket.status === "PENDING");
 
   const filteredOpenTickets = openTickets.filter(ticket =>
@@ -152,7 +152,7 @@ const ChatSidebarWithContext: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="all">Todas as Etapas</SelectItem>
                   {kanbanSteps
-                    .filter(step => step.name !== "Contato Feito" && step.name !== "Sem Contato")
+                    .filter(step => step.name !== "Sem Contato")
                     .map((step) => (
                       <SelectItem
                         key={step.id}

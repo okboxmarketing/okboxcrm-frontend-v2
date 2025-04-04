@@ -89,7 +89,7 @@ export interface Response {
   message: string;
 }
 
-export type TicketStatusEnum = "PENDING" | "OPEN" | "CLOSED";
+export type TicketStatusEnum = "PENDING" | "OPEN" | "SOLD" | "LOSS";
 
 export interface KanbanStep {
   id: number;
