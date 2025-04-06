@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, MoveDownRight } from "lucide-react";
+import { ShoppingCart, MoveDownRight, MoreVertical } from "lucide-react";
 import MoveTicketSelect from "@/components/atendimento/kanban-step-selector";
 import { useChatContext } from "@/contexts/ChatContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -18,6 +18,8 @@ import { getLossReasons } from "@/service/lossService";
 import { getProducts } from "@/service/productService";
 import { LossReason } from "@/lib/types";
 import { useAuth } from "@/context/authContext";
+import { deleteTicket } from "@/service/ticketsService";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 type Products = {
   id: string;
@@ -36,6 +38,7 @@ const ChatHeader: React.FC = () => {
   const [currentProduct, setCurrentProduct] = useState<{ id: string, quantity: string, price: string }>(
     { id: "", quantity: "1", price: "" }
   );
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   // Loss dialog state
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
@@ -121,6 +124,24 @@ const ChatHeader: React.FC = () => {
     setSelectedProducts(newProducts);
   };
 
+  const handleDeleteTicket = async () => {
+    if (!selectedChat) return;
+    try {
+      await deleteTicket(selectedChat.id);
+      toast({
+        description: "Ticket excluído com sucesso!",
+      });
+      fetchTickets();
+    } catch (error) {
+      console.error("Erro ao excluir ticket:", error);
+      toast({
+        description: "Erro ao excluir ticket",
+        variant: "destructive",
+      });
+    }
+    setConfirmDeleteOpen(false);
+  }
+
   // Handle creating sale
   const handleCreateSale = async () => {
     if (!selectedChat || selectedProducts.length === 0) return;
@@ -135,14 +156,14 @@ const ChatHeader: React.FC = () => {
           unitPrice: item.price
         }))
       };
-  
+
       console.log("Formatted sale data being sent to API:", saleData);
       await createSale(saleData);
-  
+
       toast({
         description: "Venda registrada com sucesso!",
       });
-  
+
       setSaleDialogOpen(false);
       fetchTickets();
     } catch (error) {
@@ -216,13 +237,41 @@ const ChatHeader: React.FC = () => {
           <Button onClick={handleOpenSaleDialog} className="bg-green-500 hover:bg-green-500/70">
             <ShoppingCart />
           </Button>
-          <Button onClick={handleOpenLossDialog} className="bg-red-500 hover:bg-red-500/70">
-            <MoveDownRight />
-          </Button>
+          {selectedChat.status !== "LOSS" && (
+            <Button onClick={handleOpenLossDialog} className="bg-red-500 hover:bg-red-500/70">
+              <MoveDownRight />
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="p-2">
+                <MoreVertical />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setConfirmDeleteOpen(true)}>Excluir Ticket</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirmar Exclusão</DialogTitle>
+              </DialogHeader>
+              <p>Tem certeza que deseja excluir este ticket? Esta ação não pode ser desfeita.</p>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button variant="destructive" onClick={handleDeleteTicket}>
+                  Excluir
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
 
-      {/* Sale Dialog */}
       <Dialog open={saleDialogOpen} onOpenChange={setSaleDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -343,7 +392,6 @@ const ChatHeader: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Loss Dialog */}
       <Dialog open={lossDialogOpen} onOpenChange={setLossDialogOpen}>
         <DialogContent>
           <DialogHeader>
