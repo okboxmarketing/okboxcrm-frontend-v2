@@ -279,15 +279,15 @@ const ChatSidebarWithContext: React.FC = () => {
                         {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
                       </span>
                     </div>
-                    <p className={`text-sm  truncate flex items-center gap-2 justify-between ${isUnreadMessage(ticket.lastMessage) ? "font-bold text-black" : "font-normal text-gray-500"
+                    <div className={`text-sm  truncate flex items-center gap-2 justify-between ${isUnreadMessage(ticket.lastMessage) ? "font-bold text-black" : "font-normal text-gray-500"
                       }`}>
-                      <div className="flex items-center gap-2">
+                      <p className="flex items-center gap-2">
                         {renderLastMessage(ticket.lastMessage)}
-                      </div>
+                      </p>
                       {isUnreadMessage(ticket.lastMessage) && (
                         <span className="h-4 w-4 bg-red-500 rounded-full flex-shrink-0"></span>
                       )}
-                    </p>
+                    </div>
                   </div>
                 </div>
                 <div className="flex mt-2 gap-2">
