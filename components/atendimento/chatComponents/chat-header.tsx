@@ -28,7 +28,7 @@ type Products = {
 };
 
 const ChatHeader: React.FC = () => {
-  const { selectedChat, fetchTickets } = useChatContext();
+  const { selectedChat, fetchTickets, setSelectedChat } = useChatContext();
   const { toast } = useToast();
 
   // Sale dialog state
@@ -131,6 +131,7 @@ const ChatHeader: React.FC = () => {
       toast({
         description: "Ticket excluído com sucesso!",
       });
+      setSelectedChat(null)
       fetchTickets();
     } catch (error) {
       console.error("Erro ao excluir ticket:", error);

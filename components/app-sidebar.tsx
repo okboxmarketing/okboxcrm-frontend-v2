@@ -26,17 +26,17 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  // SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/authContext";
 import { findMyCompany } from "@/service/companyService";
+import { ComponentProps, useEffect, useState } from "react";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
 
-  const [companyName, setCompanyName] = React.useState<string>("");
+  const [companyName, setCompanyName] = useState<string>("");
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchCompany = async () => {
       try {
         const company = await findMyCompany();

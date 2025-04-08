@@ -134,7 +134,6 @@ const KanbanStepsPage: React.FC = () => {
       setKanbanSteps((prev) => prev.filter((step) => step.id !== stepId));
       setStepToDelete(null);
     } catch (error) {
-      console.log(error);
       toast({ description: String(error), variant: "destructive" });
     }
   };

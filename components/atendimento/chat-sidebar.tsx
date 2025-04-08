@@ -50,7 +50,15 @@ const ChatSidebarWithContext: React.FC = () => {
   const filteredOpenTickets = openTickets.filter(ticket =>
     (showMyTickets ? ticket.responsibleId === user?.userId : true) &&
     searchTickets(ticket) &&
-    (selectedKanbanStep !== "all" ? ticket.KanbanStep.id === parseInt(selectedKanbanStep) : true)
+    (
+      selectedKanbanStep === "all" ? true :
+        selectedKanbanStep === "active" ?
+          ticket.KanbanStep.name !== "Sem Contato" &&
+          ticket.status !== "SOLD" &&
+          ticket.status !== "LOSS"
+          :
+          ticket.KanbanStep.id === parseInt(selectedKanbanStep)
+    )
   );
 
   const filteredPendingTickets = pendingTickets.filter(searchTickets);
@@ -120,7 +128,7 @@ const ChatSidebarWithContext: React.FC = () => {
       <div className="flex flex-col">
         <div className="p-4 border-b flex items-center">
           <h1 className="text-xl font-semibold">Atendimento</h1>
-          {user?.userRole != "ADVISOR" && (
+          {(user?.userRole != "ADVISOR" && tab != "PENDING") && (
             <div className="ml-auto flex items-center gap-2">
               <Switch
                 id="myTicketsSwitch"
@@ -151,6 +159,7 @@ const ChatSidebarWithContext: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as Etapas</SelectItem>
+                  <SelectItem value="active">Apenas Leads Ativos</SelectItem>
                   {kanbanSteps
                     .filter(step => step.name !== "Sem Contato")
                     .map((step) => (
