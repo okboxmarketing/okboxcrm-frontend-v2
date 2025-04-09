@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { assignAccessorToCompany, deleteCompany, findCompanyById } from "@/service/companyService";
-import { createUser } from "@/service/userService";
+import { createUser, deleteUser } from "@/service/userService";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -16,6 +16,8 @@ import { userSchema, UserSchemaType } from "@/schema/userSchema";
 import { useToast } from "@/hooks/use-toast";
 import { Company, User } from "@/lib/types";
 import { getAdvisors } from "@/service/advisorService";
+import { Trash } from "lucide-react";
+import { useAuth } from "@/context/authContext";
 
 const EmpresaPage: React.FC = () => {
   const pathname = usePathname();
@@ -26,6 +28,10 @@ const EmpresaPage: React.FC = () => {
   const [openAdvisorDialog, setOpenAdvisorDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [loadingCreateUser, setTransition] = useTransition();
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const { user } = useAuth();
+  const requiredRole = user?.userRole;
   const router = useRouter();
   const { toast } = useToast();
 
@@ -147,6 +153,7 @@ const EmpresaPage: React.FC = () => {
               <TableHead>Nome</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Função</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -155,6 +162,19 @@ const EmpresaPage: React.FC = () => {
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.role}</TableCell>
+                <TableCell className="flex gap-2">
+                  {requiredRole === "ADVISOR" && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setUserToDelete(user);
+                        setConfirmDialogOpen(true);
+                      }}
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -251,6 +271,42 @@ const EmpresaPage: React.FC = () => {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+          </DialogHeader>
+          <p>
+            Tem certeza que deseja excluir o usuário <strong>{userToDelete?.name}</strong>?
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!userToDelete) return;
+                try {
+                  await deleteUser(userToDelete.id);
+                  toast({ description: "Usuário excluído com sucesso!" });
+                  await fetchCompany();
+                } catch (error) {
+                  toast({
+                    variant: "destructive",
+                    description: String(error),
+                  });
+                } finally {
+                  setConfirmDialogOpen(false);
+                  setUserToDelete(null);
+                }
+              }}
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -198,6 +198,7 @@ const MinhaEmpresaPage: React.FC = () => {
                 Cancelar
               </Button>
               <Button type="submit" disabled={creatingUser} isLoading={creatingUser}>
+                Cadastrar
               </Button>
             </DialogFooter>
           </form>
