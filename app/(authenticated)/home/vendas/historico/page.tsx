@@ -18,13 +18,13 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const SalesHistoryPage: React.FC = () => {
     const [sales, setSales] = useState<Sale[]>([]);
     const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedSale, setExpandedSale] = useState<string | null>(null);
-    // Add state for filters
     const [date, setDate] = useState<DateRange | undefined>();
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -47,25 +47,20 @@ const SalesHistoryPage: React.FC = () => {
         fetchSales();
     }, []);
 
-    // Add effect to filter sales when filters change
     useEffect(() => {
         filterSales();
     }, [date, searchTerm, sales]);
 
-    // Add filter function
     const filterSales = () => {
         let filtered = [...sales];
 
-        // Filter by date range
         if (date?.from && date?.to) {
             filtered = filtered.filter(sale => {
                 const saleDate = parseISO(sale.createdAt);
 
-                // Create start date at beginning of day (00:00:00)
                 const startDate = new Date(date.from!);
                 startDate.setHours(0, 0, 0, 0);
 
-                // Create end date at end of day (23:59:59)
                 const endDate = new Date(date.to!);
                 endDate.setHours(23, 59, 59, 999);
 
@@ -76,7 +71,6 @@ const SalesHistoryPage: React.FC = () => {
             });
         }
 
-        // Filter by search term (client name, responsible, or ticket ID)
         if (searchTerm.trim() !== "") {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(sale =>
@@ -116,7 +110,6 @@ const SalesHistoryPage: React.FC = () => {
         });
     };
 
-    // Add function to clear filters
     const clearFilters = () => {
         setDate(undefined);
         setSearchTerm("");
@@ -134,7 +127,6 @@ const SalesHistoryPage: React.FC = () => {
                 </Badge>
             </div>
 
-            {/* Add filters section */}
             <div className="mb-6 flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                     <div className="relative">
@@ -191,7 +183,17 @@ const SalesHistoryPage: React.FC = () => {
             </div>
 
             {loading ? (
-                <p className="text-center text-gray-500">Carregando vendas...</p>
+                <div className="space-y-4">
+                    {[...Array(5)].map((_, index) => (
+                        <div key={index} className="flex items-center gap-6 w-full">
+                            <Skeleton className="h-6 w-1/5" />
+                            <Skeleton className="h-6 w-1/5" />
+                            <Skeleton className="h-6 w-1/5" />
+                            <Skeleton className="h-6 w-1/5" />
+                            <Skeleton className="h-6 w-1/5" />
+                        </div>
+                    ))}
+                </div>
             ) : filteredSales.length > 0 ? (
                 <div className="space-y-6">
                     <Table>

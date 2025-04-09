@@ -31,3 +31,7 @@ export const verifyUser = async () => {
 
   return user;
 };
+
+export const deleteUser = async (userId: string) => {
+  return apiHelper.delete(`/users/${userId}`);
+}
