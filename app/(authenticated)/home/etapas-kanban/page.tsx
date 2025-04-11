@@ -146,26 +146,41 @@ const KanbanStepsPage: React.FC = () => {
         <h1 className="text-2xl font-bold">Etapas do Kanban</h1>
       </div>
       {loading ? (
-        <div className="space-y-4 pt-10">
-          {[...Array(5)].map((_, index) => (
-            <div key={index} className="flex items-center space-x-4">
-              <Skeleton className="h-6 w-1/5" />
-              <Skeleton className="h-6 w-1/5" />
-              <Skeleton className="h-6 w-1/5" />
-              <Skeleton className="h-6 w-1/5" />
-            </div>
-          ))}
-        </div>
+        <Fragment>
+          <div className="relative">
+            <Table className="w-full table-fixed">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-2/6">Nome</TableHead>
+                  <TableHead className="w-1/6">Cor</TableHead>
+                  <TableHead className="w-1/6">Tickets</TableHead>
+                  <TableHead className="w-2/6">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+            </Table>
+          </div>
+          <div className="grid [grid-template-columns:2fr_1fr_1fr_2fr] gap-4 mt-4">
+            {[...Array(5)].map((_, index) => (
+              <Fragment key={index}>
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </Fragment>
+            ))}
+          </div>
+
+        </Fragment>
       ) : (
         <Fragment>
           <div className="relative">
-            <Table>
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Cor</TableHead>
-                  <TableHead>Tickets</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead className="w-2/6">Nome</TableHead>
+                  <TableHead className="w-1/6">Cor</TableHead>
+                  <TableHead className="w-1/6">Tickets</TableHead>
+                  <TableHead className="w-2/6">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -174,7 +189,7 @@ const KanbanStepsPage: React.FC = () => {
                     <TableRow>
                       <TableCell>{step.name}</TableCell>
                       <TableCell>
-                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: step.color }}></div>
+                        <div className="w-20 h-6 rounded-md" style={{ backgroundColor: step.color }}></div>
                       </TableCell>
                       <TableCell>{step.ticketCount}</TableCell>
                       <TableCell className="flex gap-2">
