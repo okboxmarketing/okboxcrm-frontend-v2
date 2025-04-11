@@ -1,6 +1,5 @@
 "use client";
 
-// First, let's update the imports to add the document icon
 import React, { useRef, useEffect } from "react";
 import { Check, FileText, Download } from "lucide-react";
 import { MediaEnum, NewMessagePayload } from "@/lib/types";
@@ -61,7 +60,6 @@ const renderMessageContent = (
         </div>
       );
     case MediaEnum.DOCUMENT:
-      // Get filename from URL or use a default name
       const fileName = msg.contentUrl?.split('/').pop() || "documento";
 
       return (
@@ -112,22 +110,17 @@ const renderMessageContent = (
 
 
 const formatMessageDate = (timestamp: number) => {
-  // Ensure we're working with a valid timestamp
   if (!timestamp) return "Data desconhecida";
 
-  // Convert to milliseconds if needed (check if timestamp is in seconds)
   if (timestamp < 10000000000) {
     timestamp = timestamp * 1000;
   }
 
   const messageDate = new Date(timestamp);
-  // Check if the date is valid
   if (isNaN(messageDate.getTime())) return "Data inválida";
 
-  // Check if date is in the future (more than 1 day ahead)
   const now = new Date();
   if (messageDate.getTime() > now.getTime() + 86400000) {
-    // If date is in the future, use today's date instead
     messageDate.setTime(now.getTime());
   }
 
@@ -135,7 +128,6 @@ const formatMessageDate = (timestamp: number) => {
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  // Reset hours to compare only dates
   const todayDate = new Date(today.setHours(0, 0, 0, 0));
   const yesterdayDate = new Date(yesterday.setHours(0, 0, 0, 0));
   const messageDateOnly = new Date(messageDate);
@@ -157,30 +149,24 @@ const formatMessageDate = (timestamp: number) => {
 const shouldShowDateDivider = (currentMsg: NewMessagePayload, prevMsg: NewMessagePayload | null) => {
   if (!prevMsg) return true;
 
-  // Ensure we have valid timestamps
   let currentTimestamp = currentMsg.data.messageTimestamp;
   let prevTimestamp = prevMsg.data.messageTimestamp;
 
   if (!currentTimestamp || !prevTimestamp) return true;
 
-  // Convert to milliseconds if needed
   if (currentTimestamp < 10000000000) currentTimestamp *= 1000;
   if (prevTimestamp < 10000000000) prevTimestamp *= 1000;
 
-  // Handle future dates
   const now = new Date().getTime();
   if (currentTimestamp > now + 86400000) currentTimestamp = now;
   if (prevTimestamp > now + 86400000) prevTimestamp = now;
 
-  // Create date objects and reset the time to compare only the date part
   const currentDate = new Date(currentTimestamp);
   const prevDate = new Date(prevTimestamp);
 
-  // Reset time to 00:00:00 to compare only the date part
   currentDate.setHours(0, 0, 0, 0);
   prevDate.setHours(0, 0, 0, 0);
 
-  // Compare the dates
   return currentDate.getTime() !== prevDate.getTime();
 };
 
@@ -222,21 +208,6 @@ const ChatBody: React.FC<ChatBodyProps> = ({
             >
               <div className={`flex items-start gap-2 ${fromMe ? "flex-row" : "flex-row-reverse"} max-w-[70%]`}>
                 {renderMessageContent(msg, onSelectImage, fromMe)}
-                {fromMe && (
-                  <div className="flex items-center flex-shrink-0">
-                    {msg.data.status === "PENDING" && (
-                      <Check className="text-gray-400" size={16} />
-                    )}
-                    {(msg.data.status === "DELIVERY_ACK" ||
-                      msg.data.status === "SERVER_ACK" ||
-                      msg.data.status === "SENT") && (
-                        <div className="flex items-center gap-1">
-                          <Check className="text-gray-400" size={16} />
-                          <Check className="text-gray-400" size={16} />
-                        </div>
-                      )}
-                  </div>
-                )}
               </div>
             </div>
           </React.Fragment>

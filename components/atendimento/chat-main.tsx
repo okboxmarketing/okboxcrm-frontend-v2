@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useChatContext } from "@/contexts/ChatContext";
-import ChatBody from "./chatComponents/chat-body";
-import ChatInputWithContext from "./chatComponents/chat-input";
-import ChatHeader from "./chatComponents/chat-header";
+import ChatBody from "./chat-components/chat-body";
+import ChatInput from "./chat-components/chat-input";
+import ChatHeader from "./chat-components/chat-header";
 import { useAuth } from "@/context/authContext";
 
-const ChatMainWithContext: React.FC = () => {
+const ChatMain: React.FC = () => {
   const { selectedChat } = useChatContext();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { user } = useAuth();
@@ -34,7 +34,7 @@ const ChatMainWithContext: React.FC = () => {
         <>
           <ChatHeader />
           <ChatBody onSelectImage={(url) => setSelectedImage(url)} />
-          {user?.userRole !== "ADVISOR" && <ChatInputWithContext />}
+          {user?.userRole !== "ADVISOR" && <ChatInput />}
         </>
       ) : (
         <div className="flex-1 flex items-center justify-center">
@@ -47,4 +47,4 @@ const ChatMainWithContext: React.FC = () => {
   );
 };
 
-export default ChatMainWithContext;
+export default ChatMain;

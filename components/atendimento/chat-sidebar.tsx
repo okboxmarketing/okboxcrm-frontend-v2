@@ -1,28 +1,31 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, Mic, Search, Video } from "lucide-react";
-import { KanbanStep, MediaEnum, Ticket, TicketStatusEnum } from "@/lib/types";
-import { formatMessageTime, getContrastColor } from "@/lib/utils";
+import { Search } from "lucide-react";
+import { KanbanStep, Ticket, TicketStatusEnum } from "@/lib/types";
 import { acceptTicket } from "@/service/ticketsService";
 import { toast } from "@/hooks/use-toast";
-import { Image as ImageIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useChatContext } from "@/contexts/ChatContext";
 import { Badge } from "../ui/badge";
 import { useAuth } from "@/context/authContext";
 import { getKanbanSteps } from "@/service/kanbanStepsService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { TicketList } from "./chat-sidebar/ticket-list";
 
-const ChatSidebarWithContext: React.FC = () => {
+const ChatSidebar: React.FC = () => {
   const { tickets, selectedChat, setSelectedChat, tab, setTab, fetchTickets } = useChatContext();
   const [showMyTickets, setShowMyTickets] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedKanbanStep, setSelectedKanbanStep] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+
+  useEffect(() => {
+    setIsLoading(tickets.length === 0);
+  }, [tickets]);
 
   useEffect(() => {
     const fetchKanbanData = async () => {
@@ -74,41 +77,6 @@ const ChatSidebarWithContext: React.FC = () => {
       new Date(b.lastMessage?.createdAt || 0).getTime() -
       new Date(a.lastMessage?.createdAt || 0).getTime()
   );
-
-  const renderLastMessage = (lastMessage: Ticket["lastMessage"]) => {
-    if (!lastMessage) return null;
-    const checkIcon = lastMessage.fromMe && <Check className="h-4 w-4 text-gray-400" />;
-    switch (lastMessage.mediaType) {
-      case MediaEnum.IMAGE:
-        return (
-          <>
-            {checkIcon}
-            <ImageIcon className="h-4 w-4 text-gray-400" /> Imagem
-          </>
-        );
-      case MediaEnum.AUDIO:
-        return (
-          <>
-            {checkIcon}
-            <Mic className="h-4 w-4 text-gray-400" /> Áudio
-          </>
-        );
-      case MediaEnum.VIDEO:
-        return (
-          <>
-            {checkIcon}
-            <Video className="h-4 w-4 text-gray-400" /> Vídeo
-          </>
-        );
-      default:
-        return (
-          <>
-            {checkIcon}
-            {lastMessage.content || ""}
-          </>
-        );
-    }
-  };
 
   const isUnreadMessage = (lastMessage: Ticket["lastMessage"]) => {
     return lastMessage && !lastMessage.fromMe && lastMessage.read === false;
@@ -200,132 +168,40 @@ const ChatSidebarWithContext: React.FC = () => {
 
       <div className="flex-1 overflow-y-auto">
         {tab === "PENDING" && (
-          <div>
-            {sortedPendingTickets.map(ticket => (
-              <div
-                key={ticket.id}
-                onClick={() => setSelectedChat(ticket)}
-                className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50 ${selectedChat?.id === ticket.id ? "bg-gray-50" : ""
-                  }`}
-              >
-                <div className="relative">
-                  <Avatar>
-                    {ticket.Contact.pictureUrl ? (
-                      <AvatarImage src={ticket.Contact.pictureUrl} />
-                    ) : (
-                      <AvatarFallback>{ticket.Contact.name[0]}</AvatarFallback>
-                    )}
-                  </Avatar>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center">
-                    <p className={`font-medium truncate ${isUnreadMessage(ticket.lastMessage) ? "font-bold text-black" : "font-normal text-gray-500"
-                      }`}>{ticket.Contact.name}</p>
-                    <span className="text-xs text-gray-500">
-                      {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
-                    </span>
-                  </div>
-                  <p
-                    key={`message-${ticket.id}-${ticket.lastMessage?.read}`}
-                    className={`text-sm truncate flex items-center gap-2 ${isUnreadMessage(ticket.lastMessage) ? "font-bold text-black" : "font-normal text-gray-500"
-                      }`}
-                  >
-                    {isUnreadMessage(ticket.lastMessage) && (
-                      <span className="h-2 w-2 bg-black rounded-full flex-shrink-0"></span>
-                    )}
-                    {renderLastMessage(ticket.lastMessage)}
-                  </p>
-                </div>
-                {user?.userRole != "ADVISOR" && (
-                  <button
-                    className="rounded"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        await acceptTicket(ticket.id);
-                        toast({ description: "Ticket aceito com sucesso" });
-                        setTab("OPEN");
-                        setSelectedChat(ticket);
-                        await fetchTickets();
-                      } catch (error) {
-                        console.error("Erro ao aceitar ticket:", error);
-                        toast({ description: "Erro ao aceitar ticket", variant: "destructive" });
-                      }
-                    }}
-                  >
-                    <Badge className="bg-green-500 hover:bg-green-500/70">ACEITAR</Badge>
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+          <TicketList
+            tickets={sortedPendingTickets}
+            selectedChat={selectedChat}
+            onSelectChat={setSelectedChat}
+            onAcceptTicket={async (ticket: Ticket) => {
+              try {
+                await acceptTicket(ticket.id);
+                toast({ description: "Ticket aceito com sucesso" });
+
+                fetchTickets()
+                setTab("OPEN");
+              } catch (error) {
+                console.error("Erro ao aceitar ticket:", error);
+                toast({ description: "Erro ao aceitar ticket", variant: "destructive" });
+              }
+            }}
+            loading={isLoading}
+            showAcceptButton={user?.userRole !== "ADVISOR"}
+            type="PENDING"
+          />
+        )}
+        {tab === "OPEN" && (
+          <TicketList
+            tickets={sortedOpenTickets}
+            selectedChat={selectedChat}
+            onSelectChat={setSelectedChat}
+            type="OPEN"
+            loading={isLoading}
+          />
         )}
 
-        {tab === "OPEN" && (
-          <div>
-            {sortedOpenTickets.map(ticket => (
-              <div
-                key={ticket.id}
-                onClick={() => setSelectedChat(ticket)}
-                className={`flex flex-col gap-1 p-4 cursor-pointer hover:bg-gray-50 ${selectedChat?.id === ticket.id ? "bg-gray-50" : ""
-                  }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Avatar>
-                      {ticket.Contact.pictureUrl ? (
-                        <AvatarImage src={ticket.Contact.pictureUrl} />
-                      ) : (
-                        <AvatarFallback>{ticket.Contact.name[0]}</AvatarFallback>
-                      )}
-                    </Avatar>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center">
-                      <p className={`font-medium truncate ${isUnreadMessage(ticket.lastMessage) ? "font-bold text-black" : "font-normal text-gray-500"
-                        }`}>{ticket.Contact.name}</p>
-                      <span className="text-xs text-gray-500">
-                        {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
-                      </span>
-                    </div>
-                    <div className={`text-sm  truncate flex items-center gap-2 justify-between ${isUnreadMessage(ticket.lastMessage) ? "font-bold text-black" : "font-normal text-gray-500"
-                      }`}>
-                      <p className="flex items-center gap-2">
-                        {renderLastMessage(ticket.lastMessage)}
-                      </p>
-                      {isUnreadMessage(ticket.lastMessage) && (
-                        <span className="h-4 w-4 bg-red-500 rounded-full flex-shrink-0"></span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex mt-2 gap-2">
-                  {ticket.KanbanStep ? (
-                    <span
-                      className="text-xs px-2 py-1 rounded inline-block"
-                      style={{
-                        backgroundColor: ticket.KanbanStep?.color,
-                        color: getContrastColor(ticket.KanbanStep?.color),
-                      }}
-                    >
-                      {ticket.KanbanStep.name}
-                    </span>
-                  ) : (
-                    <span className="text-xs px-2 py-1 rounded inline-block border border-red-500 text-red-500">
-                      Sem Etapa
-                    </span>
-                  )}
-                  <span className="text-xs px-2 py-1 rounded inline-block bg-black text-white">
-                    {ticket.Responsible?.name}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
 };
 
-export default ChatSidebarWithContext;
+export default ChatSidebar;

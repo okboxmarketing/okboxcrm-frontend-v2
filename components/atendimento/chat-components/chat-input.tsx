@@ -15,7 +15,7 @@ interface FormData {
 
 
 
-const ChatInputWithContext: React.FC = () => {
+const ChatInput: React.FC = () => {
   const { sendMessage, selectedChat } = useChatContext();
   const { register, handleSubmit, reset } = useForm<FormData>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -346,4 +346,4 @@ const ChatInputWithContext: React.FC = () => {
   );
 };
 
-export default ChatInputWithContext;
+export default ChatInput;

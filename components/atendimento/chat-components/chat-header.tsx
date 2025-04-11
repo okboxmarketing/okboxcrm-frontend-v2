@@ -18,7 +18,7 @@ import { getLossReasons } from "@/service/lossService";
 import { getProducts } from "@/service/productService";
 import { LossReason } from "@/lib/types";
 import { useAuth } from "@/context/authContext";
-import { deleteTicket } from "@/service/ticketsService";
+import { deleteTicket, refreshTicket } from "@/service/ticketsService";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 type Products = {
@@ -28,10 +28,9 @@ type Products = {
 };
 
 const ChatHeader: React.FC = () => {
-  const { selectedChat, fetchTickets, setSelectedChat } = useChatContext();
+  const { selectedChat, fetchTickets, setSelectedChat, setTicket } = useChatContext();
   const { toast } = useToast();
 
-  // Sale dialog state
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
   const [products, setProducts] = useState<Products[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<{ id: string, quantity: number, price: number }[]>([]);
@@ -40,7 +39,6 @@ const ChatHeader: React.FC = () => {
   );
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-  // Loss dialog state
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [lossReasons, setLossReasons] = useState<LossReason[]>([]);
   const [lossData, setLossData] = useState({
@@ -50,7 +48,6 @@ const ChatHeader: React.FC = () => {
 
   const { user } = useAuth()
 
-  // Fetch products for sale dialog
   const fetchProducts = async () => {
     try {
       const data = await getProducts();
@@ -132,7 +129,6 @@ const ChatHeader: React.FC = () => {
         description: "Ticket excluído com sucesso!",
       });
       setSelectedChat(null)
-      fetchTickets();
     } catch (error) {
       console.error("Erro ao excluir ticket:", error);
       toast({
@@ -143,7 +139,6 @@ const ChatHeader: React.FC = () => {
     setConfirmDeleteOpen(false);
   }
 
-  // Handle creating sale
   const handleCreateSale = async () => {
     if (!selectedChat || selectedProducts.length === 0) return;
 
@@ -166,7 +161,9 @@ const ChatHeader: React.FC = () => {
       });
 
       setSaleDialogOpen(false);
-      fetchTickets();
+      refreshTicket(selectedChat.id).then((ticket) => {
+        setTicket(ticket);
+      });
     } catch (error) {
       console.error("Erro ao registrar venda:", error);
       toast({
@@ -176,7 +173,6 @@ const ChatHeader: React.FC = () => {
     }
   };
 
-  // Handle creating loss
   const handleCreateLoss = async () => {
     if (!selectedChat || !lossData.reasonId) return;
 
@@ -194,7 +190,7 @@ const ChatHeader: React.FC = () => {
       });
 
       setLossDialogOpen(false);
-      fetchTickets();
+      setTicket({ ...selectedChat, status: "LOSS" });
     } catch (error) {
       console.error("Erro ao registrar perda:", error);
       toast({
