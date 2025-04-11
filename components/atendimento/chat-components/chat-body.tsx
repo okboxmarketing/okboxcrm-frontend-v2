@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
-import { Check, FileText, Download } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { MediaEnum, NewMessagePayload } from "@/lib/types";
 import { useChatContext } from "@/contexts/ChatContext";
 import { Button } from "@/components/ui/button";

@@ -37,7 +37,6 @@ const ContatosPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [isFetched, setIsFetched] = useState(false);
   const [syncLoading, setTransition] = useTransition();
   const [totalContacts, setTotalContacts] = useState(0);

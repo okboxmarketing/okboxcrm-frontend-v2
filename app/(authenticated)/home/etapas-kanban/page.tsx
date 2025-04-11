@@ -11,7 +11,6 @@ import { KanbanStep } from "@/lib/types";
 import { HexColorPicker } from "react-colorful";
 import { Plus, Trash } from "lucide-react";
 import { createKanbanStep, getKanbanSteps, removeKanbanStep, updateKanbanStep } from "@/service/kanbanStepsService";
-import { Skeleton } from "@/components/ui/skeleton";
 import { KanbanStepsSkeleton } from "@/components/skeleton/kanban-steps-skeleton";
 
 const KanbanStepsPage: React.FC = () => {
