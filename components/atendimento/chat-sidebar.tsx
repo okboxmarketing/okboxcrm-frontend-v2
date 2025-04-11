@@ -184,7 +184,7 @@ const ChatSidebarWithContext: React.FC = () => {
                   const unreadCount = sortedOpenTickets.filter(ticket =>
                     isUnreadMessage(ticket.lastMessage)
                   ).length;
-                  return unreadCount > 0 ? <Badge>{unreadCount}</Badge> : null;
+                  return unreadCount > 0 ? <Badge variant={"destructive"}>{unreadCount}</Badge> : null;
                 })()
               }
             </TabsTrigger>
