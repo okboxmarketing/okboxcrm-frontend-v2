@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState, useTransition } from "react";
+import React, { Fragment, useEffect, useState, useTransition } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,12 +30,14 @@ import { Input } from "@/components/ui/input";
 import { IMaskInput } from "react-imask";
 import { createTicket } from "@/service/ticketsService";
 import { useRouter } from "next/navigation";
+import { ContactListSkeleton } from "@/components/skeleton/contact-list-skeleton";
 
 const ContatosPage: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [isFetched, setIsFetched] = useState(false);
   const [syncLoading, setTransition] = useTransition();
   const [totalContacts, setTotalContacts] = useState(0);
@@ -214,9 +216,9 @@ const ContatosPage: React.FC = () => {
       </div>
 
       {loading ? (
-        <p className="text-center text-gray-500">Carregando contatos...</p>
+        <ContactListSkeleton />
       ) : contacts.length > 0 ? (
-        <>
+        <Fragment>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -285,7 +287,7 @@ const ContatosPage: React.FC = () => {
               </PaginationContent>
             </Pagination>
           </div>
-        </>
+        </Fragment>
       ) : (
         isFetched && (
           <div className="flex items-center flex-col gap-2">

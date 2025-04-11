@@ -10,11 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash } from "lucide-react";
 import { getProducts, createProduct, updateProduct, deleteProduct } from "@/service/productService";
+import { ProductListSkeleton } from "@/components/skeleton/product-list.skeleton";
 
 interface Product {
   id: string;
   name: string;
-  price?: number; // Make price optional
+  price?: number;
   createdAt: string;
 }
 
@@ -169,9 +170,9 @@ const ProductsPage = () => {
       </div>
 
       {loading ? (
-        <p className="text-center text-gray-500">Carregando produtos...</p>
+        <ProductListSkeleton />
       ) : products.length > 0 ? (
-        <Table>
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>

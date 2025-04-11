@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash } from "lucide-react";
 import { getLossReasons, createLossReason, updateLossReason, deleteLossReason } from "@/service/lossService";
+import { LossReasonListSkeleton } from "@/components/skeleton/loss-reason-skeleton";
 
 interface LossReason {
   id: string;
@@ -170,7 +171,7 @@ const LossReasonsPage: React.FC = () => {
       </div>
 
       {loading ? (
-        <p className="text-center text-gray-500">Carregando motivos de perdas...</p>
+        <LossReasonListSkeleton />
       ) : lossReasons.length > 0 ? (
         <Table>
           <TableHeader>

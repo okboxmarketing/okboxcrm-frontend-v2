@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Sale } from "@/lib/types";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SalesListSkeleton } from "@/components/skeleton/sales-list-skeleton";
 
 const SalesHistoryPage: React.FC = () => {
     const [sales, setSales] = useState<Sale[]>([]);
@@ -183,17 +184,7 @@ const SalesHistoryPage: React.FC = () => {
             </div>
 
             {loading ? (
-                <div className="space-y-4">
-                    {[...Array(5)].map((_, index) => (
-                        <div key={index} className="flex items-center gap-6 w-full">
-                            <Skeleton className="h-6 w-1/5" />
-                            <Skeleton className="h-6 w-1/5" />
-                            <Skeleton className="h-6 w-1/5" />
-                            <Skeleton className="h-6 w-1/5" />
-                            <Skeleton className="h-6 w-1/5" />
-                        </div>
-                    ))}
-                </div>
+                <SalesListSkeleton />
             ) : filteredSales.length > 0 ? (
                 <div className="space-y-6">
                     <Table>
@@ -203,10 +194,9 @@ const SalesHistoryPage: React.FC = () => {
                                 <TableHead>Cliente</TableHead>
                                 <TableHead>Responsável</TableHead>
                                 <TableHead>Valor Total</TableHead>
-                                <TableHead>Ticket ID</TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody>
+                        <TableBody key={filteredSales.length}>
                             {filteredSales.map((sale) => (
                                 <>
                                     <TableRow
@@ -218,7 +208,6 @@ const SalesHistoryPage: React.FC = () => {
                                         <TableCell>{sale.Ticket.Contact.name}</TableCell>
                                         <TableCell>{sale.Ticket.Responsible?.name || "N/A"}</TableCell>
                                         <TableCell className="font-medium">{formatCurrency(sale.totalAmount)}</TableCell>
-                                        <TableCell>{sale.ticketId}</TableCell>
                                     </TableRow>
                                     {expandedSale === sale.id && (
                                         <TableRow className="bg-gray-50">

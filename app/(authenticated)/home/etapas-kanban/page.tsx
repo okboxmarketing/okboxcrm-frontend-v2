@@ -12,6 +12,7 @@ import { HexColorPicker } from "react-colorful";
 import { Plus, Trash } from "lucide-react";
 import { createKanbanStep, getKanbanSteps, removeKanbanStep, updateKanbanStep } from "@/service/kanbanStepsService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { KanbanStepsSkeleton } from "@/components/skeleton/kanban-steps-skeleton";
 
 const KanbanStepsPage: React.FC = () => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
@@ -146,31 +147,7 @@ const KanbanStepsPage: React.FC = () => {
         <h1 className="text-2xl font-bold">Etapas do Kanban</h1>
       </div>
       {loading ? (
-        <Fragment>
-          <div className="relative">
-            <Table className="w-full table-fixed">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-2/6">Nome</TableHead>
-                  <TableHead className="w-1/6">Cor</TableHead>
-                  <TableHead className="w-1/6">Tickets</TableHead>
-                  <TableHead className="w-2/6">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-            </Table>
-          </div>
-          <div className="grid [grid-template-columns:2fr_1fr_1fr_2fr] gap-4 mt-4">
-            {[...Array(5)].map((_, index) => (
-              <Fragment key={index}>
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-              </Fragment>
-            ))}
-          </div>
-
-        </Fragment>
+        <KanbanStepsSkeleton />
       ) : (
         <Fragment>
           <div className="relative">

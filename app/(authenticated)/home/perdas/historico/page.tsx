@@ -18,6 +18,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { LossHistorySkeleton } from "@/components/skeleton/loss-list-skeleton";
 
 const LossHistoryPage: React.FC = () => {
     const [losses, setLosses] = useState<Loss[]>([]);
@@ -173,10 +174,10 @@ const LossHistoryPage: React.FC = () => {
             </div>
 
             {loading ? (
-                <p className="text-center text-gray-500">Carregando perdas...</p>
+                <LossHistorySkeleton />
             ) : filteredLosses.length > 0 ? (
                 <div className="space-y-6">
-                    <Table>
+                    <Table className="w-full table-fixed">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Data</TableHead>
@@ -185,7 +186,7 @@ const LossHistoryPage: React.FC = () => {
                                 <TableHead>Motivo</TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody>
+                        <TableBody key={filteredLosses.length}>
                             {filteredLosses.map((loss) => (
                                 <>
                                     <TableRow

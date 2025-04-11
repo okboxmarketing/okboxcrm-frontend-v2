@@ -24,3 +24,7 @@ export const createTicket = async (remoteJid: string) => {
 export const deleteTicket = async (ticketId: number) => {
   return apiHelper.delete(`/tickets/${ticketId}`);
 }
+
+export const refreshTicket = async (ticketId: number) => {
+  return apiHelper.get<Ticket>(`/tickets/id/${ticketId}`);
+}

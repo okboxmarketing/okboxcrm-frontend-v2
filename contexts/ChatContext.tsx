@@ -16,6 +16,7 @@ interface ChatContextType {
   setSelectedChat: (ticket: Ticket | null) => void;
   fetchTickets: () => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
+  setTicket: (updated: Ticket) => void
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -46,6 +47,13 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       console.error("Erro ao buscar tickets:", error);
     }
   }, []);
+
+  const setTicket = (updated: Ticket) => {
+    setTickets((prev) =>
+      prev.map((ticket) => (ticket.id === updated.id ? updated : ticket))
+    );
+    setSelectedChat((prev) => (prev?.id === updated.id ? updated : prev));
+  };
 
   useEffect(() => {
     fetchTickets();
@@ -192,7 +200,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     }
   };
 
-  // Make sure to expose this function in the context value
   const value = {
     tickets,
     selectedChat,
@@ -202,8 +209,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     setSelectedChat,
     fetchTickets,
     sendMessage,
-    // Add the new function if you implement it at the context level
-    // sendMediaMessage,
+    setTicket
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
