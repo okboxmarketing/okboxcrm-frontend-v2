@@ -268,26 +268,43 @@ const KanbanStepsPage: React.FC = () => {
           </Dialog><Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Confirmar Deleção</DialogTitle>
+                <DialogTitle>{stepToDelete && stepToDelete.ticketCount > 0 ? `Você ainda tem tickets na etapa ${stepToDelete.name}` : "Confirmar Deleção"}</DialogTitle>
               </DialogHeader>
-              <p>
-                Tem certeza que deseja remover a etapa <strong>{stepToDelete?.name}</strong>? Todos os atendimentos associados ficarão sem etapa definida.
-              </p>
+
+              {stepToDelete && stepToDelete?.ticketCount > 0 ? (
+                <p>
+                  Existem {stepToDelete?.ticketCount} tickets associados a esta etapa. Mova eles para outra etapa antes de excluir esta.
+                </p>
+              ) : (
+                <p>
+                  Tem certeza que deseja remover a etapa <strong>{stepToDelete?.name}</strong>?.
+                </p>
+              )}
               <DialogFooter>
                 <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    if (stepToDelete) {
-                      handleRemoveStep(stepToDelete.id);
+                {stepToDelete && stepToDelete?.ticketCount > 0 ? (
+                  <Button
+                    onClick={() => {
                       setConfirmDialogOpen(false);
-                    }
-                  }}
-                >
-                  Confirmar
-                </Button>
+                    }}
+                  >
+                    Voltar
+                  </Button>
+                ) : (
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      if (stepToDelete) {
+                        handleRemoveStep(stepToDelete.id);
+                        setConfirmDialogOpen(false);
+                      }
+                    }}
+                  >
+                    Confirmar
+                  </Button>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>
