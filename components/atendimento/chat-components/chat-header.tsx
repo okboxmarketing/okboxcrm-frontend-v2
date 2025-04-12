@@ -28,7 +28,7 @@ type Products = {
 };
 
 const ChatHeader: React.FC = () => {
-  const { selectedChat, fetchTickets, setSelectedChat, setTicket } = useChatContext();
+  const { selectedChat, fetchTickets, setSelectedChat } = useChatContext();
   const { toast } = useToast();
 
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);

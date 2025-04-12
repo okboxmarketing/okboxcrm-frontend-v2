@@ -3,7 +3,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getKanbanSteps, getKanbanStepByTicketId } from "@/service/kanbanStepsService";
 import { moveTicket } from "@/service/ticketsService";
-import { useChatContext } from "@/context/ChatContext";
 
 interface KanbanStep {
   id: number;

@@ -92,16 +92,16 @@ const renderMessageContent = (
 
     default:
       const messageText = msg.data.message.conversation;
-      const isLink = /(https?:\/\/[^\s]+)/g.test(messageText);
+      const isLinkMessage = isLink(messageText);
       return (
         <div className="relative max-w-full">
           <p
             className={`px-4 py-2 break-words ${fromMe
-                ? "bg-black text-white rounded-l-xl rounded-t-xl"
-                : "bg-white rounded-r-xl rounded-t-xl"
+              ? "bg-black text-white rounded-l-xl rounded-t-xl"
+              : "bg-white rounded-r-xl rounded-t-xl"
               }`}
           >
-            {isLink ? (
+            {isLinkMessage ? (
               <a
                 href={messageText}
                 target="_blank"
