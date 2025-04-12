@@ -7,7 +7,7 @@ import { KanbanStep, Ticket, TicketStatusEnum } from "@/lib/types";
 import { acceptTicket } from "@/service/ticketsService";
 import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
-import { useChatContext } from "@/contexts/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { Badge } from "../ui/badge";
 import { useAuth } from "@/context/authContext";
 import { getKanbanSteps } from "@/service/kanbanStepsService";

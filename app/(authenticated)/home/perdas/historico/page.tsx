@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getLosses } from "@/service/lossService";
@@ -188,7 +188,7 @@ const LossHistoryPage: React.FC = () => {
                         </TableHeader>
                         <TableBody key={filteredLosses.length}>
                             {filteredLosses.map((loss) => (
-                                <>
+                                <Fragment key={loss.id}>
                                     <TableRow
                                         key={loss.id}
                                         className="cursor-pointer hover:bg-gray-100"
@@ -234,7 +234,7 @@ const LossHistoryPage: React.FC = () => {
                                             </TableCell>
                                         </TableRow>
                                     )}
-                                </>
+                                </Fragment>
                             ))}
                         </TableBody>
                     </Table>

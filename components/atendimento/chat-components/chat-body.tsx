@@ -3,8 +3,9 @@
 import React, { useRef, useEffect } from "react";
 import { FileText, Download } from "lucide-react";
 import { MediaEnum, NewMessagePayload } from "@/lib/types";
-import { useChatContext } from "@/contexts/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
+import { isLink } from "@/lib/utils";
 
 interface ChatBodyProps {
   onSelectImage: (url: string) => void;
@@ -91,20 +92,34 @@ const renderMessageContent = (
 
     default:
       const messageText = msg.data.message.conversation;
+      const isLink = /(https?:\/\/[^\s]+)/g.test(messageText);
       return (
         <div className="relative max-w-full">
           <p
             className={`px-4 py-2 break-words ${fromMe
-              ? "bg-black text-white rounded-l-xl rounded-t-xl"
-              : "bg-white rounded-r-xl rounded-t-xl"}`}
+                ? "bg-black text-white rounded-l-xl rounded-t-xl"
+                : "bg-white rounded-r-xl rounded-t-xl"
+              }`}
           >
-            {messageText}
+            {isLink ? (
+              <a
+                href={messageText}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`underline break-words ${fromMe ? "text-blue-200" : "text-blue-600"}`}
+              >
+                {messageText}
+              </a>
+            ) : (
+              messageText
+            )}
             <span className={`inline-block ml-2 text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>
               {formatMessageTime(msg.data.messageTimestamp)}
             </span>
           </p>
         </div>
       );
+
   }
 };
 

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music } from "lucide-react";
-import { useChatContext } from "@/contexts/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { sendAudioMessage, sendMediaMessage, SendMediaParams } from "@/service/messageService";
 import { useToast } from "@/hooks/use-toast";
 

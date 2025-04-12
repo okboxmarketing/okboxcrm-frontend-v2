@@ -3,7 +3,7 @@ import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import ChatMainWithContext from "@/components/atendimento/chat-main";
 import ChatSidebarWithContext from "@/components/atendimento/chat-sidebar";
-import { ChatProvider, useChatContext } from "@/contexts/ChatContext";
+import { ChatProvider, useChatContext } from "@/context/ChatContext";
 
 const ChatContent = () => {
   const { tickets, setSelectedChat, selectedChat } = useChatContext();

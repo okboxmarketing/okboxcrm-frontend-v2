@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, MoveDownRight, MoreVertical } from "lucide-react";
 import MoveTicketSelect from "@/components/atendimento/kanban-step-selector";
-import { useChatContext } from "@/contexts/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,8 @@ const ChatHeader: React.FC = () => {
   const [currentProduct, setCurrentProduct] = useState<{ id: string, quantity: string, price: string }>(
     { id: "", quantity: "1", price: "" }
   );
+  const [kanbanRefreshKey, setKanbanRefreshKey] = useState(0);
+
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
@@ -63,7 +65,6 @@ const ChatHeader: React.FC = () => {
     }
   };
 
-  // Fetch loss reasons for loss dialog
   const fetchLossReasons = async () => {
     try {
       const data = await getLossReasons();
@@ -80,7 +81,6 @@ const ChatHeader: React.FC = () => {
     }
   };
 
-  // Handle opening sale dialog
   const handleOpenSaleDialog = () => {
     fetchProducts();
     setSelectedProducts([]);
@@ -88,14 +88,12 @@ const ChatHeader: React.FC = () => {
     setSaleDialogOpen(true);
   };
 
-  // Handle opening loss dialog
   const handleOpenLossDialog = () => {
     fetchLossReasons();
     setLossData({ reasonId: "", description: "" });
     setLossDialogOpen(true);
   };
 
-  // Handle adding product to sale
   const handleAddProduct = () => {
     if (!currentProduct.id || parseInt(currentProduct.quantity) <= 0 || !currentProduct.price) return;
 
@@ -114,7 +112,6 @@ const ChatHeader: React.FC = () => {
     setCurrentProduct({ id: "", quantity: "1", price: "" });
   };
 
-  // Handle removing product from sale
   const handleRemoveProduct = (index: number) => {
     const newProducts = [...selectedProducts];
     newProducts.splice(index, 1);
@@ -161,9 +158,13 @@ const ChatHeader: React.FC = () => {
       });
 
       setSaleDialogOpen(false);
-      refreshTicket(selectedChat.id).then((ticket) => {
-        setTicket(ticket);
+      const updated = await refreshTicket(selectedChat.id);
+      setSelectedChat({
+        ...selectedChat,
+        status: updated.status,
+        KanbanStep: updated.KanbanStep,
       });
+      setKanbanRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error("Erro ao registrar venda:", error);
       toast({
@@ -190,7 +191,14 @@ const ChatHeader: React.FC = () => {
       });
 
       setLossDialogOpen(false);
-      setTicket({ ...selectedChat, status: "LOSS" });
+      const updated = await refreshTicket(selectedChat.id);
+      setSelectedChat({
+        ...selectedChat,
+        status: updated.status,
+        KanbanStep: updated.KanbanStep,
+      });
+      setKanbanRefreshKey(prev => prev + 1);
+
     } catch (error) {
       console.error("Erro ao registrar perda:", error);
       toast({
@@ -200,7 +208,6 @@ const ChatHeader: React.FC = () => {
     }
   };
 
-  // Calculate total sale amount
   const calculateTotal = () => {
     return selectedProducts.reduce((total, item) => {
       return total + (item.price * item.quantity);
@@ -230,7 +237,7 @@ const ChatHeader: React.FC = () => {
       </div>
       {selectedChat.status !== "PENDING" && user.userRole !== "ADVISOR" && (
         <div className="flex items-center gap-4">
-          <MoveTicketSelect ticketId={selectedChat.id} fetchTickets={fetchTickets} />
+          <MoveTicketSelect ticketId={selectedChat.id} fetchTickets={fetchTickets} refreshKey={kanbanRefreshKey} />
           <Button onClick={handleOpenSaleDialog} className="bg-green-500 hover:bg-green-500/70">
             <ShoppingCart />
           </Button>

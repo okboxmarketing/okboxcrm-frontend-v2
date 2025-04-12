@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useChatContext } from "@/contexts/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import ChatBody from "./chat-components/chat-body";
 import ChatInput from "./chat-components/chat-input";
 import ChatHeader from "./chat-components/chat-header";

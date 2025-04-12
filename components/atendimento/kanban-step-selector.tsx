@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getKanbanSteps, getKanbanStepByTicketId } from "@/service/kanbanStepsService";
 import { moveTicket } from "@/service/ticketsService";
+import { useChatContext } from "@/context/ChatContext";
 
 interface KanbanStep {
   id: number;
@@ -13,9 +14,10 @@ interface KanbanStep {
 interface MoveTicketSelectProps {
   ticketId: number;
   fetchTickets: () => void;
+  refreshKey: number
 }
 
-const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets }) => {
+const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets, refreshKey }) => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedStep, setSelectedStep] = useState<string>("");
   const { toast } = useToast();
@@ -26,12 +28,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
         getKanbanSteps(),
         getKanbanStepByTicketId(ticketId),
       ]);
-
-      const filteredSteps = steps.filter(step =>
-        step.name !== "Perdido" && step.name !== "Vendido"
-      );
-
-      setKanbanSteps(filteredSteps);
+      setKanbanSteps(steps);
       setSelectedStep(currentStep.id.toString());
     } catch (error) {
       console.log(error);
@@ -41,7 +38,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
 
   useEffect(() => {
     fetchKanbanData();
-  }, [ticketId]);
+  }, [ticketId, refreshKey]);
 
   const handleMoveTicket = async (value: string) => {
     const stepId = Number(value);
@@ -51,7 +48,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
       await moveTicket(ticketId, stepId.toString());
       setSelectedStep(value);
       toast({ description: "Ticket movido com sucesso!" });
-      fetchTickets();
+      fetchTickets()
     } catch (error) {
       console.log(error);
       toast({
@@ -62,7 +59,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
   };
 
   return (
-    <Select onValueChange={handleMoveTicket} value={selectedStep}>
+    <Select key={refreshKey} onValueChange={handleMoveTicket} value={selectedStep}>
       <SelectTrigger className="bg-white">
         <SelectValue placeholder="Selecione a Etapa" className="w-1/2" />
       </SelectTrigger>
@@ -71,7 +68,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
           <SelectItem
             key={step.id}
             value={step.id.toString()}
-            disabled={step.name === "Sem Contato" || step.name === "Contato Feito"}>
+            disabled={step.name === "Sem Contato" || step.name === "Contato Feito" || step.name === "Vendido" || step.name === "Perdido"}>
             <p className="font-bold" style={{ color: step.color }}>
               {step.name}
             </p>
