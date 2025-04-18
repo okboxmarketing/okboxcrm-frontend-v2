@@ -9,10 +9,10 @@ import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { useChatContext } from "@/context/ChatContext";
 import { Badge } from "../ui/badge";
-import { useAuth } from "@/context/authContext";
 import { getKanbanSteps } from "@/service/kanbanStepsService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { TicketList } from "./chat-sidebar/ticket-list";
+import useAuthStore from "@/store/authStore";
 
 const ChatSidebar: React.FC = () => {
   const { tickets, selectedChat, setSelectedChat, tab, setTab, fetchTickets } = useChatContext();
@@ -21,7 +21,7 @@ const ChatSidebar: React.FC = () => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedKanbanStep, setSelectedKanbanStep] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     setIsLoading(tickets.length === 0);

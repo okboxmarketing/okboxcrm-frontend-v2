@@ -17,9 +17,9 @@ import { createLoss } from "@/service/lossService";
 import { getLossReasons } from "@/service/lossService";
 import { getProducts } from "@/service/productService";
 import { LossReason } from "@/lib/types";
-import { useAuth } from "@/context/authContext";
 import { deleteTicket, refreshTicket } from "@/service/ticketsService";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import useAuthStore from "@/store/authStore";
 
 type Products = {
   id: string;
@@ -48,7 +48,7 @@ const ChatHeader: React.FC = () => {
     description: ""
   });
 
-  const { user } = useAuth()
+  const { user } = useAuthStore()
 
   const fetchProducts = async () => {
     try {
@@ -235,7 +235,7 @@ const ChatHeader: React.FC = () => {
           )}
         </div>
       </div>
-      {selectedChat.status !== "PENDING" && user.userRole !== "ADVISOR" && (
+      {selectedChat.status !== "PENDING" && user?.userRole !== "ADVISOR" && (
         <div className="flex items-center gap-4">
           <MoveTicketSelect ticketId={selectedChat.id} fetchTickets={fetchTickets} refreshKey={kanbanRefreshKey} />
           <Button onClick={handleOpenSaleDialog} className="bg-green-500 hover:bg-green-500/70">

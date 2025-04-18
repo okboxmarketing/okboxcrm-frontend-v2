@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { loginSchema } from "@/schema/userSchema"
-import { loginUser, verifyUser } from "@/service/userService"
+import { loginUser } from "@/service/userService"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation";
+import useAuthStore from "@/store/authStore";
 import FormError from "./ui/form-error";
 
 type AuthCredentialsType = {
@@ -21,6 +22,7 @@ export function LoginForm({
 }: React.ComponentPropsWithoutRef<"form">) {
   const [loading, setLoading] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const { login } = useAuthStore();
   const router = useRouter();
   const {
     register,
@@ -33,10 +35,11 @@ export function LoginForm({
     setLoading(async () => {
       setError(null);
       try {
-        await loginUser(data.email, data.password);
-        console.log("Login efetuado com sucesso!");
-        await verifyUser();
-        switch (localStorage.getItem("role")) {
+        const response = await loginUser(data.email, data.password);
+        if (response?.access_token) {
+          await login(response.access_token)
+        }
+        switch (useAuthStore.getState().user?.userRole) {
           case "MASTER":
             router.push("/home/empresas");
             break;
@@ -44,7 +47,7 @@ export function LoginForm({
             router.push("/home/atendimento");
             break;
           case "ADVISOR":
-            router.push("/home/kanban");
+            router.push("/home/empresas");
             break;
           default:
             router.push("/home");

@@ -33,12 +33,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { userSchema, UserSchemaType } from "@/schema/userSchema";
 import { useToast } from "@/hooks/use-toast";
 import { Company, User } from "@/lib/types";
-import { useAuth } from "@/context/authContext";
 import { Trash } from "lucide-react";
+import useAuthStore from "@/store/authStore";
 
 const MinhaEmpresaPage: React.FC = () => {
   const [company, setCompany] = useState<Company>();
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const requestUserRole = user?.userRole;
   const [openDialog, setOpenDialog] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
@@ -211,7 +211,7 @@ const MinhaEmpresaPage: React.FC = () => {
             <DialogTitle>Confirmar Exclusão</DialogTitle>
           </DialogHeader>
           <p>
-            Tem certeza que deseja excluir o usuário <strong>{userToDelete?.name}</strong>?
+            Tem certeza que deseja excluir o usuário <strong>{userToDelete?.id}</strong>?
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>

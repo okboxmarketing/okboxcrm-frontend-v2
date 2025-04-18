@@ -5,12 +5,12 @@ import { useChatContext } from "@/context/ChatContext";
 import ChatBody from "./chat-components/chat-body";
 import ChatInput from "./chat-components/chat-input";
 import ChatHeader from "./chat-components/chat-header";
-import { useAuth } from "@/context/authContext";
+import useAuthStore from "@/store/authStore";
 
 const ChatMain: React.FC = () => {
   const { selectedChat } = useChatContext();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

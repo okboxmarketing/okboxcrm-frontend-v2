@@ -15,7 +15,7 @@ import { getMyCompanies } from "@/service/advisorService";
 import { setActiveCompany } from "@/service/companyService";
 import { Company } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/authContext";
+import useAuthStore from "@/store/authStore";
 
 interface AdvisorCompaniesDialogProps {
     open: boolean;
@@ -31,7 +31,7 @@ export function AdvisorCompaniesDialog({
     const [activating, setActivating] = useState<string | null>(null);
     const router = useRouter();
     const { toast } = useToast();
-    const { user, refreshUser } = useAuth();
+    const { user, login } = useAuthStore();
     const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -41,7 +41,6 @@ export function AdvisorCompaniesDialog({
                 const data = await getMyCompanies();
                 setCompanies(data);
 
-                // Set active company from user context
                 if (user?.companyId) {
                     setActiveCompanyId(user.companyId);
                 }
@@ -64,19 +63,14 @@ export function AdvisorCompaniesDialog({
     const handleSetActive = async (companyId: string) => {
         try {
             setActivating(companyId);
-            await setActiveCompany(companyId);
+            const response = await setActiveCompany(companyId);
+            await login(response.access_token)
             setActiveCompanyId(companyId);
-
-            // Refresh user context to get updated token
-            if (refreshUser) {
-                await refreshUser();
-            }
 
             toast({
                 description: "Empresa ativada com sucesso!",
             });
 
-            // Close dialog and refresh page
             onOpenChange(false);
             router.push('/home/atendimento');
         } catch (error) {
@@ -109,7 +103,7 @@ export function AdvisorCompaniesDialog({
                         <p className="text-gray-500">Nenhuma empresa encontrada.</p>
                     </div>
                 ) : (
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-4 overflow-y-auto">
                         {companies.map((company) => (
                             <div
                                 key={company.id}

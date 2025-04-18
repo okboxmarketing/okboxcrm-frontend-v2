@@ -3,7 +3,7 @@ import { Company } from "@/lib/types";
 
 export const createCompany = async (company: any) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken");
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/company`, {
       method: "POST",
@@ -22,7 +22,6 @@ export const createCompany = async (company: any) => {
     }
 
     const responseData = JSON.parse(text);
-    console.log("COMPANY RESPONSE:", responseData);
 
     return responseData;
   } catch (error) {
@@ -59,13 +58,7 @@ export const getCompaniesByAdvisor = async () => {
 
 export const setActiveCompany = async (companyId: string) => {
   try {
-    const response = await apiHelper.post<{ access_token: string, user: any }>('/company/set-active', { companyId });
-
-    // Update the token and user in localStorage
-    localStorage.setItem('token', response.access_token);
-    localStorage.setItem('user', JSON.stringify(response.user));
-
-    return response;
+    return await apiHelper.post<{ access_token: string, user: any }>('/company/set-active', { companyId });
   } catch (error) {
     console.error("Error setting active company:", error);
     throw error;

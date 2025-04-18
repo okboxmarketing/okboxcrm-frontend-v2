@@ -69,19 +69,24 @@ export interface User {
   email: string;
   role: string;
   companyId: string;
+  companyName?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
   AdvisorOf?: (Company & { _count?: { users: number } })[];
 }
 
-
 export interface AuthUser {
   userId: string;
-  companyId: string;
-  userRole: string;
   userName: string;
   userEmail: string;
+  userRole: string;
+  companyId: string;
+  companyName: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  AdvisorOf?: (Company & { _count?: { users: number } })[];
 }
 
 export interface Response {

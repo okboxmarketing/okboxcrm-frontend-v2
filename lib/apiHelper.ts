@@ -1,7 +1,7 @@
 export const apiHelper = {
   get: async <T>(url: string, params?: Record<string, unknown>): Promise<T> => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
       const queryString = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}${queryString}`, {
@@ -35,7 +35,7 @@ export const apiHelper = {
 
   post: async <T>(url: string, data?: unknown): Promise<T> => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
         method: "POST",
@@ -62,7 +62,7 @@ export const apiHelper = {
   },
   delete: async <T>(url: string): Promise<T> => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
         method: "DELETE",
@@ -89,7 +89,7 @@ export const apiHelper = {
 
   patch: async <T>(url: string, data?: unknown): Promise<T> => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
         method: "PATCH",

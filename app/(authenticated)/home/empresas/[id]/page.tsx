@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Company, User } from "@/lib/types";
 import { getAdvisors } from "@/service/advisorService";
 import { Trash } from "lucide-react";
-import { useAuth } from "@/context/authContext";
+import useAuthStore from "@/store/authStore";
 
 const EmpresaPage: React.FC = () => {
   const pathname = usePathname();
@@ -30,7 +30,7 @@ const EmpresaPage: React.FC = () => {
   const [loadingCreateUser, setTransition] = useTransition();
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const requiredRole = user?.userRole;
   const router = useRouter();
   const { toast } = useToast();
