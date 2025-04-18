@@ -106,8 +106,8 @@ export function AppSidebar() {
     }, [initializeAuth])
 
     const handleLogout = () => {
-        logout()
         window.location.href = "/"
+        logout()
     }
 
     return (
@@ -126,7 +126,7 @@ export function AppSidebar() {
 
 
             <SidebarContent>
-                {user?.userRole === "USER" || user?.userRole === "ADMIN" || (user?.userRole === "ADVISOR" && user?.companyId) && (
+                {user?.userRole === "USER" || user?.userRole === "ADMIN" || (user?.userRole === "ADVISOR" && user?.companyId) ? (
                     <SidebarGroup>
                         <SidebarGroupLabel>CRM</SidebarGroupLabel>
                         <SidebarMenu>
@@ -172,8 +172,8 @@ export function AppSidebar() {
                             })}
                         </SidebarMenu>
                     </SidebarGroup>
-                )}
-                {user?.userRole === "ADVISOR" && (
+                ) : null}
+                {user?.userRole === "ADVISOR" ? (
                     <SidebarGroup>
                         <SidebarGroupLabel>Assessor</SidebarGroupLabel>
                         <SidebarMenu>
@@ -192,7 +192,7 @@ export function AppSidebar() {
                             })}
                         </SidebarMenu>
                     </SidebarGroup>
-                )}
+                ) : null}
                 {user?.userRole === "ADMIN" && (
                     <SidebarGroup>
                         <SidebarGroupLabel>Administrador</SidebarGroupLabel>
@@ -213,7 +213,7 @@ export function AppSidebar() {
                         </SidebarMenu>
                     </SidebarGroup>
                 )}
-                {user?.userRole === "MASTER" && (
+                {user?.userRole === "MASTER" ? (
                     <SidebarGroup>
                         <SidebarGroupLabel>Okbox</SidebarGroupLabel>
                         <SidebarMenu>
@@ -232,20 +232,20 @@ export function AppSidebar() {
                             })}
                         </SidebarMenu>
                     </SidebarGroup>
-                )}
+                ) : null}
 
             </SidebarContent>
 
             <SidebarFooter>
                 <SidebarMenu>
-                    {user?.userRole === "ADVISOR" && (
+                    {user?.userRole === "ADVISOR" ? (
                         <SidebarMenuItem className="p-2">
                             <SidebarMenuButton onClick={(e) => handleChangeCompany(e)} className="w-full  bg-black text-white textcenter justify-center hover:bg-black/80 hover:text-white">
                                 <Building2 className="mr-2" />
                                 Trocar Empresa
                             </SidebarMenuButton>
                         </SidebarMenuItem>
-                    )}
+                    ) : null}
                     <SidebarMenuItem>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
