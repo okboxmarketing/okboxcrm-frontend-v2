@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import useAuthStore from "@/store/authStore"
-import { Fragment, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { AdvisorCompaniesDialog } from "../advisor/advisor-companies-dialog"
 
 const navItems = [
@@ -95,7 +95,7 @@ export function AppSidebar() {
     const [companiesDialogOpen, setCompaniesDialogOpen] = useState(false)
     const { user, initializeAuth, logout } = useAuthStore()
 
-    const handleChangeCompany = (e: React.MouseEvent, item: { name: string }) => {
+    const handleChangeCompany = (e: React.MouseEvent) => {
         e.preventDefault();
         setCompaniesDialogOpen(true);
     };
@@ -240,7 +240,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     {user?.userRole === "ADVISOR" && (
                         <SidebarMenuItem className="p-2">
-                            <SidebarMenuButton onClick={(e) => handleChangeCompany(e, { name: "Empresa" })} className="w-full  bg-black text-white textcenter justify-center hover:bg-black/80 hover:text-white">
+                            <SidebarMenuButton onClick={(e) => handleChangeCompany(e)} className="w-full  bg-black text-white textcenter justify-center hover:bg-black/80 hover:text-white">
                                 <Building2 className="mr-2" />
                                 Trocar Empresa
                             </SidebarMenuButton>
