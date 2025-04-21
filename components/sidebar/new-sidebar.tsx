@@ -50,7 +50,7 @@ import { useEffect, useState } from "react"
 import { AdvisorCompaniesDialog } from "../advisor/advisor-companies-dialog"
 
 const navItems = [
-    { title: "Dashboard (Em breve)", url: "#", icon: PieChart },
+    { title: "Dashboard (Em breve)", url: "/home", icon: PieChart },
     { title: "Atendimento", url: "/home/atendimento", icon: MessageCircle },
     { title: "Kanban", url: "/home/kanban", icon: Kanban },
     { title: "Contatos", url: "/home/contatos", icon: Contact },
