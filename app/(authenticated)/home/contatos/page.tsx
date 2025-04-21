@@ -1,10 +1,11 @@
 'use client'
+
 import React, { Fragment, useEffect, useState, useTransition } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, Search, Trash } from "lucide-react";
-import { getContacts, syncContacts, createContact, findContact, deleteContact } from "@/service/contactService";
+import { syncContacts, createContact, findContact, deleteContact } from "@/service/contactService";
 import { Contact } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -31,27 +32,35 @@ import { IMaskInput } from "react-imask";
 import { createTicket } from "@/service/ticketsService";
 import { useRouter } from "next/navigation";
 import { ContactListSkeleton } from "@/components/skeleton/contact-list-skeleton";
+import { useContacts } from "@/hooks/swr/use-contacts-swr";
+import { formatPhone } from "@/lib/utils";
 
 const ContatosPage: React.FC = () => {
-  const [contacts, setContacts] = useState<Contact[]>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [isFetched, setIsFetched] = useState(false);
   const [syncLoading, setTransition] = useTransition();
-  const [totalContacts, setTotalContacts] = useState(0);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [phone, setPhone] = useState("");
+  const [creatingContact, setCreatingContact] = useState(false);
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchResults, setSearchResults] = useState<Contact[] | null>(null);
   const router = useRouter();
 
+  const { contacts, totalPages, total, loading, mutate } = useContacts(page);
+
+  useEffect(() => {
+    if (!loading) setIsFetched(true);
+  }, [loading]);
+
   const handleCreateContact = async () => {
+    setCreatingContact(true);
     try {
-      const cleanedPhone = phone.replace(/\D/g, "")
+      const cleanedPhone = phone.replace(/\D/g, "");
       await createContact(cleanedPhone, name);
       toast({ description: "Contato criado com sucesso!" });
-      fetchContacts(page);
+      mutate();
       setOpen(false);
       setName("");
       setPhone("");
@@ -59,68 +68,44 @@ const ContatosPage: React.FC = () => {
       if (err instanceof Error) {
         toast({ description: err.message, variant: "destructive" });
       }
+    } finally {
+      setCreatingContact(false);
     }
   };
 
   const findContacts = async (name: string) => {
     if (name.length === 0) {
-      return fetchContacts(page);
+      setSearchResults(null);
+      return;
     }
-    setLoading(true);
     try {
-      const contacts = await findContact(name);
-      setContacts(contacts);
+      const results = await findContact(name);
+      setSearchResults(results);
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (debounceTimeout) {
-      clearTimeout(debounceTimeout);
-    }
+    if (debounceTimeout) clearTimeout(debounceTimeout);
 
     const timeout = setTimeout(() => {
-      findContacts(name);
+      findContacts(searchTerm);
     }, 500);
+
     setDebounceTimeout(timeout);
-
     return () => clearTimeout(timeout);
-  }, [name]);
-
-  const handleSubmitSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    findContacts(name);
-  };
+  }, [searchTerm]);
 
   const handleDeleteContact = async (id: string) => {
     try {
       await deleteContact(id);
-      fetchContacts(page);
+      mutate();
       toast({ description: "Contato deletado com sucesso!" });
     } catch (err) {
       if (err instanceof Error) {
         toast({ description: err.message, variant: "destructive" });
       }
-    }
-  }
-
-  const fetchContacts = async (currentPage = 1) => {
-    setLoading(true);
-    try {
-      const { data, totalPages, total } = await getContacts(currentPage);
-      setTotalContacts(total);
-      setContacts(data);
-      setTotalPages(totalPages);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-      setIsFetched(true);
-      setName("");
-      setPhone("");
     }
   };
 
@@ -131,51 +116,43 @@ const ContatosPage: React.FC = () => {
     } catch {
       console.log("Error creating ticket");
     }
-  }
-
-  useEffect(() => {
-    fetchContacts(page);
-  }, [page]);
+  };
 
   const handleSyncContacts = async () => {
     setTransition(async () => {
       try {
         await syncContacts();
-        fetchContacts(page);
+        mutate();
         toast({ description: "Contatos sincronizados com sucesso!" });
       } catch (error) {
         console.error(error);
         if (error instanceof Error) {
-          toast({
-            description: error.message,
-            variant: "destructive",
-          });
+          toast({ description: error.message, variant: "destructive" });
         }
       }
     });
   };
 
+  const displayedContacts = searchResults ?? contacts;
+
   return (
-    <div className="container mx-auto p-6">
+    <div className="flex-1 p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold">Meus Contatos</h1>
-          <Badge className="bg-black text-white px-3 py-1 text-sm">
-            {totalContacts}
-          </Badge>
+          <Badge className="bg-black text-white px-3 py-1 text-sm">{total}</Badge>
         </div>
-        <form onSubmit={handleSubmitSearch} className="flex items-center">
+        <div className="flex items-center gap-2">
           <Input
             placeholder="Pesquisar contato"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="rounded-r-none"
           />
-          <Button type="submit" className="rounded-l-none">
+          <Button className="rounded-l-none">
             <Search />
           </Button>
-        </form>
-
+        </div>
         <div className="flex items-center gap-4">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -186,13 +163,8 @@ const ContatosPage: React.FC = () => {
                 <DialogTitle>Adicionar Contato</DialogTitle>
                 <DialogDescription>Insira o nome e telefone</DialogDescription>
               </DialogHeader>
-
               <div className="flex flex-col gap-4 py-4">
-                <Input
-                  placeholder="Nome"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
+                <Input placeholder="Nome" value={name} onChange={(e) => setName(e.target.value)} />
                 <IMaskInput
                   mask="+55 (00) 00000-0000"
                   value={phone}
@@ -203,7 +175,7 @@ const ContatosPage: React.FC = () => {
                 />
               </div>
               <DialogFooter>
-                <Button onClick={handleCreateContact}>Salvar</Button>
+                <Button onClick={handleCreateContact} isLoading={creatingContact}>Salvar</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -216,7 +188,7 @@ const ContatosPage: React.FC = () => {
 
       {loading ? (
         <ContactListSkeleton />
-      ) : contacts.length > 0 ? (
+      ) : displayedContacts.length > 0 ? (
         <Fragment>
           <div className="overflow-x-auto">
             <Table>
@@ -229,7 +201,7 @@ const ContatosPage: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contacts.map((contact) => (
+                {displayedContacts.map((contact) => (
                   <TableRow key={contact.id} className="hover:bg-gray-100">
                     <TableCell>
                       <Avatar>
@@ -238,7 +210,7 @@ const ContatosPage: React.FC = () => {
                       </Avatar>
                     </TableCell>
                     <TableCell>{contact.name}</TableCell>
-                    <TableCell>{contact.phone}</TableCell>
+                    <TableCell>{formatPhone(contact.phone)}</TableCell>
                     <TableCell className="flex items-center gap-2">
                       <button>
                         <MessageCircle onClick={() => handleCreateTicket(contact.remoteJid)} />

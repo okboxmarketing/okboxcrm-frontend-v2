@@ -50,7 +50,7 @@ import { useEffect, useState } from "react"
 import { AdvisorCompaniesDialog } from "../advisor/advisor-companies-dialog"
 
 const navItems = [
-    { title: "Dashboard (Em breve)", url: "/home", icon: PieChart },
+    { title: "Dashboard (Beta)", url: "/home", icon: PieChart },
     { title: "Atendimento", url: "/home/atendimento", icon: MessageCircle },
     { title: "Kanban", url: "/home/kanban", icon: Kanban },
     { title: "Contatos", url: "/home/contatos", icon: Contact },
@@ -235,7 +235,7 @@ export function AppSidebar() {
                 ) : null}
 
             </SidebarContent>
-
+            <h1 className="px-4 text-xs">Em Desenvolvimento - v1.0.0</h1>
             <SidebarFooter>
                 <SidebarMenu>
                     {user?.userRole === "ADVISOR" ? (

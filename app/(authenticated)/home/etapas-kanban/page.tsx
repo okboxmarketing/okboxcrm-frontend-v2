@@ -97,7 +97,6 @@ const KanbanStepsPage: React.FC = () => {
     if (!stepName.trim()) return;
 
     try {
-      console.log("aquii", stepName, color, position);
       await createKanbanStep(stepName, color, position);
       toast({ description: "Etapa criada com sucesso!" });
       setStepName("");
@@ -141,7 +140,7 @@ const KanbanStepsPage: React.FC = () => {
 
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="flex-1 mx-auto p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Etapas do Kanban</h1>
       </div>

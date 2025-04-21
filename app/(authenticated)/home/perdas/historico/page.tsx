@@ -107,7 +107,7 @@ const LossHistoryPage: React.FC = () => {
     };
 
     return (
-        <div className="container mx-auto p-6">
+        <div className="flex-1 p-6">
             <div className="flex items-center justify-between mb-4">
                 <div>
                     <h1 className="text-2xl font-bold">Histórico de Perdas</h1>

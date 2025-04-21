@@ -28,14 +28,24 @@ export function formatMessageTime(timestamp: string) {
   }
 };
 
-
 export function formatPhone(phone: string) {
-  const country = phone.slice(0, 2);
-  const area = phone.slice(2, 4);
-  const part1 = phone.slice(4, 8);
-  const part2 = phone.slice(8);
-  return `+${country} (${area}) ${part1} - ${part2}`;
+  const cleaned = phone.replace(/\D/g, '');
+
+  const country = cleaned.slice(0, 2);
+  const area = cleaned.slice(2, 4);
+  const rest = cleaned.slice(4);
+
+  if (rest.length === 9) {
+    return `+${country} (${area}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+  }
+
+  if (rest.length === 8) {
+    return `+${country} (${area}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+  }
+
+  return `+${country} (${area}) ${rest}`;
 }
+
 
 export function getContrastColor(hexColor: string) {
   if (hexColor.startsWith("#")) hexColor = hexColor.slice(1);

@@ -87,7 +87,7 @@ export default function AdvisorDetailsPage() {
   if (!advisor) return <div></div>;
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="flex-1 p-6">
       <div className="flex items-center justify-between">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">{advisor.name}</h1>

@@ -1,24 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DashboardData } from '@/types/dashboard';
-import { getDashboardData } from '@/service/dashboardService';
 import { KanbanPieChart } from '@/components/dashboard/kanban-pie-chart';
-
-import { CalendarIcon } from "lucide-react"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { Button } from "@/components/ui/button"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { cn } from "@/lib/utils"
+import { CalendarIcon } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
-
+import { useDashboardData } from '@/hooks/swr/use-dashboard-swr';
+import { LossReasonsBarChart } from '@/components/dashboard/loss-reason-chart';
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
@@ -27,28 +27,11 @@ export default function DashboardPage() {
     to: today,
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!date?.from || !date?.to) return;
+  const startDate = date?.from?.toISOString().split('T')[0] ?? '';
+  const endDate = date?.to?.toISOString().split('T')[0] ?? '';
 
-      setLoading(true);
-      try {
-        const startDate = date.from.toISOString().split('T')[0];
-        const endDate = date.to.toISOString().split('T')[0];
-        const result = await getDashboardData(startDate, endDate);
-        setData(result);
-      } catch (error) {
-        console.error('Erro ao buscar dashboard', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { data } = useDashboardData(startDate, endDate);
 
-    fetchData();
-  }, [date]);
-
-  if (loading) return <p className="p-4">Carregando...</p>;
-  if (!data) return <p className="p-4">Nenhum dado disponível.</p>;
 
   return (
     <div className="p-6 space-y-6">
@@ -62,21 +45,21 @@ export default function DashboardPage() {
           <Popover>
             <PopoverTrigger asChild>
               <Button
-                variant={"outline"}
+                variant="outline"
                 className={cn(
-                  "w-[300px] justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
+                  'w-[300px] justify-start text-left font-normal',
+                  !date && 'text-muted-foreground'
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {date?.from ? (
                   date.to ? (
                     <>
-                      {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                      {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
+                      {format(date.from, 'dd/MM/yyyy', { locale: ptBR })} -{' '}
+                      {format(date.to, 'dd/MM/yyyy', { locale: ptBR })}
                     </>
                   ) : (
-                    format(date.from, "dd/MM/yyyy", { locale: ptBR })
+                    format(date.from, 'dd/MM/yyyy', { locale: ptBR })
                   )
                 ) : (
                   <span>Selecione um período</span>
@@ -101,13 +84,14 @@ export default function DashboardPage() {
           </Button>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle>Total de Vendas</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{data.totalVendas}</p>
+            <p className="text-2xl font-bold">{data?.totalVendas || 0}</p>
           </CardContent>
         </Card>
 
@@ -117,29 +101,37 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {new Intl.NumberFormat("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              }).format(data.valorTotalVendas)}
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(data?.valorTotalVendas || 0)}
             </p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Ticket Médio</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {new Intl.NumberFormat("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              }).format(data.ticketMedio)}
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(data?.ticketMedio || 0)}
             </p>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Total de Perdas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{data?.totalPerdas || 0}</p>
+          </CardContent>
+        </Card>
 
-        <KanbanPieChart data={data.composicaoKanban} />
+        <KanbanPieChart data={data?.composicaoKanban || []} />
+        <LossReasonsBarChart data={data?.rankingMotivosPerda || []} />
       </div>
     </div>
   );

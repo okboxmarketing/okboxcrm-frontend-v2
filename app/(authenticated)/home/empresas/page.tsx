@@ -72,7 +72,7 @@ const CadastroPage: React.FC = () => {
   if (loading) return <p className="text-center"></p>;
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="flex-1 p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Empresas Cadastradas</h1>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
