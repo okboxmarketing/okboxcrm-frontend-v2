@@ -103,7 +103,7 @@ export function AdvisorCompaniesDialog({
                         <p className="text-gray-500">Nenhuma empresa encontrada.</p>
                     </div>
                 ) : (
-                    <div className="grid gap-4 py-4 overflow-y-auto">
+                    <div className="max-h-[400px] overflow-y-auto grid gap-4 py-4">
                         {companies.map((company) => (
                             <div
                                 key={company.id}
