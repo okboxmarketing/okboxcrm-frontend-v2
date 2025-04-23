@@ -4,7 +4,10 @@ export type DashboardData = {
     ticketMedio: number;
     totalConversas: number;
     taxaConversao: number;
-    mediaLeadsPorDia: number;
+    conversasPorDia: {
+        dia: string;
+        quantidade: number;
+    }[];
     totalPerdas: number;
     composicaoKanban: {
         etapa: string;

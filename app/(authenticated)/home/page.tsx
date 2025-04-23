@@ -88,13 +88,20 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
+            <CardTitle>Conversas Iniciadas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{data?.totalConversas || 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
             <CardTitle>Total de Vendas</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{data?.totalVendas || 0}</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Valor Total de Vendas</CardTitle>
@@ -106,6 +113,16 @@ export default function DashboardPage() {
                 currency: 'BRL',
               }).format(data?.valorTotalVendas || 0)}
             </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Taxa de Conversão</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{new Intl.NumberFormat('pt-BR', {
+              style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2,
+            }).format(data?.taxaConversao || 0)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -132,6 +149,7 @@ export default function DashboardPage() {
 
         <KanbanPieChart data={data?.composicaoKanban || []} />
         <LossReasonsBarChart data={data?.rankingMotivosPerda || []} />
+
       </div>
     </div>
   );
