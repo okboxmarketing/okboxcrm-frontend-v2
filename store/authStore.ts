@@ -13,6 +13,7 @@ interface AuthState {
     login: (token: string) => void;
     logout: () => void;
     initializeAuth: () => void;
+    setCompanyImage: (companyImage: string) => void;
 }
 
 const useAuthStore = create<AuthState>((set) => ({
@@ -28,8 +29,6 @@ const useAuthStore = create<AuthState>((set) => ({
     login: (token) => {
         try {
             const decodedToken = jwtDecode<AuthUser>(token);
-            console.log("USER NO LOGIN STORE:", decodedToken)
-
             set({ user: decodedToken, token: token, isAuthenticated: true, isLoading: false });
             localStorage.setItem('authToken', token);
         } catch (error) {
@@ -48,11 +47,8 @@ const useAuthStore = create<AuthState>((set) => ({
         if (storedToken) {
             try {
                 const decodedToken = jwtDecode<AuthUser>(storedToken);
-                console.log("USER NO INITIALIZE:", decodedToken)
-
                 set({ user: decodedToken, token: storedToken, isAuthenticated: true, isLoading: false });
             } catch (error) {
-                console.error('Erro ao inicializar autenticação do armazenamento:', error);
                 set({ user: null, token: null, isAuthenticated: false, isLoading: false });
                 localStorage.removeItem('authToken');
             }
@@ -60,6 +56,10 @@ const useAuthStore = create<AuthState>((set) => ({
             set({ isLoading: false });
         }
     },
+
+    setCompanyImage: (companyImage: string) => set((state) => ({
+        user: state.user ? { ...state.user, companyImage } : null,
+    })),
 }));
 
 export default useAuthStore;

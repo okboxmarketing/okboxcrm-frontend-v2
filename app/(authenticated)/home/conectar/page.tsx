@@ -1,162 +1,457 @@
-"use client";
-import { Button } from '@/components/ui/button';
-import { connect, createInstance, getStatus } from '@/service/whaInstanceService';
-import React, { useEffect, useState, useTransition } from 'react';
-import Image from 'next/image';
-import { useToast } from '@/hooks/use-toast';
-import { io } from 'socket.io-client';
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import { CircleCheckBig, Loader2 } from 'lucide-react';
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { connect, createInstance, getInstance, getStatus, logoutInstance } from "@/service/whaInstanceService"
+import type React from "react"
+import { useEffect, useState, useTransition } from "react"
+import Image from "next/image"
+import { useToast } from "@/hooks/use-toast"
+import { io } from "socket.io-client"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+import { AlertCircle, CheckCircle2, CircleCheckBig, Loader2, LogOut, MessageSquare, RefreshCw, Smartphone, Users, WifiOff } from 'lucide-react'
+import { Badge } from "@/components/ui/badge"
+import { motion, AnimatePresence } from "framer-motion"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import useAuthStore from "@/store/authStore"
+
+export interface InstanceData {
+  profileName: string;
+  profilePicUrl: string;
+  messagesCount: number;
+  chatsCount: number;
+  contactsCount: number;
+}
 
 const ConectarPage: React.FC = () => {
-  const [base64, setBase64] = useState<string>();
-  const [generatingQRCode, setGeneratingQRCode] = useTransition();
+  const [base64, setBase64] = useState<string>()
+  const [generatingQRCode, setGeneratingQRCode] = useTransition()
   const [creatingInstance, setCreatingInstanceTransition] = useTransition()
-  const [status, setStatus] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [disconnecting, setDisconnecting] = useTransition()
+  const [status, setStatus] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [instanceData, setInstanceData] = useState<InstanceData | null>(null)
+  const [loadingInstanceData, setLoadingInstanceData] = useState(false)
+  const { user, setCompanyImage } = useAuthStore()
+  const { toast } = useToast()
 
   const checkStatus = async () => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const newStatus = await getStatus();
-      if (newStatus === "close") setStatus("Desconectado");
-      if (newStatus === "open") setStatus("Conectado");
-      if (newStatus === "connecting") setStatus("Conectando");
+      const newStatus = await getStatus()
+      if (newStatus === "close") setStatus("Desconectado")
+      if (newStatus === "open") {
+        setStatus("Conectado")
+        fetchInstanceData()
+      }
+      if (newStatus === "connecting") setStatus("Conectando")
     } catch (error) {
-      console.error("Erro ao buscar status:", error);
+      console.error("Erro ao buscar status:", error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
+
+  const fetchInstanceData = async () => {
+    setLoadingInstanceData(true)
+    try {
+      const data = await getInstance()
+      console.log("Dados da instância:", data)
+      setInstanceData(data)
+      setCompanyImage(data.profilePicUrl)
+    } catch (error) {
+      console.error("Erro ao buscar dados da instância:", error)
+    } finally {
+      setLoadingInstanceData(false)
+    }
+  }
 
   useEffect(() => {
-    checkStatus();
-  }, []);
+    checkStatus()
+  }, [])
 
   useEffect(() => {
-    const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, { transports: ["websocket"] });
+    if (!user?.companyId) {
+      console.error("companyId não está disponível")
+      return
+    }
+    const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, { transports: ["websocket"] })
 
     socket.on("connect", () => {
-      const companyId = localStorage.getItem("companyId");
-      if (companyId) {
-        socket.emit("join", companyId);
-      }
-    });
+      socket.emit("join", user.companyId)
+    })
 
-    socket.on("qrCode", (qrcode: string) => setBase64(qrcode));
+    socket.on("qrCode", (qrcode: string) => setBase64(qrcode))
 
     socket.on("connectionStatus", (status: string) => {
-      if (status === "close") setStatus("Desconectado");
-      if (status === "open") {
-        setStatus("Conectado");
-        setBase64(undefined);
+      if (status === "close") {
+        setStatus("Desconectado")
+        setInstanceData(null)
+        toast({
+          title: "Desconectado",
+          description: "A conexão com o WhatsApp foi perdida.",
+          variant: "destructive",
+        })
       }
-      if (status === "connecting") setStatus("Conectando");
-    });
+      if (status === "open") {
+        setStatus("Conectado")
+        setBase64(undefined)
+        fetchInstanceData()
+        toast({
+          title: "Conectado",
+          description: "WhatsApp conectado com sucesso!",
+        })
+      }
+      if (status === "connecting") setStatus("Conectando")
+    })
 
     return () => {
-      socket.disconnect();
-    };
-  }, []);
+      socket.disconnect()
+    }
+  }, [toast, user?.companyId])
 
   const handleConnect = async () => {
     setGeneratingQRCode(async () => {
-      await connect();
-      checkStatus();
-    });
-  };
+      try {
+        await connect()
+        toast({
+          title: "QR Code gerado",
+          description: "Escaneie o QR Code com seu WhatsApp para conectar.",
+        })
+        checkStatus()
+      } catch (error) {
+        console.log(error)
+        toast({
+          title: "Erro",
+          description: "Não foi possível gerar o QR Code.",
+          variant: "destructive",
+        })
+      }
+    })
+  }
 
   const handleCreateInstance = async () => {
     setCreatingInstanceTransition(async () => {
       try {
-        await createInstance();
-        toast({ title: "Conexão criada", description: "A conexão foi criada com sucesso!" });
-        checkStatus();
+        await createInstance()
+        toast({
+          title: "Conexão criada",
+          description: "A conexão foi criada com sucesso!",
+        })
+        checkStatus()
       } catch (err) {
-        console.log(err);
+        console.log(err)
+        toast({
+          title: "Erro",
+          description: "Não foi possível criar a conexão.",
+          variant: "destructive",
+        })
       }
     })
-  };
+  }
+
+  const handleDisconnect = async () => {
+    setDisconnecting(async () => {
+      try {
+        await logoutInstance()
+        setStatus("Desconectado")
+        setInstanceData(null)
+        toast({
+          title: "Desconectado",
+          description: "WhatsApp desconectado com sucesso.",
+        })
+        checkStatus()
+      } catch (error) {
+        console.log(error)
+        toast({
+          title: "Erro",
+          description: "Não foi possível desconectar o WhatsApp.",
+          variant: "destructive",
+        })
+      }
+    })
+  }
+
+  const getStatusIcon = () => {
+    if (isLoading) return <Loader2 className="animate-spin w-6 h-6 text-gray-400" />
+
+    switch (status) {
+      case "Desconectado":
+        return <WifiOff className="w-6 h-6 text-red-500" />
+      case "Conectando":
+        return <RefreshCw className="w-6 h-6 text-orange-500 animate-spin" />
+      case "Conectado":
+        return <CheckCircle2 className="w-6 h-6 text-green-500" />
+      default:
+        return <AlertCircle className="w-6 h-6 text-gray-400" />
+    }
+  }
+
+  const getStatusBadge = () => {
+    if (isLoading)
+      return (
+        <Badge variant="outline" className="animate-pulse">
+          Carregando...
+        </Badge>
+      )
+
+    switch (status) {
+      case "Desconectado":
+        return <Badge variant="destructive">Desconectado</Badge>
+      case "Conectando":
+        return (
+          <Badge variant="outline" className="border-orange-500 text-orange-500">
+            Conectando
+          </Badge>
+        )
+      case "Conectado":
+        return (
+          <Badge variant="outline" className="border-green-500 text-green-500">
+            Conectado
+          </Badge>
+        )
+      default:
+        return <Badge variant="outline">Não inicializado</Badge>
+    }
+  }
+
+  const getStatusDescription = () => {
+    if (isLoading) return "Verificando o status da conexão..."
+
+    switch (status) {
+      case "Desconectado":
+        return "Sua conexão com o WhatsApp está desativada. Gere um QR Code para conectar."
+      case "Conectando":
+        return "Escaneie o QR Code com seu WhatsApp para finalizar a conexão."
+      case "Conectado":
+        return "Sua conexão com o WhatsApp está ativa. Você pode enviar e receber mensagens."
+      default:
+        return "Crie uma conexão para começar a usar o WhatsApp."
+    }
+  }
+
+  const formatNumber = (num: number): string => {
+    return num > 999 ? `${(num / 1000).toFixed(1)}k` : num.toString()
+  }
 
   return (
-    <div className="flex flex-col container mx-auto p-6 w-full h-full gap-6">
-      <div>
-        <h1 className="text-2xl font-bold">Conexão</h1>
-        <p className="text-black/40">Conecte-se para aproveitar todas as funcionalidades de nosso CRM!</p>
+    <div className="flex flex-col container mx-auto p-6 w-full min-h-[80vh] gap-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Conexão WhatsApp</h1>
+        <p className="text-muted-foreground">Conecte seu WhatsApp para aproveitar todas as funcionalidades do CRM</p>
       </div>
 
-      <Card
-        className={cn(
-          "flex justify-between p-6 border transition-shadow duration-200",
-          status === "Desconectado" && "border-red-500 shadow-red-300 shadow-sm",
-          status === "Conectando" && "border-orange-500 shadow-orange-300 shadow-sm",
-          status === "Conectado" && "border-green-500 shadow-green-300 shadow-sm"
-        )}
-      >
-        <div>
-          <div className="flex gap-2 items-center">
-            {isLoading ? (
-              <Loader2 className="animate-spin text-gray-400 w-4 h-4" />
-            ) : (
-              <span
-                className={cn(
-                  "w-4 h-4 transition-shadow duration-200 rounded-full",
-                  status === "Desconectado" && "bg-red-500 shadow-red-300 shadow-sm",
-                  status === "Conectando" && "bg-orange-500 shadow-orange-300 shadow-sm",
-                  status === "Conectado" && "bg-green-500 shadow-green-300 shadow-sm"
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="md:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="space-y-1">
+              <CardTitle>Status da Conexão</CardTitle>
+              <CardDescription>{getStatusDescription()}</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {getStatusIcon()}
+              {getStatusBadge()}
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex-1 space-y-4 w-full">
+                <div
+                  className={cn(
+                    "p-4 rounded-lg border transition-all duration-300",
+                    status === "Desconectado" && "border-red-200 bg-red-50",
+                    status === "Conectando" && "border-orange-200 bg-orange-50",
+                    status === "Conectado" && "border-green-200 bg-green-50",
+                    !status && "border-gray-200 bg-gray-50",
+                  )}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <Smartphone
+                      className={cn(
+                        "w-5 h-5",
+                        status === "Desconectado" && "text-red-500",
+                        status === "Conectando" && "text-orange-500",
+                        status === "Conectado" && "text-green-500",
+                        !status && "text-gray-500",
+                      )}
+                    />
+                    <h3 className="font-medium">Dispositivo WhatsApp</h3>
+                  </div>
+
+                  <div className="text-sm text-muted-foreground">
+                    {status === "Conectado" ? (
+                      loadingInstanceData ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="animate-spin w-4 h-4" />
+                          <span>Carregando informações do perfil...</span>
+                        </div>
+                      ) : instanceData ? (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-16 w-16 border-2 border-green-100">
+                              <AvatarImage src={instanceData.profilePicUrl || "/placeholder.svg"} alt={instanceData.profileName} />
+                              <AvatarFallback className="bg-green-100 text-green-800">
+                                {instanceData.profileName.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h4 className="font-medium text-base text-gray-900">{instanceData.profileName}</h4>
+                              <p className="text-xs text-muted-foreground">Conectado e pronto para uso</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
+                            <div className="flex flex-col items-center p-2 bg-white rounded-md shadow-sm">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                                <MessageSquare className="w-3 h-3" />
+                                <span>Mensagens</span>
+                              </div>
+                              <span className="font-medium text-sm">{formatNumber(instanceData.messagesCount)}</span>
+                            </div>
+                            <div className="flex flex-col items-center p-2 bg-white rounded-md shadow-sm">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                                <MessageSquare className="w-3 h-3" />
+                                <span>Conversas</span>
+                              </div>
+                              <span className="font-medium text-sm">{formatNumber(instanceData.chatsCount)}</span>
+                            </div>
+                            <div className="flex flex-col items-center p-2 bg-white rounded-md shadow-sm">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                                <Users className="w-3 h-3" />
+                                <span>Contatos</span>
+                              </div>
+                              <span className="font-medium text-sm">{formatNumber(instanceData.contactsCount)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <p>Seu WhatsApp está conectado e pronto para uso.</p>
+                      )
+                    ) : status === "Conectando" ? (
+                      <p>Aguardando confirmação do dispositivo...</p>
+                    ) : status === "Desconectado" ? (
+                      <p>Nenhum dispositivo conectado no momento.</p>
+                    ) : (
+                      <p>Crie uma conexão para vincular seu WhatsApp.</p>
+                    )}
+                  </div>
+                </div>
+
+                {status !== "Conectado" && (
+                  <div className="flex flex-col gap-3">
+                    <h3 className="text-sm font-medium">Instruções:</h3>
+                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-2 pl-2">
+                      <li>Clique em &quot;Criar Conexão&quot; se for sua primeira vez</li>
+                      <li>Clique em &quot;Gerar QR Code&quot; para exibir o código</li>
+                      <li>Abra o WhatsApp no seu celular</li>
+                      <li>Acesse Configurações &gt; Dispositivos Conectados</li>
+                      <li>Escaneie o QR Code exibido na tela</li>
+                      <li>Aguarde a confirmação da conexão</li>
+                    </ol>
+                  </div>
                 )}
-              />
-            )}
-            <p
-              className={cn(
-                "font-medium transition-colors duration-200",
-                status === "Desconectado" && "text-red-500",
-                status === "Conectando" && "text-orange-500",
-                status === "Conectado" && "text-green-500"
-              )}
-            >
-              {isLoading ? "Carregando..." : status}
-            </p>
-          </div>
-          {/* <p>Nome</p>
-          <p>Foto do User</p> */}
-        </div>
 
-        {isLoading ? (
-          <div className="relative w-[350px] h-[350px] flex items-center justify-center">
-            <Loader2 className="animate-spin text-gray-400 w-12 h-12" />
-          </div>
-        ) : base64 ? (
-          <Image src={base64} width={350} height={350} alt="QR Code de Conexão" />
-        ) : (
-          <div className="relative w-[350px] h-[350px] flex items-center justify-center">
-            <Image
-              src="/qrcode-zap.svg"
-              alt="QR Code Placeholder"
-              layout="fill"
-              objectFit="cover"
-              className="absolute top-0 left-0 w-full h-full opacity-10"
-            />
-            {status === "Conectado" ? (
-              <CircleCheckBig className="text-green-500" size={150} />
-            ) : (
-              !status ? (
-                <Button className="relative z-10" onClick={handleCreateInstance} isLoading={creatingInstance}>
-                  Criar Conexão
-                </Button>
-              ) : (
-                <Button className="relative z-10" onClick={handleConnect} isLoading={generatingQRCode}>
-                  Gerar QR-Code
-                </Button>
-              )
-            )}
-          </div>
-        )}
-      </Card>
+                {status === "Conectado" && (
+                  <Button
+                    variant="outline"
+                    className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={handleDisconnect}
+                    disabled={disconnecting}
+                  >
+                    {disconnecting ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogOut className="mr-2 h-4 w-4" />
+                    )}
+                    Desconectar WhatsApp
+                  </Button>
+                )}
+              </div>
+
+              <div className="relative w-full md:w-[350px] h-[350px] flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                  {isLoading ? (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center justify-center w-full h-full"
+                    >
+                      <Loader2 className="animate-spin text-gray-400 w-12 h-12" />
+                    </motion.div>
+                  ) : base64 ? (
+                    <motion.div
+                      key="qrcode"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="relative"
+                    >
+                      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg -m-4 z-0"></div>
+                      <div className="relative z-10 p-4 bg-white rounded-lg shadow-lg">
+                        <Image
+                          src={base64 || "/placeholder.svg"}
+                          width={300}
+                          height={300}
+                          alt="QR Code de Conexão"
+                          className="rounded-md"
+                        />
+                        <p className="text-center text-sm mt-2 text-muted-foreground">
+                          Escaneie este QR Code com seu WhatsApp
+                        </p>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="actions"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="relative w-full h-full flex items-center justify-center"
+                    >
+                      <Image
+                        src="/qrcode-zap.svg"
+                        alt="QR Code Placeholder"
+                        width={350}
+                        height={350}
+                        className="absolute top-0 left-0 w-full h-full opacity-10"
+                      />
+                      {status === "Conectado" ? (
+                        <motion.div
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="flex flex-col items-center gap-4"
+                        >
+                          <CircleCheckBig className="text-green-500" size={120} />
+                          <p className="text-green-600 font-medium text-center">WhatsApp conectado com sucesso!</p>
+                        </motion.div>
+                      ) : !status ? (
+                        <Button
+                          size="lg"
+                          className="relative z-10"
+                          onClick={handleCreateInstance}
+                          disabled={creatingInstance}
+                        >
+                          {creatingInstance && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Criar Conexão
+                        </Button>
+                      ) : (
+                        <Button size="lg" className="relative z-10" onClick={handleConnect} disabled={generatingQRCode}>
+                          {generatingQRCode && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Gerar QR-Code
+                        </Button>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
-  );
-};
+  )
+}
 
-export default ConectarPage;
+export default ConectarPage

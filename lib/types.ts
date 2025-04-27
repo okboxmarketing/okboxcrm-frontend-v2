@@ -87,6 +87,8 @@ export interface AuthUser {
   createdAt: string;
   updatedAt: string;
   AdvisorOf?: (Company & { _count?: { users: number } })[];
+  profileImage?: string;
+  companyImage?: string;
 }
 
 export interface Response {

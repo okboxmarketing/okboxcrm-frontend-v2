@@ -254,9 +254,13 @@ export function AppSidebar() {
                                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                                 >
                                     <Avatar className="h-8 w-8 rounded-lg">
-                                        <AvatarFallback className="rounded-lg bg-black text-white">
-                                            {user?.userName ? user.userName.substring(0, 2).toUpperCase() : "U"}
-                                        </AvatarFallback>
+                                        {user?.companyImage ? (
+                                            <img src={user.companyImage} alt="Company Avatar" className="rounded-lg" />
+                                        ) : user?.userName ? (
+                                            user.userName.substring(0, 2).toUpperCase()
+                                        ) : (
+                                            "U"
+                                        )}
                                     </Avatar>
                                     <div className="grid flex-1 text-left text-sm leading-tight">
                                         <span className="truncate font-semibold">{user?.userName || "Usuário"}</span>
@@ -275,7 +279,7 @@ export function AppSidebar() {
                                     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                                         <Avatar className="h-8 w-8 rounded-lg">
                                             <AvatarFallback className="rounded-lg bg-black text-white">
-                                                {user?.userName ? user.userName.substring(0, 2).toUpperCase() : "U"}
+                                                {user?.companyImage || user?.userName ? user.userName.substring(0, 2).toUpperCase() : "U"}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="grid flex-1 text-left text-sm leading-tight">

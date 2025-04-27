@@ -1,7 +1,8 @@
+import { InstanceData } from "@/app/(authenticated)/home/conectar/page";
 import { apiHelper } from "@/lib/apiHelper";
 
 export const getInstance = async () => {
-  return apiHelper.get("/wha-instance");
+  return apiHelper.get<InstanceData>("/wha-instance");
 };
 
 export const connect = async () => {
@@ -22,3 +23,7 @@ export const getStatus = async () => {
 export const createInstance = async () => {
   return apiHelper.post("/wha-instance");
 }
+
+export const logoutInstance = async () => {
+  return apiHelper.post("/wha-instance/logout");
+};
