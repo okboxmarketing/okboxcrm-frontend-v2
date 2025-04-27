@@ -41,6 +41,7 @@ export interface Company {
   createdAt: string;
   updatedAt: string;
   userCount?: number;
+  profileImage?: string;
   Advisor: {
     id: string;
     name: string;
@@ -73,6 +74,7 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  profileImage?: string;
   AdvisorOf?: (Company & { _count?: { users: number } })[];
 }
 

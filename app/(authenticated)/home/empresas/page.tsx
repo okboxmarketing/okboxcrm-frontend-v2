@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Users } from "lucide-react";
+import { Building2, Users } from "lucide-react";
 import { Company } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type CompanyType = {
   name: string;
@@ -98,10 +99,10 @@ const CadastroPage: React.FC = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Data Criação</TableHead>
+            <TableHead className="w-[120px]">Data Criação</TableHead>
             <TableHead>Nome</TableHead>
             <TableHead>Assessor</TableHead>
-            <TableHead>Usuários</TableHead>
+            <TableHead className="w-[100px]">Usuários</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -119,11 +120,34 @@ const CadastroPage: React.FC = () => {
                 })}
               </TableCell>
 
-              <TableCell>{company.name}</TableCell>
+              <TableCell className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage
+                    src={company.profileImage || "/placeholder-building.svg"}
+                    alt={company.name}
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    <Building2 className="h-6 w-6" />
+                  </AvatarFallback>
+                </Avatar>
+                {company.name}
+              </TableCell>
+
               <TableCell>{company.Advisor?.name || "Nenhum"}</TableCell>
-              <TableCell className="flex items-center gap-2"><Users size={14} />{company._count?.users || company.userCount}</TableCell>
+
+              <TableCell className="flex items-center gap-2">
+                <Users size={14} />
+                {company._count?.users || company.userCount || 0}
+              </TableCell>
             </TableRow>
           ))}
+          {companies.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                Nenhuma empresa cadastrada
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>

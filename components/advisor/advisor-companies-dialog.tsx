@@ -110,9 +110,15 @@ export function AdvisorCompaniesDialog({
                                 className="flex justify-between items-center border rounded-md p-4 hover:bg-gray-50"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="bg-gray-100 p-2 rounded-full">
-                                        <Building2 className="h-5 w-5 text-gray-600" />
-                                    </div>
+                                    {company.profileImage ? (
+                                        <img
+                                            src={company.profileImage}
+                                            alt={company.name}
+                                            className="w-10 h-10 rounded-full"
+                                        />
+                                    ) : (
+                                        <Building2 size={40} className="text-gray-500 h-8" />
+                                    )}
                                     <div className="text-left">
                                         <p className="font-medium">{company.name}</p>
                                         <p className="text-sm text-gray-500">

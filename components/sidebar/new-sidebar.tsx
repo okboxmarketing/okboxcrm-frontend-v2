@@ -253,7 +253,7 @@ export function AppSidebar() {
                                     size="lg"
                                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                                 >
-                                    <Avatar className="h-8 w-8 rounded-lg">
+                                    <Avatar className="h-8 w-8 rounded-lg items-center bg-black text-white justify-center">
                                         {user?.companyImage ? (
                                             <img src={user.companyImage} alt="Company Avatar" className="rounded-lg" />
                                         ) : user?.userName ? (
