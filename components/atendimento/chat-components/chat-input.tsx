@@ -5,18 +5,16 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music } from "lucide-react";
-import { useChatContext } from "@/context/ChatContext";
 import { sendAudioMessage, sendMediaMessage, SendMediaParams } from "@/service/messageService";
 import { useToast } from "@/hooks/use-toast";
+import { useChatStore } from "@/store/chatStore";
 
 interface FormData {
   text: string;
 }
 
-
-
 const ChatInput: React.FC = () => {
-  const { sendMessage, selectedChat } = useChatContext();
+  const { sendMessage, selectedChat } = useChatStore();
   const { register, handleSubmit, reset } = useForm<FormData>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);

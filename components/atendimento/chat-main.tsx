@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useChatContext } from "@/context/ChatContext";
 import ChatBody from "./chat-components/chat-body";
 import ChatInput from "./chat-components/chat-input";
 import ChatHeader from "./chat-components/chat-header";
 import useAuthStore from "@/store/authStore";
+import { useChatStore } from "@/store/chatStore";
 
 const ChatMain: React.FC = () => {
-  const { selectedChat } = useChatContext();
+  const { selectedChat } = useChatStore();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { user } = useAuthStore();
 

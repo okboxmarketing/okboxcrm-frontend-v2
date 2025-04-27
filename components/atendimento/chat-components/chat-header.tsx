@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, MoveDownRight, MoreVertical } from "lucide-react";
 import MoveTicketSelect from "@/components/atendimento/kanban-step-selector";
-import { useChatContext } from "@/context/ChatContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -20,6 +19,7 @@ import { LossReason } from "@/lib/types";
 import { deleteTicket, refreshTicket } from "@/service/ticketsService";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import useAuthStore from "@/store/authStore";
+import { useChatStore } from "@/store/chatStore";
 
 type Products = {
   id: string;
@@ -28,7 +28,7 @@ type Products = {
 };
 
 const ChatHeader: React.FC = () => {
-  const { selectedChat, fetchTickets, setSelectedChat } = useChatContext();
+  const { selectedChat, fetchTickets, selectChat } = useChatStore();
   const { toast } = useToast();
 
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
@@ -125,7 +125,7 @@ const ChatHeader: React.FC = () => {
       toast({
         description: "Ticket excluído com sucesso!",
       });
-      setSelectedChat(null)
+      selectChat(null)
     } catch (error) {
       console.error("Erro ao excluir ticket:", error);
       toast({
@@ -159,7 +159,7 @@ const ChatHeader: React.FC = () => {
 
       setSaleDialogOpen(false);
       const updated = await refreshTicket(selectedChat.id);
-      setSelectedChat({
+      selectChat({
         ...selectedChat,
         status: updated.status,
         KanbanStep: updated.KanbanStep,
@@ -192,7 +192,7 @@ const ChatHeader: React.FC = () => {
 
       setLossDialogOpen(false);
       const updated = await refreshTicket(selectedChat.id);
-      setSelectedChat({
+      selectChat({
         ...selectedChat,
         status: updated.status,
         KanbanStep: updated.KanbanStep,

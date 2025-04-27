@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search } from "lucide-react";
@@ -7,15 +7,15 @@ import { KanbanStep, Ticket, TicketStatusEnum } from "@/lib/types";
 import { acceptTicket } from "@/service/ticketsService";
 import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
-import { useChatContext } from "@/context/ChatContext";
 import { Badge } from "../ui/badge";
 import { getKanbanSteps } from "@/service/kanbanStepsService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { TicketList } from "./chat-sidebar/ticket-list";
 import useAuthStore from "@/store/authStore";
+import { useChatStore } from "@/store/chatStore";
 
 const ChatSidebar: React.FC = () => {
-  const { tickets, selectedChat, setSelectedChat, tab, setTab, fetchTickets } = useChatContext();
+  const { tickets, tab, setTab, selectedChat, selectChat, fetchTickets } = useChatStore()
   const [showMyTickets, setShowMyTickets] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
@@ -28,16 +28,35 @@ const ChatSidebar: React.FC = () => {
   }, [tickets]);
 
   useEffect(() => {
-    const fetchKanbanData = async () => {
-      try {
-        const data = await getKanbanSteps();
-        setKanbanSteps(data);
-      } catch (error) {
-        console.error("Error fetching kanban data:", error);
-      }
-    };
-    fetchKanbanData();
-  }, [])
+    getKanbanSteps().then(setKanbanSteps).catch(console.error);
+  }, []);
+
+  const sortedTickets = useMemo(() => {
+    return [...tickets]
+      .filter(t => t.lastMessage)
+      .sort((a, b) =>
+        new Date(b.lastMessage!.createdAt).getTime()
+        - new Date(a.lastMessage!.createdAt).getTime()
+      );
+  }, [tickets]);
+
+  const openTickets = sortedTickets.filter(t => ["OPEN", "SOLD", "LOSS"].includes(t.status));
+  const pendingTickets = sortedTickets.filter(t => t.status === "PENDING");
+
+  const matchesSearch = (t: Ticket) => t.Contact.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+  const filteredOpen = openTickets.filter(t =>
+    matchesSearch(t) &&
+    (showMyTickets ? t.responsibleId === user?.userId : true) &&
+    (selectedKanbanStep === "all"
+      ? true
+      : selectedKanbanStep === "active"
+        ? t.KanbanStep.name !== "Sem Contato" && !["SOLD", "LOSS"].includes(t.status)
+        : t.KanbanStep.id === +selectedKanbanStep
+    )
+  );
+
+  const filteredPending = pendingTickets.filter(matchesSearch);
 
   const searchTickets = (ticket: Ticket) => {
     const lowercaseSearch = searchTerm.toLowerCase();
@@ -47,8 +66,7 @@ const ChatSidebar: React.FC = () => {
     return matchesContactName
   };
 
-  const openTickets = tickets.filter(ticket => ticket.status === "OPEN" || ticket.status === "SOLD" || ticket.status === "LOSS");
-  const pendingTickets = tickets.filter(ticket => ticket.status === "PENDING");
+
 
   const filteredOpenTickets = openTickets.filter(ticket =>
     (showMyTickets ? ticket.responsibleId === user?.userId : true) &&
@@ -167,38 +185,30 @@ const ChatSidebar: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {tab === "PENDING" && (
+        {tab === "PENDING" ? (
           <TicketList
-            tickets={sortedPendingTickets}
+            tickets={filteredPending}
             selectedChat={selectedChat}
-            onSelectChat={setSelectedChat}
-            onAcceptTicket={async (ticket: Ticket) => {
-              try {
-                await acceptTicket(ticket.id);
-                toast({ description: "Ticket aceito com sucesso" });
-
-                fetchTickets()
-                setTab("OPEN");
-              } catch (error) {
-                console.error("Erro ao aceitar ticket:", error);
-                toast({ description: "Erro ao aceitar ticket", variant: "destructive" });
-              }
+            onSelectChat={selectChat}
+            onAcceptTicket={async t => {
+              await acceptTicket(t.id);
+              toast({ description: "Ticket aceito com sucesso" });
+              fetchTickets();
+              setTab("OPEN");
             }}
             loading={isLoading}
             showAcceptButton={user?.userRole !== "ADVISOR"}
             type="PENDING"
           />
-        )}
-        {tab === "OPEN" && (
+        ) : (
           <TicketList
-            tickets={sortedOpenTickets}
+            tickets={filteredOpen}
             selectedChat={selectedChat}
-            onSelectChat={setSelectedChat}
-            type="OPEN"
+            onSelectChat={selectChat}
             loading={isLoading}
+            type="OPEN"
           />
         )}
-
       </div>
     </div>
   );
