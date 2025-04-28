@@ -14,3 +14,7 @@ export const loginUser = async (email: string, password: string) => {
 export const deleteUser = async (userId: string) => {
   return apiHelper.delete(`/users/${userId}`);
 }
+
+export const deleteUserMaster = async (userId: string) => {
+  return apiHelper.delete(`/users/master/${userId}`);
+}

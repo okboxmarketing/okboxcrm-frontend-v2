@@ -28,3 +28,8 @@ export const deleteTicket = async (ticketId: number) => {
 export const refreshTicket = async (ticketId: number) => {
   return apiHelper.get<Ticket>(`/tickets/id/${ticketId}`);
 }
+
+export const hideTicket = async (ticketId: number) => {
+  console.log("Hiding ticket", ticketId);
+  return apiHelper.delete(`/tickets/hide/${ticketId}`);
+}

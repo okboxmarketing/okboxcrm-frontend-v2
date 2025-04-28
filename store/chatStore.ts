@@ -24,6 +24,7 @@ interface ChatState {
     selectChat: (ticket: Ticket | null) => void;
     sendMessage: (text: string) => Promise<void>;
     initialize: () => void;
+    removeTicket: (id: number) => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -90,6 +91,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
             get().fetchMessages();
         }
     },
+
+    removeTicket: (id: number) => set(state => ({
+        tickets: state.tickets.filter(t => t.id !== id),
+        selectedChat: state.selectedChat?.id === id ? null : state.selectedChat,
+    })),
 
     sendMessage: async (text) => {
         const chat = get().selectedChat;

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, MoveDownRight, MoreVertical } from "lucide-react";
+import { ShoppingCart, MoveDownRight, MoreVertical, Trash, EyeOff, ChevronRight } from "lucide-react";
 import MoveTicketSelect from "@/components/atendimento/kanban-step-selector";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -16,10 +16,11 @@ import { createLoss } from "@/service/lossService";
 import { getLossReasons } from "@/service/lossService";
 import { getProducts } from "@/service/productService";
 import { LossReason } from "@/lib/types";
-import { deleteTicket, refreshTicket } from "@/service/ticketsService";
+import { deleteTicket, hideTicket, refreshTicket } from "@/service/ticketsService";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import useAuthStore from "@/store/authStore";
 import { useChatStore } from "@/store/chatStore";
+import Link from "next/link";
 
 type Products = {
   id: string;
@@ -28,7 +29,7 @@ type Products = {
 };
 
 const ChatHeader: React.FC = () => {
-  const { selectedChat, fetchTickets, selectChat } = useChatStore();
+  const { selectedChat, fetchTickets, selectChat, removeTicket } = useChatStore();
   const { toast } = useToast();
 
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
@@ -40,6 +41,7 @@ const ChatHeader: React.FC = () => {
   const [kanbanRefreshKey, setKanbanRefreshKey] = useState(0);
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmHideOpen, setConfirmHideOpen] = useState(false);
 
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [lossReasons, setLossReasons] = useState<LossReason[]>([]);
@@ -126,6 +128,7 @@ const ChatHeader: React.FC = () => {
         description: "Ticket excluído com sucesso!",
       });
       selectChat(null)
+      removeTicket(selectedChat.id);
     } catch (error) {
       console.error("Erro ao excluir ticket:", error);
       toast({
@@ -134,6 +137,25 @@ const ChatHeader: React.FC = () => {
       });
     }
     setConfirmDeleteOpen(false);
+  }
+
+  const handleHideTicket = async () => {
+    if (!selectedChat) return;
+    try {
+      await hideTicket(selectedChat.id);
+      toast({
+        description: "Ticket ocultado com sucesso!",
+      });
+      selectChat(null)
+      removeTicket(selectedChat.id);
+    } catch (error) {
+      console.error("Erro ao ocultar ticket:", error);
+      toast({
+        description: "Erro ao ocultar ticket",
+        variant: "destructive",
+      });
+    }
+    setConfirmHideOpen(false);
   }
 
   const handleCreateSale = async () => {
@@ -253,7 +275,14 @@ const ChatHeader: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setConfirmDeleteOpen(true)}>Excluir Ticket</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setConfirmHideOpen(true)} className="flex items-center gap-2 text-blue-500 hover:bg-blue-100">
+                <EyeOff />
+                Ocultar Ticket
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setConfirmDeleteOpen(true)} className="flex items-center gap-2 text-red-500 hover:bg-red-100">
+                <Trash />
+                Excluir Ticket
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -269,6 +298,26 @@ const ChatHeader: React.FC = () => {
                 </Button>
                 <Button variant="destructive" onClick={handleDeleteTicket}>
                   Excluir
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={confirmHideOpen} onOpenChange={setConfirmHideOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Você tem certeza?</DialogTitle>
+              </DialogHeader>
+              <p>Tem certeza que deseja ocultar este ticket? Ele não vai mais participar de seu atendimento, métricas e kanban.</p>
+              <Link href={'/contatos/ocultos'} className="flex items-center gap-2 text-blue-500 hover:text-blue-300 text-sm">
+                <ChevronRight />
+                Ver Tickets Ocultos
+              </Link>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConfirmHideOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleHideTicket}>
+                  Ocultar
                 </Button>
               </DialogFooter>
             </DialogContent>
