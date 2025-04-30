@@ -308,7 +308,7 @@ const ChatHeader: React.FC = () => {
                 <DialogTitle>Você tem certeza?</DialogTitle>
               </DialogHeader>
               <p>Tem certeza que deseja ocultar este ticket? Ele não vai mais participar de seu atendimento, métricas e kanban.</p>
-              <Link href={'/contatos/ocultos'} className="flex items-center gap-2 text-blue-500 hover:text-blue-300 text-sm">
+              <Link href={'/home/tickets'} className="flex items-center gap-2 text-blue-500 hover:text-blue-300 text-sm">
                 <ChevronRight />
                 Ver Tickets Ocultos
               </Link>

@@ -1,9 +1,15 @@
 "use client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Check, Image as ImageIcon, Mic, Video } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, EyeOff, Image as ImageIcon, Mic, Video } from "lucide-react";
 import { formatMessageTime, getContrastColor } from "@/lib/utils";
 import { MediaEnum, Ticket } from "@/lib/types";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { hideTicket } from "@/service/ticketsService";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import React from "react";
 
 interface TicketItemProps {
     ticket: Ticket;
@@ -23,6 +29,7 @@ export const TicketItem: React.FC<TicketItemProps> = ({
     type
 }) => {
     const isUnreadMessage = ticket.lastMessage && !ticket.lastMessage.fromMe && !ticket.lastMessage.read;
+    const [confirmHideOpen, setConfirmHideOpen] = React.useState(false);
 
     const renderLastMessage = () => {
         if (!ticket.lastMessage) return null;
@@ -82,6 +89,28 @@ export const TicketItem: React.FC<TicketItemProps> = ({
                         <span className="text-xs text-gray-500">
                             {ticket.lastMessage?.createdAt ? formatMessageTime(ticket.lastMessage.createdAt) : ""}
                         </span>
+                        {showAcceptButton && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                    <button className="p-1 rounded-full hover:bg-gray-200 transition-colors">
+                                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                                    </button>
+
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setConfirmHideOpen(true)
+                                        }}
+                                        className="cursor-pointer"
+                                    >
+                                        <EyeOff className="h-4 w-4 mr-2" />
+                                        Ocultar Ticket
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
 
                     <div className="flex items-center justify-between gap-2">
@@ -120,6 +149,29 @@ export const TicketItem: React.FC<TicketItemProps> = ({
                     </span>
                 </div>
             )}
+            <Dialog open={confirmHideOpen} onOpenChange={setConfirmHideOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Você tem certeza?</DialogTitle>
+                    </DialogHeader>
+                    <p>Tem certeza que deseja ocultar este ticket? Ele não vai mais participar de seu atendimento, métricas e kanban.</p>
+                    <Link href={{
+                        pathname: "/home/tickets",
+                        query: { tab: "hidden" },
+                    }} className="flex items-center gap-2 text-blue-500 hover:text-blue-300 text-sm">
+                        <ChevronRight />
+                        Ver Tickets Ocultos
+                    </Link>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setConfirmHideOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button onClick={() => (hideTicket(ticket.id))}>
+                            Ocultar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
