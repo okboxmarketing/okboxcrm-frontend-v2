@@ -75,6 +75,7 @@ const ConectarPage: React.FC = () => {
       console.error("companyId não está disponível")
       return
     }
+
     const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, { transports: ["websocket"] })
 
     socket.on("connect", () => {
@@ -108,7 +109,7 @@ const ConectarPage: React.FC = () => {
     return () => {
       socket.disconnect()
     }
-  }, [toast, user?.companyId])
+  }, [user?.companyId, toast])
 
   const handleConnect = async () => {
     setGeneratingQRCode(async () => {
@@ -291,7 +292,10 @@ const ConectarPage: React.FC = () => {
                             <Avatar className="h-16 w-16 border-2 border-green-100">
                               <AvatarImage src={instanceData.profilePicUrl || "/placeholder.svg"} alt={instanceData.profileName} />
                               <AvatarFallback className="bg-green-100 text-green-800">
-                                {instanceData.profileName.substring(0, 2).toUpperCase()}
+                                {instanceData.profileName
+                                  ? instanceData.profileName.substring(0, 2).toUpperCase()
+                                  : "??"
+                                }
                               </AvatarFallback>
                             </Avatar>
                             <div>

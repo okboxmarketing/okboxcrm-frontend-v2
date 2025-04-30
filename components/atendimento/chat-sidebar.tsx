@@ -20,12 +20,7 @@ const ChatSidebar: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedKanbanStep, setSelectedKanbanStep] = useState<string>("all");
-  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuthStore();
-
-  useEffect(() => {
-    setIsLoading(tickets.length === 0);
-  }, [tickets]);
 
   useEffect(() => {
     getKanbanSteps().then(setKanbanSteps).catch(console.error);
@@ -196,7 +191,7 @@ const ChatSidebar: React.FC = () => {
               fetchTickets();
               setTab("OPEN");
             }}
-            loading={isLoading}
+            loading={false}
             showAcceptButton={user?.userRole !== "ADVISOR"}
             type="PENDING"
           />
@@ -205,7 +200,7 @@ const ChatSidebar: React.FC = () => {
             tickets={filteredOpen}
             selectedChat={selectedChat}
             onSelectChat={selectChat}
-            loading={isLoading}
+            loading={false}
             type="OPEN"
           />
         )}
