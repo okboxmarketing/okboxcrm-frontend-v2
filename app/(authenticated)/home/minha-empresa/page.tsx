@@ -101,8 +101,6 @@ const MinhaEmpresaPage: React.FC = () => {
     }
   };
 
-
-
   return (
     <div className="flex-1 p-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">

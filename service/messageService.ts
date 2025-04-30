@@ -9,7 +9,7 @@ export interface SendMediaParams {
   mediaType: "image" | "video" | "document";
   mimeType: string;
   caption?: string;
-  media: string; // base64
+  media: string;
   fileName: string;
 }
 

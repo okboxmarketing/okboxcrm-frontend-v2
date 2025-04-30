@@ -14,7 +14,7 @@ export const acceptTicket = async (ticketId: number) => {
 }
 
 export const moveTicket = async (stepId: number, ticketId: string) => {
-  return apiHelper.post(`/tickets/${stepId}/${ticketId}`);
+  return apiHelper.post(`/tickets/move/${stepId}/${ticketId}`);
 }
 
 export const createTicket = async (remoteJid: string) => {
@@ -31,5 +31,13 @@ export const refreshTicket = async (ticketId: number) => {
 
 export const hideTicket = async (ticketId: number) => {
   console.log("Hiding ticket", ticketId);
-  return apiHelper.delete(`/tickets/hide/${ticketId}`);
+  return apiHelper.post(`/tickets/hide/${ticketId}`);
+}
+
+export const getHiddenTickets = async () => {
+  return apiHelper.get<Ticket[]>(`/tickets/hidden`);
+}
+
+export const unhideTicket = async (ticketId: number) => {
+  return apiHelper.post(`/tickets/unhide/${ticketId}`);
 }

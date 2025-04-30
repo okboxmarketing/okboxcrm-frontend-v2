@@ -20,3 +20,7 @@ export const getKanbanStepByTicketId = async (ticketId: number) => {
 export const updateKanbanStep = async (stepId: number, name: string, color: string) => {
   return apiHelper.patch(`/kanban-steps/${stepId}`, { name, color });
 }
+
+export const updateKanbanStepPosition = async (stepId: number, position: number) => {
+  return apiHelper.patch(`/kanban-steps/${stepId}/position`, { position });
+}

@@ -15,6 +15,7 @@ import {
     PlugZap,
     UserCheck,
     Building,
+    Ticket,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -51,8 +52,9 @@ import { AdvisorCompaniesDialog } from "../advisor/advisor-companies-dialog"
 
 const navItems = [
     { title: "Dashboard (Beta)", url: "/home", icon: PieChart },
-    { title: "Atendimento", url: "/home/atendimento", icon: MessageCircle },
     { title: "Kanban", url: "/home/kanban", icon: Kanban },
+    { title: "Atendimento", url: "/home/atendimento", icon: MessageCircle },
+    { title: "Tickets", url: "/home/tickets", icon: Ticket },
     { title: "Contatos", url: "/home/contatos", icon: Contact },
     { title: "Etapas do Funil", url: "/home/etapas-kanban", icon: Cone },
     {

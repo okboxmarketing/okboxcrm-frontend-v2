@@ -17,12 +17,9 @@ export default function KanbanBoard() {
   const { kanbanSteps, isLoading, mutate } = useKanbanSteps();
   const [draggingTicketId, setDraggingTicketId] = useState<number | null>(null);
 
-  const columns = kanbanSteps
-    .filter((step) => step.name !== 'Vendido' && step.name !== 'Perdido')
-    .reduce((acc, step) => {
-      acc[step.id] = step;
-      return acc;
-    }, {} as Record<string, typeof kanbanSteps[number]>);
+  const orderedSteps = [...kanbanSteps]
+    .filter(step => step.name !== 'Vendido' && step.name !== 'Perdido')
+    .sort((a, b) => a.position - b.position);
 
   const handleTicketClick = (ticketId: number) => {
     router.push(`/home/atendimento?ticketId=${ticketId}`);
@@ -70,7 +67,7 @@ export default function KanbanBoard() {
 
       <div className="flex space-x-4 overflow-x-auto">
         <AnimatePresence initial={false}>
-          {Object.values(columns).map((column) => (
+          {orderedSteps.map((column) => (
             <motion.div
               key={column.id}
               layout
