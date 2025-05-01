@@ -29,38 +29,6 @@ export function formatMessageTime(timestamp: string) {
   }
 };
 
-
-export function groupMessagesByDay(msgs: NewMessagePayload[]) {
-  const groups: { label: string, items: NewMessagePayload[] }[] = [];
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  const formatLabel = (date: Date) => {
-    const dOnly = new Date(date.setHours(0, 0, 0, 0)).getTime();
-    if (dOnly === new Date(today.setHours(0, 0, 0, 0)).getTime()) return 'Hoje';
-    if (dOnly === new Date(yesterday.setHours(0, 0, 0, 0)).getTime()) return 'Ontem';
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-  };
-
-  msgs.forEach(msg => {
-    const ts = msg.data.messageTimestamp < 1e11
-      ? msg.data.messageTimestamp * 1000
-      : msg.data.messageTimestamp;
-    const msgDate = new Date(ts);
-    const label = formatLabel(new Date(msgDate));
-
-    const grp = groups.find(g => g.label === label);
-    if (grp) {
-      grp.items.push(msg);
-    } else {
-      groups.push({ label, items: [msg] });
-    }
-  });
-
-  return groups;
-}
-
 export function formatPhone(phone: string) {
   const cleaned = phone.replace(/\D/g, '');
 

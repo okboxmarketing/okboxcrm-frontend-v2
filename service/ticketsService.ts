@@ -5,8 +5,21 @@ export const getTickets = async () => {
   return apiHelper.get<Ticket[]>(`/tickets`);
 };
 
-export const getMessagesByContactId = async (contactId: string) => {
-  return apiHelper.get<Message[]>(`/tickets/messages/${contactId}`);
+interface PaginationMeta {
+  total: number;
+  page: number;
+  pageCount: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+export const getMessagesByContactId = async (
+  contactId: string,
+  page: number = 1
+): Promise<{ data: Message[]; meta: PaginationMeta }> => {
+  return apiHelper.get<{ data: Message[]; meta: PaginationMeta }>(
+    `/tickets/messages/${contactId}?page=${page}`,
+  );
 };
 
 export const acceptTicket = async (ticketId: number) => {

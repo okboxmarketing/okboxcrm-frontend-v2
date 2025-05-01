@@ -19,20 +19,30 @@ interface ChatState {
     tab: TicketStatusEnum;
     socket: Socket | null;
     fetchTickets: () => Promise<void>;
-    fetchMessages: () => Promise<void>;
     setTab: (tab: TicketStatusEnum) => void;
     selectChat: (ticket: Ticket | null) => void;
     sendMessage: (text: string) => Promise<void>;
     initialize: () => void;
     removeTicket: (id: number) => void;
+
+    page: number;
+    hasNextPage: boolean;
+    isLoadingMore: boolean;
+    fetchMessages: (page?: number) => Promise<void>;
+    fetchMoreMessages: () => Promise<void>;
+    isLoadingMessages: boolean;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
     tickets: [],
     messages: [],
+    page: 1,
+    hasNextPage: false,
+    isLoadingMore: false,
     selectedChat: null,
     tab: "OPEN",
     socket: null,
+    isLoadingMessages: false,
 
     fetchTickets: async () => {
         try {
@@ -43,32 +53,62 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
     },
 
-    fetchMessages: async () => {
+    fetchMessages: async (page = 1) => {
         const chat = get().selectedChat;
         if (!chat) return;
+        set({ isLoadingMore: page > 1, isLoadingMessages: page === 1 });
         try {
-            const raw = await getMessagesByContactId(chat.Contact.remoteJid);
-            const formatted: NewMessagePayload[] = raw.map((msg: Message) => {
+            const { data, meta } = await getMessagesByContactId(
+                chat.Contact.remoteJid,
+                page
+            );
+            const formatted: NewMessagePayload[] = data.map((msg: Message) => {
                 let mediaType = MediaEnum.TEXT;
                 let contentUrl: string | undefined;
                 let conversation = msg.content;
-                if (msg.mediaType === MediaEnum.IMAGE) {
-                    mediaType = MediaEnum.IMAGE;
-                    contentUrl = msg.content;
-                    conversation = '';
-                } else if (msg.mediaType === MediaEnum.AUDIO) {
-                    mediaType = MediaEnum.AUDIO;
-                    contentUrl = msg.content;
-                    conversation = '';
+
+                switch (msg.mediaType) {
+                    case MediaEnum.IMAGE:
+                        mediaType = MediaEnum.IMAGE;
+                        contentUrl = msg.content;
+                        conversation = '';
+                        break;
+
+                    case MediaEnum.AUDIO:
+                        mediaType = MediaEnum.AUDIO;
+                        contentUrl = msg.content;
+                        conversation = '';
+                        break;
+
+                    case MediaEnum.VIDEO:
+                        mediaType = MediaEnum.VIDEO;
+                        contentUrl = msg.content;
+                        conversation = '';
+                        break;
+
+                    case MediaEnum.DOCUMENT:
+                        mediaType = MediaEnum.DOCUMENT;
+                        contentUrl = msg.content;
+                        conversation = '';
+                        break;
+
+                    default:
+                        mediaType = MediaEnum.TEXT;
+                        break;
                 }
+
                 return {
                     contactId: msg.contactId,
                     data: {
-                        key: { fromMe: msg.fromMe, id: msg.id, remoteJid: msg.contactId },
+                        key: {
+                            fromMe: msg.fromMe,
+                            id: msg.id.toString(),
+                            remoteJid: msg.contactId,
+                        },
                         message: { conversation },
                         messageType: msg.mediaType,
                         messageTimestamp: new Date(msg.createdAt).getTime(),
-                        instanceId: msg.id,
+                        instanceId: msg.id.toString(),
                         status: msg.status ?? undefined,
                     },
                     mediaType,
@@ -76,10 +116,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     content: msg.content,
                 };
             });
-            set({ messages: formatted });
-            get().fetchTickets();
-        } catch (err) {
-            console.error('Erro ao buscar mensagens:', err);
+
+            if (page === 1) {
+                set({
+                    messages: formatted,
+                    page: 1,
+                    hasNextPage: meta.hasNext,
+                });
+            } else {
+                set(state => ({
+                    messages: [...formatted, ...state.messages],
+                    hasNextPage: meta.hasNext,
+                    page,
+                }));
+            }
+        } finally {
+            set({ isLoadingMore: false, isLoadingMessages: false });
         }
     },
 
@@ -90,6 +142,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (ticket) {
             get().fetchMessages();
         }
+    },
+
+    fetchMoreMessages: async () => {
+        const { page, hasNextPage } = get();
+        if (!hasNextPage) return;
+        await get().fetchMessages(page + 1);
     },
 
     removeTicket: (id: number) => set(state => ({

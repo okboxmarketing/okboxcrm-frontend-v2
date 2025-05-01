@@ -6,52 +6,11 @@ import { MediaEnum, NewMessagePayload } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { isLink } from "@/lib/utils";
 import { useChatStore } from "@/store/chatStore";
+import { PuffLoader, PulseLoader } from "react-spinners";
+import MessageTimestamp from "./message/message-timestamp";
 
 interface ChatBodyProps {
   onSelectImage: (url: string) => void;
-}
-
-const formatMessageTime = (timestamp: number) => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-
-function groupByDay(msgs: NewMessagePayload[]) {
-  type Group = { label: string; items: NewMessagePayload[] };
-  const groups: Group[] = [];
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  const normalize = (ts: number) => {
-    const ms = ts < 1e11 ? ts * 1000 : ts;
-    const d = new Date(ms);
-    d.setHours(0, 0, 0, 0);
-    return d.getTime();
-  };
-
-  const labelOf = (d: number) => {
-    const t0 = normalize(today.getTime());
-    const y0 = normalize(yesterday.getTime());
-    if (d === t0) return "Hoje";
-    if (d === y0) return "Ontem";
-    return new Date(d).toLocaleDateString("pt-BR", {
-      day: "2-digit", month: "2-digit", year: "2-digit"
-    });
-  };
-
-  msgs.forEach(m => {
-    const dayKey = normalize(m.data.messageTimestamp);
-    const lbl = labelOf(dayKey);
-    let grp = groups.find(g => g.label === lbl);
-    if (!grp) {
-      grp = { label: lbl, items: [] };
-      groups.push(grp);
-    }
-    grp.items.push(m);
-  });
-
-  return groups;
 }
 
 const renderMessageContent = (
@@ -69,9 +28,7 @@ const renderMessageContent = (
             className="max-w-full w-64 h-64 object-cover rounded-lg cursor-pointer"
             onClick={() => msg.contentUrl && onSelectImage(msg.contentUrl)}
           />
-          <span className={`absolute bottom-1 right-2 text-xs ${fromMe ? "text-white" : "text-gray-500"}`}>
-            {formatMessageTime(msg.data.messageTimestamp)}
-          </span>
+          <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
         </div>
       );
     case MediaEnum.AUDIO:
@@ -81,9 +38,7 @@ const renderMessageContent = (
             <source src={msg.contentUrl} type="audio/ogg" />
             Seu navegador não suporta áudio.
           </audio>
-          <span className={`absolute bottom-1 right-2 text-xs ${fromMe ? "text-white" : "text-gray-500"}`}>
-            {formatMessageTime(msg.data.messageTimestamp)}
-          </span>
+          <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
         </div>
       );
     case MediaEnum.VIDEO:
@@ -93,9 +48,7 @@ const renderMessageContent = (
             <source src={msg.contentUrl} type="video/mp4" />
             Seu navegador não suporta vídeos.
           </video>
-          <span className={`absolute bottom-1 right-2 text-xs ${fromMe ? "text-white" : "text-gray-500"}`}>
-            {formatMessageTime(msg.data.messageTimestamp)}
-          </span>
+          <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
         </div>
       );
     case MediaEnum.DOCUMENT:
@@ -121,9 +74,7 @@ const renderMessageContent = (
               <Download className="h-4 w-4 flex-shrink-0" />
               <span>Baixar</span>
             </Button>
-            <span className={`block mt-2 text-right text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>
-              {formatMessageTime(msg.data.messageTimestamp)}
-            </span>
+            <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
           </div>
         </div>
       );
@@ -134,7 +85,7 @@ const renderMessageContent = (
       return (
         <div className="relative max-w-full">
           <p
-            className={`px-4 py-2 break-words ${fromMe
+            className={`px-4 py-2 whitespace-pre-wrap break-all ${fromMe
               ? "bg-black text-white rounded-l-xl rounded-t-xl"
               : "bg-white rounded-r-xl rounded-t-xl"
               }`}
@@ -144,16 +95,14 @@ const renderMessageContent = (
                 href={messageText}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`underline break-words ${fromMe ? "text-blue-200" : "text-blue-600"}`}
+                className="underline break-all whitespace-pre-wrap"
               >
                 {messageText}
               </a>
             ) : (
               messageText
             )}
-            <span className={`inline-block ml-2 text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>
-              {formatMessageTime(msg.data.messageTimestamp)}
-            </span>
+            <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
           </p>
         </div>
       );
@@ -164,49 +113,100 @@ const renderMessageContent = (
 const ChatBody: React.FC<ChatBodyProps> = ({
   onSelectImage,
 }) => {
-  const { messages, selectedChat } = useChatStore();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const filtered = useMemo(() => {
-    if (!selectedChat) return [];
-    return messages.filter(m => m.contactId === selectedChat.Contact.remoteJid);
-  }, [messages, selectedChat]);
-
-  const groups = useMemo(() => groupByDay(filtered), [filtered]);
+  const {
+    messages,
+    selectedChat,
+    fetchMoreMessages,
+    page,
+    hasNextPage,
+    isLoadingMore,
+    isLoadingMessages,
+  } = useChatStore();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView();
+    if (selectedChat) {
+      setTimeout(scrollToBottom, 0)
     }
+  }, [selectedChat]);
+
+  const scrollToBottom = () => {
+    const el = scrollRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  };
+
+  const orderedMessages = React.useMemo(() => {
+    return [...messages].sort(
+      (a, b) => a.data.messageTimestamp - b.data.messageTimestamp
+    );
   }, [messages]);
+
+  useEffect(() => {
+    if (!isLoadingMore && page === 1) {
+      setTimeout(scrollToBottom, 0)
+    }
+  }, [messages, isLoadingMore]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollTop < 50 && hasNextPage && !isLoadingMore) {
+      const previousHeight = el.scrollHeight;
+      fetchMoreMessages().then(() => {
+        const newHeight = el.scrollHeight;
+        el.scrollTop = newHeight - previousHeight + el.scrollTop;
+      });
+    }
+  };
 
   if (!selectedChat) return null;
 
+  if (page === 1 && isLoadingMessages) {
+    return (
+      <div
+        ref={scrollRef}
+        className="flex-1 flex items-center justify-center"
+        style={{ minHeight: "200px" }}
+      >
+        <PuffLoader
+          color="black"
+          size={50}
+          speedMultiplier={1.5}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 overflow-y-auto px-4 space-y-4">
-      {groups.map(group => (
-        <div key={group.label}>
-          <div className="flex justify-center my-2">
-            <span className="bg-gray-200 px-3 py-1 rounded-full text-xs text-gray-600">
-              {group.label}
-            </span>
-          </div>
-          {group.items.map(msg => {
-            const fromMe = msg.data.key.fromMe;
-            return (
-              <div
-                key={msg.data.key.id}
-                className={`flex ${fromMe ? "justify-end" : "justify-start"} w-full mb-2`}
-              >
-                <div className={`max-w-[70%] ${fromMe ? "ml-auto" : "mr-auto"}`}>
-                  {renderMessageContent(msg, onSelectImage, fromMe)}
-                </div>
-              </div>
-            );
-          })}
+    <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 space-y-4" ref={scrollRef} onScroll={handleScroll}>
+      {isLoadingMore && (
+        <div className="flex justify-center py-2">
+          <PulseLoader
+            color="black"
+            size={10}
+            speedMultiplier={1.5}
+          />
         </div>
-      ))}
-      <div ref={messagesEndRef} />
+      )}
+      {orderedMessages.map((msg) => {
+        const fromMe = msg.data.key.fromMe;
+        return (
+          <div
+            key={msg.data.key.id}
+            className={`flex ${fromMe ? "justify-end" : "justify-start"
+              } w-full mb-2`}
+          >
+            <div
+              className={`max-w-[70%] ${fromMe ? "ml-auto" : "mr-auto"
+                }`}
+            >
+              {renderMessageContent(msg, onSelectImage, fromMe)}
+            </div>
+          </div>
+        );
+      })}
+      <div id="messages-end" />
     </div>
   );
 };
