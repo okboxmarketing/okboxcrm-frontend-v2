@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { FileText, Download } from "lucide-react";
 import { MediaEnum, NewMessagePayload } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -137,17 +137,24 @@ const ChatBody: React.FC<ChatBodyProps> = ({
     }
   };
 
+  const filteredMessages = React.useMemo(() => {
+    if (!selectedChat) return [];
+    return messages.filter(
+      (m) => m.contactId === selectedChat.Contact.remoteJid
+    );
+  }, [messages, selectedChat]);
+
   const orderedMessages = React.useMemo(() => {
-    return [...messages].sort(
+    return [...filteredMessages].sort(
       (a, b) => a.data.messageTimestamp - b.data.messageTimestamp
     );
-  }, [messages]);
+  }, [filteredMessages]);
 
   useEffect(() => {
     if (!isLoadingMore && page === 1) {
       setTimeout(scrollToBottom, 0)
     }
-  }, [messages, isLoadingMore]);
+  }, [orderedMessages, isLoadingMore]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
