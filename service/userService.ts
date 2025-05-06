@@ -11,9 +11,14 @@ export const loginUser = async (email: string, password: string) => {
   return response;
 };
 
-export const deleteUser = async (userId: string) => {
-  return apiHelper.delete(`/users/${userId}`);
-}
+export const deleteUser = async (userId: string, companyId?: string) => {
+  return apiHelper.delete(
+    `/users/${userId}`,
+    companyId ? { companyId } : undefined
+  );
+};
+
+
 
 export const deleteUserMaster = async (userId: string) => {
   return apiHelper.delete(`/users/master/${userId}`);

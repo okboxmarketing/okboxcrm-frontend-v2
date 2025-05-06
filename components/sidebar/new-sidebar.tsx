@@ -108,8 +108,8 @@ export function AppSidebar() {
     }, [initializeAuth])
 
     const handleLogout = () => {
-        window.location.href = "/"
         logout()
+        window.location.href = "/"
     }
 
     return (

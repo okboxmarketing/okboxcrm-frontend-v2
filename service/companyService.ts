@@ -35,9 +35,7 @@ export const findCompanyById = async (companyId: string) => {
 };
 
 export const findAllCompanies = async () => {
-  const company = await apiHelper.get<Company[]>("/company");
-  console.log("DEBUUUG:", company)
-  return company
+  return await apiHelper.get<Company[]>("/company");
 };
 
 export const findMyCompany = async () => {
@@ -57,10 +55,5 @@ export const getCompaniesByAdvisor = async () => {
 };
 
 export const setActiveCompany = async (companyId: string) => {
-  try {
-    return await apiHelper.post<{ access_token: string, user: any }>('/company/set-active', { companyId });
-  } catch (error) {
-    console.error("Error setting active company:", error);
-    throw error;
-  }
+  return await apiHelper.post<{ access_token: string, user: any }>('/company/set-active', { companyId });
 }

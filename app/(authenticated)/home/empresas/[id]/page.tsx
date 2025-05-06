@@ -205,6 +205,7 @@ const EmpresaPage: React.FC = () => {
                         variant="destructive"
                         size="sm"
                         onClick={() => {
+                          console.log(user);
                           setUserToDelete(user);
                           setConfirmDialogOpen(true);
                         }}
@@ -333,7 +334,7 @@ const EmpresaPage: React.FC = () => {
               onClick={async () => {
                 if (!userToDelete) return;
                 try {
-                  await deleteUser(userToDelete.id);
+                  await deleteUser(userToDelete.id, companyId!);
                   toast({ description: "Usuário excluído com sucesso!" });
                   await fetchCompany();
                 } catch (error) {

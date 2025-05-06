@@ -12,9 +12,7 @@ export const createAdvisor = async (data: CreateAdvisorData) => {
 };
 
 export const getMyCompanies = async (): Promise<Company[]> => {
-    const companies = await apiHelper.get<Company[]>("/company");
-    console.log("debug: ", companies);
-    return companies;
+    return await apiHelper.get<Company[]>("/company");
 };
 
 export const getAdvisors = async (): Promise<User[]> => {
