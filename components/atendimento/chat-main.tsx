@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { Fragment } from "react";
 import ChatBody from "./chat-components/chat-body";
 import ChatInput from "./chat-components/chat-input";
 import ChatHeader from "./chat-components/chat-header";
@@ -9,33 +9,17 @@ import { useChatStore } from "@/store/chatStore";
 
 const ChatMain: React.FC = () => {
   const { selectedChat } = useChatStore();
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { user } = useAuthStore();
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setSelectedImage(null);
-      }
-    };
-
-    if (selectedImage) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [selectedImage]);
+  const showChatInput = user?.userRole !== "ADVISOR" && selectedChat?.status !== "PENDING";
 
   return (
     <div className="flex-1 flex flex-col bg-[#FAFAFA] relative">
       {selectedChat ? (
-        <>
+        <Fragment>
           <ChatHeader />
-          <ChatBody onSelectImage={(url) => setSelectedImage(url)} />
-          {user?.userRole !== "ADVISOR" && <ChatInput />}
-        </>
+          <ChatBody />
+          {showChatInput && <ChatInput />}
+        </Fragment>
       ) : (
         <div className="flex-1 flex items-center justify-center">
           <p className="text-center text-gray-500">

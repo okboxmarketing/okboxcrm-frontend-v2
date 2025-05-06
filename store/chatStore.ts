@@ -230,7 +230,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
             if (ts < 1e12) ts = ts * 1000;
             payload.data.messageTimestamp = ts;
 
-            // se for nossa própria mensagem, atualiza apenas o ticket
             if (payload.data.key.fromMe) {
                 set((state) => ({
                     tickets: state.tickets.map((t) =>
@@ -251,7 +250,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 return;
             }
 
-            // mensagens recebidas de terceiros
             set((state) => {
                 const exists = state.messages.some((m) => m.data.key.id === payload.data.key.id);
                 const messages = exists ? state.messages : [...state.messages, payload];
