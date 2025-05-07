@@ -114,8 +114,8 @@ const ChatBody: React.FC = () => {
               ) : (
                 messageText
               )}
-              <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
             </p>
+            <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
           </div>
         );
 

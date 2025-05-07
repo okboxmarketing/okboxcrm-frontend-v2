@@ -60,6 +60,7 @@ export default function KanbanBoard() {
                   element: el,
                   getData: () => ({ droppableId: col.id }),
                   onDrop: ({ source }) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const { ticketId, sourceStepId } = source.data as any;
                     if (sourceStepId !== col.id) {
                       moveTicket(ticketId, col.id.toString()).then(() => reload());

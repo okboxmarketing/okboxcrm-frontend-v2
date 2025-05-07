@@ -5,7 +5,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search } from "lucide-react";
 import { KanbanStep, Ticket, TicketStatusEnum } from "@/lib/types";
 import { acceptTicket } from "@/service/ticketsService";
-import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "../ui/badge";
 import { getKanbanSteps } from "@/service/kanbanStepsService";
@@ -22,9 +21,11 @@ const ChatSidebar: React.FC = () => {
   const [selectedKanbanStep, setSelectedKanbanStep] = useState<string>("all");
   const { user } = useAuthStore();
 
+
   useEffect(() => {
     getKanbanSteps().then(setKanbanSteps).catch(console.error);
   }, []);
+
 
   const sortedTickets = useMemo(() => {
     return [...tickets]
@@ -187,9 +188,9 @@ const ChatSidebar: React.FC = () => {
             onSelectChat={selectChat}
             onAcceptTicket={async t => {
               await acceptTicket(t.id);
-              toast({ description: "Ticket aceito com sucesso" });
-              fetchTickets();
+              fetchTickets()
               setTab("OPEN");
+              selectChat(t)
             }}
             loading={false}
             showAcceptButton={user?.userRole !== "ADVISOR"}

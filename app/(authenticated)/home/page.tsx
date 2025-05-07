@@ -146,7 +146,16 @@ export default function DashboardPage() {
             <p className="text-2xl font-bold">{data?.totalPerdas || 0}</p>
           </CardContent>
         </Card>
-
+        <Card>
+          <CardHeader>
+            <CardTitle>Tempo Médio de Resposta (min)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">
+              {data?.tempoMedioResposta?.toFixed(0) ?? 0}
+            </p>
+          </CardContent>
+        </Card>
         <KanbanPieChart data={data?.composicaoKanban || []} />
         <LossReasonsBarChart data={data?.rankingMotivosPerda || []} />
 

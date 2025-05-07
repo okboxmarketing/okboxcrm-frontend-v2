@@ -9,7 +9,8 @@ import { hideTicket } from "@/service/ticketsService";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import React from "react";
+import React, { useState } from "react";
+import { useChatStore } from "@/store/chatStore";
 
 interface TicketItemProps {
     ticket: Ticket;
@@ -29,7 +30,8 @@ export const TicketItem: React.FC<TicketItemProps> = ({
     type
 }) => {
     const isUnreadMessage = ticket.lastMessage && !ticket.lastMessage.fromMe && !ticket.lastMessage.read;
-    const [confirmHideOpen, setConfirmHideOpen] = React.useState(false);
+    const [confirmHideOpen, setConfirmHideOpen] = useState(false);
+    const { removeTicket } = useChatStore()
 
     const renderLastMessage = () => {
         if (!ticket.lastMessage) return null;
@@ -166,12 +168,16 @@ export const TicketItem: React.FC<TicketItemProps> = ({
                         <Button variant="outline" onClick={() => setConfirmHideOpen(false)}>
                             Cancelar
                         </Button>
-                        <Button onClick={() => (hideTicket(ticket.id))}>
+                        <Button onClick={() => {
+                            hideTicket(ticket.id)
+                            setConfirmHideOpen(false)
+                            removeTicket(ticket.id)
+                        }}>
                             Ocultar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 };

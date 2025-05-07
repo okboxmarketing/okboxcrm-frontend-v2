@@ -18,8 +18,8 @@ export type DashboardData = {
         motivo: string;
         quantidade: number;
     }[];
-    tempoMedioResposta?: string;
-    tempoMedioFechamento?: string;
+    tempoMedioResposta?: number;
+    tempoMedioFechamento?: number;
     etapasFinalizacao: {
         etapa: string;
         tipo: 'ganho' | 'perdido';

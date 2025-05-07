@@ -21,7 +21,7 @@ const MessageTimestamp: React.FC<MessageTimestampProps> = ({
 
     return (
         <div
-            className={`mt-1 flex items-center justify-end text-[10px] ${fromMe ? "text-gray-200" : "text-gray-500"
+            className={`mt-1 flex items-center justify-end text-[10px] ${fromMe ? "text-gray-500" : "text-gray-500"
                 }`}
         >
             <span className="mr-1">{date}</span>

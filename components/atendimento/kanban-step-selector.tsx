@@ -46,7 +46,6 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
     try {
       await moveTicket(ticketId, stepId.toString());
       setSelectedStep(value);
-      toast({ description: "Ticket movido com sucesso!" });
       fetchTickets()
     } catch (error) {
       console.log(error);

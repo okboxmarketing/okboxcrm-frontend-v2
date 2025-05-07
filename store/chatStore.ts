@@ -73,25 +73,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
                         contentUrl = msg.content;
                         conversation = '';
                         break;
-
                     case MediaEnum.AUDIO:
                         mediaType = MediaEnum.AUDIO;
                         contentUrl = msg.content;
                         conversation = '';
                         break;
-
                     case MediaEnum.VIDEO:
                         mediaType = MediaEnum.VIDEO;
                         contentUrl = msg.content;
                         conversation = '';
                         break;
-
                     case MediaEnum.DOCUMENT:
                         mediaType = MediaEnum.DOCUMENT;
                         contentUrl = msg.content;
                         conversation = '';
                         break;
-
                     default:
                         mediaType = MediaEnum.TEXT;
                         break;
@@ -124,7 +120,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     hasNextPage: meta.hasNext,
                 });
             } else {
-                set(state => ({
+                set((state) => ({
                     messages: [...formatted, ...state.messages],
                     hasNextPage: meta.hasNext,
                     page,
@@ -138,7 +134,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     setTab: (tab) => set({ tab }),
 
     selectChat: (ticket) => {
-        set({ selectedChat: ticket, messages: [] });
+        set((state) => ({
+            selectedChat: ticket,
+            messages: [],
+            tickets: state.tickets.map((t) =>
+                t.id === ticket?.id
+                    ? {
+                        ...t,
+                        lastMessage: t.lastMessage
+                            ? { ...t.lastMessage, read: true }
+                            : t.lastMessage,
+                    }
+                    : t
+            ),
+        }));
         if (ticket) {
             get().fetchMessages();
         }
@@ -150,16 +159,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
         await get().fetchMessages(page + 1);
     },
 
-    removeTicket: (id: number) => set(state => ({
-        tickets: state.tickets.filter(t => t.id !== id),
-        selectedChat: state.selectedChat?.id === id ? null : state.selectedChat,
-    })),
+    removeTicket: (id: number) =>
+        set((state) => ({
+            tickets: state.tickets.filter((t) => t.id !== id),
+            selectedChat:
+                state.selectedChat?.id === id ? null : state.selectedChat,
+        })),
 
     sendMessage: async (text) => {
         const chat = get().selectedChat;
         if (!chat) return;
         const now = Date.now();
-        const user = useAuthStore.getState().user;
         const tempId = `tmp-${now}`;
         const newMsg: NewMessagePayload = {
             contactId: chat.Contact.remoteJid,
@@ -217,12 +227,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
     initialize: () => {
         const user = useAuthStore.getState().user;
         if (get().socket) return;
-        const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || '', { transports: ['websocket'] });
+        const socket = io(
+            process.env.NEXT_PUBLIC_BACKEND_URL || '',
+            { transports: ['websocket'] }
+        );
 
         socket.on('connect', () => {
             if (user?.companyId) {
                 socket.emit('join', user.companyId);
             }
+        });
+
+        socket.on('newTicket', async () => {
+            await get().fetchTickets();
         });
 
         socket.on('newMessage', (payload: NewMessagePayload) => {
@@ -233,11 +250,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
             if (payload.data.key.fromMe) {
                 set((state) => ({
                     tickets: state.tickets.map((t) =>
-                        t.Contact.remoteJid === payload.contactId
+                        t.Contact?.remoteJid === payload.contactId
                             ? {
                                 ...t,
                                 lastMessage: {
-                                    content: payload.data.message.conversation || '',
+                                    content:
+                                        payload.data.message.conversation || '',
                                     fromMe: true,
                                     createdAt: new Date(ts).toISOString(),
                                     mediaType: payload.mediaType,
@@ -251,14 +269,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }
 
             set((state) => {
-                const exists = state.messages.some((m) => m.data.key.id === payload.data.key.id);
-                const messages = exists ? state.messages : [...state.messages, payload];
+                const exists = state.messages.some(
+                    (m) => m.data.key.id === payload.data.key.id
+                );
+                const messages = exists
+                    ? state.messages
+                    : [...state.messages, payload];
                 const tickets = state.tickets.map((t) =>
-                    t.Contact.remoteJid === payload.contactId
+                    t.Contact?.remoteJid === payload.contactId
                         ? {
                             ...t,
                             lastMessage: {
-                                content: payload.data.message.conversation || '',
+                                content:
+                                    payload.data.message.conversation || '',
                                 fromMe: payload.data.key.fromMe,
                                 createdAt: new Date(ts).toISOString(),
                                 mediaType: payload.mediaType,
