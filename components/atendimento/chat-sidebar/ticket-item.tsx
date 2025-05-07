@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import React from "react";
+import { useChatStore } from "@/store/chatStore";
 
 interface TicketItemProps {
     ticket: Ticket;
@@ -30,6 +31,7 @@ export const TicketItem: React.FC<TicketItemProps> = ({
 }) => {
     const isUnreadMessage = ticket.lastMessage && !ticket.lastMessage.fromMe && !ticket.lastMessage.read;
     const [confirmHideOpen, setConfirmHideOpen] = React.useState(false);
+    const { removeTicket, fetchPending } = useChatStore()
 
     const renderLastMessage = () => {
         if (!ticket.lastMessage) return null;
@@ -144,9 +146,12 @@ export const TicketItem: React.FC<TicketItemProps> = ({
                             Sem Etapa
                         </span>
                     )}
-                    <span className="text-xs px-2 py-1 rounded inline-block bg-black text-white">
-                        {ticket.Responsible?.name}
-                    </span>
+                    {ticket.Responsible && ticket.Responsible.name && (
+                        <span className="text-xs px-2 py-1 rounded inline-block bg-black text-white">
+                            {ticket.Responsible?.name}
+                        </span>
+
+                    )}
                 </div>
             )}
             <Dialog open={confirmHideOpen} onOpenChange={setConfirmHideOpen}>
@@ -166,7 +171,11 @@ export const TicketItem: React.FC<TicketItemProps> = ({
                         <Button variant="outline" onClick={() => setConfirmHideOpen(false)}>
                             Cancelar
                         </Button>
-                        <Button onClick={() => (hideTicket(ticket.id))}>
+                        <Button onClick={async () => {
+                            await hideTicket(ticket.id)
+                            removeTicket(ticket.id)
+                            fetchPending()
+                        }}>
                             Ocultar
                         </Button>
                     </DialogFooter>

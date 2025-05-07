@@ -12,11 +12,10 @@ interface KanbanStep {
 
 interface MoveTicketSelectProps {
   ticketId: number;
-  fetchTickets: () => void;
   refreshKey: number
 }
 
-const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets, refreshKey }) => {
+const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, refreshKey }) => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedStep, setSelectedStep] = useState<string>("");
   const { toast } = useToast();
@@ -47,7 +46,6 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
       await moveTicket(ticketId, stepId.toString());
       setSelectedStep(value);
       toast({ description: "Ticket movido com sucesso!" });
-      fetchTickets()
     } catch (error) {
       console.log(error);
       toast({

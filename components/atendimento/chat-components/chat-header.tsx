@@ -29,7 +29,7 @@ type Products = {
 };
 
 const ChatHeader: React.FC = () => {
-  const { selectedChat, fetchTickets, selectChat, removeTicket } = useChatStore();
+  const { selectedChat, selectChat, removeTicket } = useChatStore();
   const { toast } = useToast();
 
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
@@ -259,7 +259,7 @@ const ChatHeader: React.FC = () => {
       </div>
       {selectedChat.status !== "PENDING" && user?.userRole !== "ADVISOR" && (
         <div className="flex items-center gap-4">
-          <MoveTicketSelect ticketId={selectedChat.id} fetchTickets={fetchTickets} refreshKey={kanbanRefreshKey} />
+          <MoveTicketSelect ticketId={selectedChat.id} refreshKey={kanbanRefreshKey} />
           <Button onClick={handleOpenSaleDialog} className="bg-green-500 hover:bg-green-500/70">
             <ShoppingCart />
           </Button>
