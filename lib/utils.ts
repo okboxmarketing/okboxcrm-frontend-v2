@@ -28,8 +28,8 @@ export function formatMessageTime(timestamp: string) {
   }
 };
 
-export function formatPhone(phone: string) {
-  const cleaned = phone.replace(/\D/g, '');
+export function formatPhone(phone?: string) {
+  const cleaned = (phone ?? '').replace(/\D/g, '');
 
   const country = cleaned.slice(0, 2);
   const area = cleaned.slice(2, 4);

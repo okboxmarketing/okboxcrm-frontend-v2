@@ -14,7 +14,7 @@ export const removeKanbanStep = async (stepId: number) => {
 }
 
 export const getKanbanStepByTicketId = async (ticketId: number) => {
-  return apiHelper.get<KanbanStep>(`/kanban-steps/${ticketId}`);
+  return apiHelper.get<KanbanStep>(`/kanban-steps/ticket/${ticketId}`);
 }
 
 export const updateKanbanStep = async (stepId: number, name: string, color: string) => {
