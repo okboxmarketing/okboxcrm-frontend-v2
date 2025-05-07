@@ -21,6 +21,6 @@ export const updateKanbanStep = async (stepId: number, name: string, color: stri
   return apiHelper.patch(`/kanban-steps/${stepId}`, { name, color });
 }
 
-export const updateKanbanStepPosition = async (stepId: number, position: number) => {
-  return apiHelper.patch(`/kanban-steps/${stepId}/position`, { position });
+export const swapKanbanSteps = async (stepAId: number, stepBId: number) => {
+  return apiHelper.post(`/kanban-steps/swap`, { stepAId, stepBId });
 }
