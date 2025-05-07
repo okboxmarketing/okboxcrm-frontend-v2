@@ -14,10 +14,10 @@ const ChatBody: React.FC = () => {
     messages,
     selectedChat,
     fetchMoreMessages,
-    msgPage,
-    msgHasNext,
-    msgLoading,
-    msgLoadingMore,
+    page,
+    hasNextPage,
+    isLoadingMore,
+    isLoadingMessages,
   } = useChatStore();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -149,14 +149,14 @@ const ChatBody: React.FC = () => {
   }, [filteredMessages]);
 
   useEffect(() => {
-    if (!msgLoadingMore && msgPage === 1) {
+    if (!isLoadingMore && page === 1) {
       setTimeout(scrollToBottom, 0)
     }
-  }, [orderedMessages, msgLoadingMore]);
+  }, [orderedMessages, isLoadingMore]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
-    if (el.scrollTop < 50 && msgHasNext && !msgLoadingMore) {
+    if (el.scrollTop < 50 && hasNextPage && !isLoadingMore) {
       const previousHeight = el.scrollHeight;
       fetchMoreMessages().then(() => {
         const newHeight = el.scrollHeight;
@@ -167,7 +167,7 @@ const ChatBody: React.FC = () => {
 
   if (!selectedChat) return null;
 
-  if (msgPage === 1 && msgLoading) {
+  if (page === 1 && isLoadingMessages) {
     return (
       <div
         ref={scrollRef}
@@ -185,7 +185,7 @@ const ChatBody: React.FC = () => {
 
   return (
     <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 space-y-4" ref={scrollRef} onScroll={handleScroll}>
-      {msgLoadingMore && (
+      {isLoadingMore && (
         <div className="flex justify-center py-2">
           <PulseLoader
             color="black"

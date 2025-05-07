@@ -100,8 +100,6 @@ export interface Response {
 
 export type TicketStatusEnum = "PENDING" | "OPEN" | "SOLD" | "LOSS";
 
-export type TabStatusEnum = "PENDING" | "OPEN"
-
 export interface KanbanStep {
   id: number;
   name: string;

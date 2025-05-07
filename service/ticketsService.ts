@@ -5,11 +5,6 @@ export const getTickets = async () => {
   return apiHelper.get<Ticket[]>(`/tickets`);
 };
 
-interface MessagePaginadas {
-  data: Message[];
-  meta: PaginationMeta
-}
-
 interface PaginationMeta {
   total: number;
   page: number;
@@ -18,16 +13,11 @@ interface PaginationMeta {
   hasPrevious: boolean;
 }
 
-interface TicketsPaginados {
-  data: Ticket[];
-  meta: PaginationMeta
-}
-
 export const getMessagesByContactId = async (
   contactId: string,
   page: number = 1
-): Promise<MessagePaginadas> => {
-  return apiHelper.get<MessagePaginadas>(
+): Promise<{ data: Message[]; meta: PaginationMeta }> => {
+  return apiHelper.get<{ data: Message[]; meta: PaginationMeta }>(
     `/tickets/messages/${contactId}?page=${page}`,
   );
 };
@@ -63,8 +53,4 @@ export const getHiddenTickets = async () => {
 
 export const unhideTicket = async (ticketId: number) => {
   return apiHelper.post(`/tickets/unhide/${ticketId}`);
-}
-
-export const getTicketsByStatus = async (status: string, page: number = 1) => {
-  return apiHelper.get<TicketsPaginados>(`/tickets/status/${status}?page=${page}`);
 }

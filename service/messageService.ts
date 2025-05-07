@@ -14,6 +14,7 @@ export interface SendMediaParams {
 }
 
 export const sendMediaMessage = async (params: SendMediaParams) => {
+  console.log("Sending Media: ", params)
   await apiHelper.post('/message/media', params);
 }
 
