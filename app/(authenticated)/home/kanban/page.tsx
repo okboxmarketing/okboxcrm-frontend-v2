@@ -12,11 +12,13 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { toast } from '@/hooks/use-toast';
 
 export default function KanbanBoard() {
   const router = useRouter();
-  const { kanbanBoard, isLoading, error, reload, loadMore, loadingMore } = useKanbanBoard();
+  const { kanbanBoard, isLoading, error, loadMore, loadingMore, reload } = useKanbanBoard();
   const [draggingTicketId, setDraggingTicketId] = useState<number | null>(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState<number | null>(null);
 
   const ordered = [...kanbanBoard]
     .filter((col) => col.name !== 'Vendido' && col.name !== 'Perdido')
@@ -53,17 +55,46 @@ export default function KanbanBoard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="w-80 flex-shrink-0 rounded-xl overflow-hidden shadow-md bg-white border"
+              className={`w-80 flex-shrink-0 rounded-xl overflow-hidden shadow-md bg-white border transition-all duration-200 ${dragOverColumnId === col.id ? 'ring-2 ring-primary ring-offset-2 scale-[1.02]' : ''
+                }`}
               ref={(el) => {
                 if (!el) return;
                 dropTargetForElements({
                   element: el,
                   getData: () => ({ droppableId: col.id }),
-                  onDrop: ({ source }) => {
+                  onDragStart: () => {
+                    setDragOverColumnId(null);
+                  },
+                  onDragEnter: () => {
+                    setDragOverColumnId(col.id);
+                  },
+                  onDragLeave: () => {
+                    setDragOverColumnId(null);
+                  },
+                  onDrop: async ({ source }) => {
+                    setDragOverColumnId(null);
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const { ticketId, sourceStepId } = source.data as any;
+                    const { ticketId, sourceStepId, sourceStepName } = source.data as any;
                     if (sourceStepId !== col.id) {
-                      moveTicket(ticketId, col.id.toString()).then(() => reload());
+                      if (sourceStepName === "Sem Contato") {
+                        toast({
+                          title: 'Movimentação não permitida',
+                          description: 'Você precisa aceitar o atendimento antes de movê-lo para outra etapa.',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+                      try {
+                        await moveTicket(ticketId, col.id.toString());
+                        await reload();
+                      } catch (error) {
+                        toast({
+                          title: 'Erro ao mover ticket',
+                          description: error instanceof Error ? error.message : 'Ocorreu um erro ao tentar mover o ticket.',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
                     }
                     setDraggingTicketId(null);
                   },
@@ -85,12 +116,12 @@ export default function KanbanBoard() {
 
               <ScrollArea className="p-3 h-[calc(100vh-200px)]">
                 <AnimatePresence>
-                  {col.tickets.length === 0 ? (
+                  {col.tickets?.length === 0 ? (
                     <div className="flex h-20 items-center justify-center text-sm text-slate-400 border-dashed border rounded-lg">
                       Nenhum atendimento nesta etapa
                     </div>
                   ) : (
-                    col.tickets.map((ticket) => (
+                    col.tickets && col.tickets.map((ticket) => (
                       <motion.div
                         key={ticket.id}
                         layout
@@ -117,6 +148,7 @@ export default function KanbanBoard() {
                             getInitialData: () => ({
                               ticketId: ticket.id,
                               sourceStepId: col.id,
+                              sourceStepName: col.name,
                             }),
                             onDragStart: () => setDraggingTicketId(ticket.id),
                           });
@@ -149,7 +181,7 @@ export default function KanbanBoard() {
                   )}
                 </AnimatePresence>
 
-                {col.tickets.length < col.ticketCount && (
+                {col.tickets?.length < col.ticketCount && (
                   <div className="text-center mt-2">
                     <Button variant="outline" onClick={() => loadMore(col.id)} isLoading={loadingMore[col.id]}>
                       Carregar mais
