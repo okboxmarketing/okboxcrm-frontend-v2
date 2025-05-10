@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
-import { getTickets, getMessagesByContactId } from '@/service/ticketsService';
+import { getTickets, getMessagesByContactId, getTicketCounts } from '@/service/ticketsService';
 import { sendTextMessage } from '@/service/messageService';
 import {
     NewMessagePayload,
@@ -12,19 +12,53 @@ import {
 import useAuthStore from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 
+// Função de debounce
+const debounce = (func: Function, wait: number) => {
+    let timeout: NodeJS.Timeout;
+    return (...args: any[]): Promise<void> => {
+        return new Promise((resolve) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                func(...args);
+                resolve();
+            }, wait);
+        });
+    };
+};
+
 interface ChatState {
     tickets: Ticket[];
     messages: NewMessagePayload[];
     selectedChat: Ticket | null;
     tab: TicketStatusEnum;
     socket: Socket | null;
-    fetchTickets: () => Promise<void>;
+    fetchTickets: (
+        status: TicketStatusEnum,
+        cursor?: string,
+        kanbanStepId?: number,
+        responsibleId?: string,
+        onlyActive?: boolean
+    ) => Promise<void>;
     setTab: (tab: TicketStatusEnum) => void;
     selectChat: (ticket: Ticket | null) => void;
     sendMessage: (text: string) => Promise<void>;
     initialize: () => void;
     removeTicket: (id: number) => void;
 
+    // Contagens de tickets
+    ticketCounts: {
+        pending: number;
+        unread: number;
+    };
+    fetchTicketCounts: () => Promise<void>;
+
+    // Paginação de tickets
+    ticketsCursor: string | null;
+    hasMoreTickets: boolean;
+    isLoadingMoreTickets: boolean;
+    fetchMoreTickets: () => Promise<void>;
+
+    // Paginação de mensagens
     page: number;
     hasNextPage: boolean;
     isLoadingMore: boolean;
@@ -43,13 +77,59 @@ export const useChatStore = create<ChatState>((set, get) => ({
     tab: "OPEN",
     socket: null,
     isLoadingMessages: false,
+    ticketsCursor: null,
+    hasMoreTickets: false,
+    isLoadingMoreTickets: false,
+    ticketCounts: {
+        pending: 0,
+        unread: 0
+    },
 
-    fetchTickets: async () => {
+    fetchTicketCounts: debounce(async () => {
         try {
-            const data = await getTickets();
-            set({ tickets: data });
+            const counts = await getTicketCounts();
+            set({ ticketCounts: counts });
+        } catch (err) {
+            console.error('Erro ao buscar contagens de tickets:', err);
+        }
+    }, 1000), // 1 segundo de debounce
+
+    fetchTickets: async (
+        status: TicketStatusEnum,
+        cursor?: string,
+        kanbanStepId?: number,
+        responsibleId?: string,
+        onlyActive?: boolean
+    ) => {
+        try {
+            const { data, meta } = await getTickets(
+                status,
+                cursor,
+                undefined,
+                kanbanStepId || undefined,
+                responsibleId || undefined,
+                onlyActive || undefined
+            );
+            set({
+                tickets: cursor ? [...get().tickets, ...data] : data,
+                ticketsCursor: meta.nextCursor,
+                hasMoreTickets: meta.hasNextPage
+            });
+            get().fetchTicketCounts();
         } catch (err) {
             console.error('Erro ao buscar tickets:', err);
+        }
+    },
+
+    fetchMoreTickets: async () => {
+        const { ticketsCursor, hasMoreTickets, isLoadingMoreTickets, tab } = get();
+        if (!hasMoreTickets || isLoadingMoreTickets) return;
+
+        set({ isLoadingMoreTickets: true });
+        try {
+            await get().fetchTickets(tab, ticketsCursor || undefined);
+        } finally {
+            set({ isLoadingMoreTickets: false });
         }
     },
 
@@ -131,7 +211,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
     },
 
-    setTab: (tab) => set({ tab }),
+    setTab: (tab) => {
+        set({ tab, tickets: [], ticketsCursor: null, hasMoreTickets: false });
+        get().fetchTickets(tab);
+    },
 
     selectChat: (ticket) => {
         set((state) => ({
@@ -239,7 +322,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
 
         socket.on('newTicket', async () => {
-            await get().fetchTickets();
+            await get().fetchTickets(get().tab);
         });
 
         socket.on('newMessage', (payload: NewMessagePayload) => {
@@ -292,9 +375,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 );
                 return { messages, tickets };
             });
+            get().fetchTicketCounts();
         });
 
         set({ socket });
-        get().fetchTickets();
+        get().fetchTickets(get().tab);
+        get().fetchTicketCounts();
     },
 }));

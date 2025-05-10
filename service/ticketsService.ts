@@ -1,8 +1,57 @@
 import { apiHelper } from "@/lib/apiHelper";
-import { Message, Ticket } from "@/lib/types";
+import { Message, Ticket, TicketStatusEnum } from "@/lib/types";
 
-export const getTickets = async () => {
-  return apiHelper.get<Ticket[]>(`/tickets`);
+interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    hasNextPage: boolean;
+    nextCursor: string | null;
+  };
+}
+
+interface ListResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    pageCount: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+}
+
+export const getTickets = async (
+  status: TicketStatusEnum,
+  cursor?: string,
+  limit?: number,
+  kanbanStepId?: number,
+  responsibleId?: string,
+  onlyActive?: boolean
+) => {
+  const params = new URLSearchParams();
+  params.append('status', status);
+  if (cursor) params.append('cursor', cursor);
+  if (limit) params.append('limit', limit.toString());
+  if (kanbanStepId) params.append('kanbanStepId', kanbanStepId.toString());
+  if (responsibleId) params.append('responsibleId', responsibleId);
+  if (onlyActive) params.append('onlyActive', 'true');
+
+  return apiHelper.get<PaginatedResponse<Ticket>>(`/tickets?${params.toString()}`);
+};
+
+export const listTickets = async (
+  page: number = 1,
+  limit: number = 20,
+  kanbanStepId?: number,
+  status?: TicketStatusEnum
+) => {
+  const params = new URLSearchParams();
+  params.append('page', page.toString());
+  params.append('limit', limit.toString());
+  if (kanbanStepId) params.append('kanbanStepId', kanbanStepId.toString());
+  if (status) params.append('status', status);
+
+  return apiHelper.get<ListResponse<Ticket>>(`/tickets/list?${params.toString()}`);
 };
 
 interface PaginationMeta {
@@ -54,3 +103,12 @@ export const getHiddenTickets = async () => {
 export const unhideTicket = async (ticketId: number) => {
   return apiHelper.post(`/tickets/unhide/${ticketId}`);
 }
+
+interface TicketCounts {
+  pending: number;
+  unread: number;
+}
+
+export const getTicketCounts = async () => {
+  return apiHelper.get<TicketCounts>('/tickets/counts');
+};

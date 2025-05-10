@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, MoveDownRight, MoreVertical, Trash, EyeOff, ChevronRight } from "lucide-react";
@@ -31,6 +31,10 @@ type Products = {
 const ChatHeader: React.FC = () => {
   const { selectedChat, fetchTickets, selectChat, removeTicket } = useChatStore();
   const { toast } = useToast();
+
+  const handleFetchTickets = useCallback(() => {
+    return fetchTickets("OPEN");
+  }, [fetchTickets]);
 
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
   const [products, setProducts] = useState<Products[]>([]);
@@ -259,7 +263,7 @@ const ChatHeader: React.FC = () => {
       </div>
       {selectedChat.status !== "PENDING" && user?.userRole !== "ADVISOR" && (
         <div className="flex items-center gap-4">
-          <MoveTicketSelect ticketId={selectedChat.id} fetchTickets={fetchTickets} refreshKey={kanbanRefreshKey} />
+          <MoveTicketSelect ticketId={selectedChat.id} fetchTickets={handleFetchTickets} refreshKey={kanbanRefreshKey} />
           <Button onClick={handleOpenSaleDialog} className="bg-green-500 hover:bg-green-500/70">
             <ShoppingCart />
           </Button>

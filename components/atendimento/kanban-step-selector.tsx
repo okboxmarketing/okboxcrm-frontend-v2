@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getKanbanSteps, getKanbanStepByTicketId } from "@/service/kanbanStepsService";
 import { moveTicket } from "@/service/ticketsService";
+import { TicketStatusEnum } from "@/lib/types";
 
 interface KanbanStep {
   id: number;
@@ -12,8 +13,8 @@ interface KanbanStep {
 
 interface MoveTicketSelectProps {
   ticketId: number;
-  fetchTickets: () => void;
-  refreshKey: number
+  fetchTickets: (status: TicketStatusEnum, cursor?: string, kanbanStepId?: number, responsibleId?: string, onlyActive?: boolean) => Promise<void>;
+  refreshKey: number;
 }
 
 const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets, refreshKey }) => {
@@ -46,7 +47,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
     try {
       await moveTicket(ticketId, stepId.toString());
       setSelectedStep(value);
-      fetchTickets()
+      fetchTickets("OPEN", undefined, stepId, undefined, true);
     } catch (error) {
       console.log(error);
       toast({
