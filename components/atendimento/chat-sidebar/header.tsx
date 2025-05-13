@@ -64,16 +64,18 @@ export const ChatSidebarHeader: React.FC<HeaderProps> = ({
                                 <SelectItem value="all">Todas as Etapas</SelectItem>
                                 <SelectItem value="active">Apenas Leads Ativos</SelectItem>
                                 {kanbanSteps
-                                    .filter(step => step.name !== "Sem Contato")
-                                    .map((step) => (
-                                        <SelectItem
-                                            key={step.id}
-                                            value={step.id.toString()}>
-                                            <p className="font-bold" style={{ color: step.color }}>
-                                                {step.name}
-                                            </p>
-                                        </SelectItem>
-                                    ))}
+                                    .filter(step => step.id != null && step.name !== "Sem Contato")
+                                    .map(step => {
+                                        if (step.id == null) return null;
+                                        return (
+                                            <SelectItem key={step.id} value={step.id.toString()}>
+                                                <p className="font-bold" style={{ color: step.color }}>
+                                                    {step.name}
+                                                </p>
+                                            </SelectItem>
+                                        );
+                                    })}
+
                             </SelectContent>
                         </Select>
                     </div>

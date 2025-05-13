@@ -29,7 +29,11 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
         getKanbanStepByTicketId(ticketId),
       ]);
       setKanbanSteps(steps);
-      setSelectedStep(currentStep.id.toString());
+      if (currentStep.id) {
+        setSelectedStep(currentStep.id.toString());
+      } else {
+        console.error("ID da etapa inválido");
+      }
     } catch (error) {
       console.log(error);
       toast({ description: "Erro ao carregar etapas do Kanban" });
@@ -45,7 +49,12 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
     if (isNaN(stepId)) return;
 
     try {
-      await moveTicket(ticketId, stepId.toString());
+      if (stepId) {
+        await moveTicket(ticketId, stepId.toString());
+      } else {
+        console.error("ID da etapa inválido");
+        return
+      }
       setSelectedStep(value);
       fetchTickets("OPEN", undefined, stepId, undefined, true);
     } catch (error) {
@@ -66,7 +75,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
         {kanbanSteps.map((step) => (
           <SelectItem
             key={step.id}
-            value={step.id.toString()}
+            value={step.id && step.id.toString() || ""}
             disabled={step.name === "Sem Contato" || step.name === "Contato Feito" || step.name === "Vendido" || step.name === "Perdido"}>
             <p className="font-bold" style={{ color: step.color }}>
               {step.name}
