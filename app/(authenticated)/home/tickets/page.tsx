@@ -106,13 +106,18 @@ export default function TicketsPage() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Todas as Etapas</SelectItem>
-                            {kanbanSteps.map((step) => (
-                                <SelectItem key={step.id} value={step.id.toString()}>
-                                    <p className="font-bold" style={{ color: step.color }}>
-                                        {step.name}
-                                    </p>
-                                </SelectItem>
-                            ))}
+                            {kanbanSteps.map((step, i) => {
+                                if (step?.id == null) {
+                                    console.warn(`kanbanSteps[${i}] sem id:`, step);
+                                    return null;
+                                }
+                                const idStr = step.id.toString();
+                                return (
+                                    <SelectItem key={idStr} value={idStr}>
+                                        <p style={{ color: step.color }}>{step.name}</p>
+                                    </SelectItem>
+                                );
+                            })}
                         </SelectContent>
                     </Select>
                 </div>
