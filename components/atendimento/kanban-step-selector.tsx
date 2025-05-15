@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { getKanbanSteps, getKanbanStepByTicketId } from "@/service/kanbanStepsService";
+import { getKanbanSteps } from "@/service/kanbanStepsService";
 import { moveTicket } from "@/service/ticketsService";
 import { TicketStatusEnum } from "@/lib/types";
+import { useChatStore } from "@/store/chatStore";
 
 interface KanbanStep {
   id: number;
@@ -19,21 +20,13 @@ interface MoveTicketSelectProps {
 
 const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets, refreshKey }) => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
-  const [selectedStep, setSelectedStep] = useState<string>("");
+  const { selectedChat } = useChatStore()
   const { toast } = useToast();
 
   const fetchKanbanData = async () => {
     try {
-      const [steps, currentStep] = await Promise.all([
-        getKanbanSteps(),
-        getKanbanStepByTicketId(ticketId),
-      ]);
+      const steps = await getKanbanSteps();
       setKanbanSteps(steps);
-      if (currentStep.id) {
-        setSelectedStep(currentStep.id.toString());
-      } else {
-        console.error("ID da etapa inválido");
-      }
     } catch (error) {
       console.log(error);
       toast({ description: "Erro ao carregar etapas do Kanban" });
@@ -42,7 +35,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
 
   useEffect(() => {
     fetchKanbanData();
-  }, [ticketId, refreshKey]);
+  }, [refreshKey, selectedChat?.kanbanStepId]);
 
   const handleMoveTicket = async (value: string) => {
     const stepId = Number(value);
@@ -55,7 +48,6 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
         console.error("ID da etapa inválido");
         return
       }
-      setSelectedStep(value);
       fetchTickets("OPEN", undefined, stepId, undefined, true);
     } catch (error) {
       console.log(error);
@@ -67,7 +59,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
   };
 
   return (
-    <Select key={refreshKey} onValueChange={handleMoveTicket} value={selectedStep}>
+    <Select key={refreshKey} onValueChange={handleMoveTicket} value={selectedChat?.kanbanStepId?.toString() || ""}>
       <SelectTrigger className="bg-white">
         <SelectValue placeholder="Selecione a Etapa" className="w-1/2" />
       </SelectTrigger>
@@ -75,8 +67,8 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
         {kanbanSteps.map((step) => (
           <SelectItem
             key={step.id}
-            value={step.id && step.id.toString() || ""}
-            disabled={step.name === "Sem Contato" || step.name === "Contato Feito" || step.name === "Vendido" || step.name === "Perdido"}>
+            value={step.id.toString()}
+            disabled={step.name === "Sem Contato" || step.name === "Contato Feito"}>
             <p className="font-bold" style={{ color: step.color }}>
               {step.name}
             </p>

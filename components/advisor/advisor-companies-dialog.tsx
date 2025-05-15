@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Building2, CheckCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import {
     Dialog,
     DialogContent,
@@ -29,7 +28,6 @@ export function AdvisorCompaniesDialog({
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [activating, setActivating] = useState<string | null>(null);
-    const router = useRouter();
     const { toast } = useToast();
     const { user, login } = useAuthStore();
     const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null);
@@ -71,9 +69,8 @@ export function AdvisorCompaniesDialog({
                 description: "Empresa ativada com sucesso!",
             });
 
+            window.location.href = '/home/atendimento';
             onOpenChange(false);
-            router.push('/home/atendimento');
-            window.location.reload();
         } catch (error) {
             console.error("Erro ao ativar empresa:", error);
             toast({
@@ -135,7 +132,7 @@ export function AdvisorCompaniesDialog({
                                     className="flex items-center gap-1"
                                 >
                                     {activating === company.id ? (
-                                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                                        <div className="animate-spin h-4 w-4 border-2 border-black border-t-transparent rounded-full" />
                                     ) : activeCompanyId === company.id ? (
                                         <>
                                             <CheckCircle size={16} />

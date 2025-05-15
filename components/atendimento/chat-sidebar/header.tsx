@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { KanbanStep } from "@/lib/types";
 
+
 interface HeaderProps {
     showMyTickets: boolean;
     setShowMyTickets: (value: boolean) => void;
@@ -27,6 +28,10 @@ export const ChatSidebarHeader: React.FC<HeaderProps> = ({
     userRole,
     tab
 }) => {
+    const handleSearch = (value: string) => {
+        setSearchTerm(value);
+    };
+
     return (
         <div className="flex flex-col">
             <div className="p-4 border-b flex items-center">
@@ -45,18 +50,26 @@ export const ChatSidebarHeader: React.FC<HeaderProps> = ({
                 )}
             </div>
             <div className="p-4 border-b">
-                <div className="relative">
-                    <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-                    <Input
-                        className="pl-9 bg-gray-50"
-                        placeholder="Pesquisar ticket..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar contato..."
+                            className="pl-8"
+                            value={searchTerm}
+                            onChange={(e) => handleSearch(e.target.value)}
+                        />
+                    </div>
                 </div>
                 {tab === "OPEN" && (
                     <div className="pt-4">
-                        <Select onValueChange={handleFilterTickets} value={selectedKanbanStep}>
+                        <Select
+                            onValueChange={(value) => {
+                                handleFilterTickets(value);
+                                localStorage.setItem('selectedKanbanStep', value);
+                            }}
+                            value={selectedKanbanStep}
+                        >
                             <SelectTrigger className="bg-white">
                                 <SelectValue placeholder="Filtrar por Etapa" className="w-1/2" />
                             </SelectTrigger>
@@ -75,7 +88,6 @@ export const ChatSidebarHeader: React.FC<HeaderProps> = ({
                                             </SelectItem>
                                         );
                                     })}
-
                             </SelectContent>
                         </Select>
                     </div>

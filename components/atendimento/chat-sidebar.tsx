@@ -142,7 +142,10 @@ const ChatSidebar: React.FC = () => {
                   await acceptTicket(t.id);
                   fetchTickets("OPEN");
                   setTab("OPEN");
-                  selectChat(t)
+                  selectChat({
+                    ...t,
+                    status: "OPEN"
+                  });
                 }}
                 loading={false}
                 showAcceptButton={user?.userRole !== "ADVISOR"}

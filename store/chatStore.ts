@@ -57,6 +57,9 @@ interface ChatState {
     hasMoreTickets: boolean;
     isLoadingMoreTickets: boolean;
     fetchMoreTickets: () => Promise<void>;
+    currentKanbanStepId?: number;
+    currentResponsibleId?: string;
+    currentOnlyActive?: boolean;
 
     // Paginação de mensagens
     page: number;
@@ -84,6 +87,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         pending: 0,
         unread: 0
     },
+    currentKanbanStepId: undefined,
+    currentResponsibleId: undefined,
+    currentOnlyActive: undefined,
 
     fetchTicketCounts: debounce(async () => {
         try {
@@ -113,7 +119,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
             set({
                 tickets: cursor ? [...get().tickets, ...data] : data,
                 ticketsCursor: meta.nextCursor,
-                hasMoreTickets: meta.hasNextPage
+                hasMoreTickets: meta.hasNextPage,
+                currentKanbanStepId: kanbanStepId,
+                currentResponsibleId: responsibleId,
+                currentOnlyActive: onlyActive
             });
             get().fetchTicketCounts();
         } catch (err) {
@@ -122,12 +131,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     fetchMoreTickets: async () => {
-        const { ticketsCursor, hasMoreTickets, isLoadingMoreTickets, tab } = get();
+        const {
+            ticketsCursor,
+            hasMoreTickets,
+            isLoadingMoreTickets,
+            tab,
+            currentKanbanStepId,
+            currentResponsibleId,
+            currentOnlyActive
+        } = get();
+
         if (!hasMoreTickets || isLoadingMoreTickets) return;
 
         set({ isLoadingMoreTickets: true });
         try {
-            await get().fetchTickets(tab, ticketsCursor || undefined);
+            await get().fetchTickets(
+                tab,
+                ticketsCursor || undefined,
+                currentKanbanStepId,
+                currentResponsibleId,
+                currentOnlyActive
+            );
         } finally {
             set({ isLoadingMoreTickets: false });
         }

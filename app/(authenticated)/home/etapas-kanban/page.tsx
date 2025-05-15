@@ -140,18 +140,22 @@ const KanbanStepsPage: React.FC = () => {
                 >
                   <ChevronDown className="w-4 h-4" />
                 </Button>
-                <Button onClick={() => {
-                  setStepToEdit(step);
-                  setEditStepName(step.name);
-                  setEditColor(step.color);
-                  setEditDialogOpen(true);
-                }}>
+                <Button
+                  disabled={step.name === "Contato Feito" || step.name === "Sem Contato" || step.name === "Vendido" || step.name === "Perdido"}
+                  onClick={() => {
+                    setStepToEdit(step);
+                    setEditStepName(step.name);
+                    setEditColor(step.color);
+                    setEditDialogOpen(true);
+                  }}>
                   Editar
                 </Button>
-                <Button variant="destructive" onClick={() => {
-                  setStepToDelete(step);
-                  setConfirmDialogOpen(true);
-                }}>
+                <Button
+                  disabled={step.name === "Contato Feito" || step.name === "Sem Contato" || step.name === "Vendido" || step.name === "Perdido"}
+                  variant="destructive" onClick={() => {
+                    setStepToDelete(step);
+                    setConfirmDialogOpen(true);
+                  }}>
                   <Trash className="w-4 h-4" />
                 </Button>
               </TableCell>
@@ -185,7 +189,6 @@ const KanbanStepsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar Etapa</DialogTitle></DialogHeader>
