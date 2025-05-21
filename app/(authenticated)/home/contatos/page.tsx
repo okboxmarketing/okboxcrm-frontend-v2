@@ -3,7 +3,6 @@
 import React, { Fragment, useEffect, useState, useTransition } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, Search, Trash } from "lucide-react";
 import { syncContacts, createContact, findContact, deleteContact } from "@/service/contactService";
 import { Contact } from "@/lib/types";
@@ -34,6 +33,8 @@ import { useRouter } from "next/navigation";
 import { ContactListSkeleton } from "@/components/skeleton/contact-list-skeleton";
 import { useContacts } from "@/hooks/swr/use-contacts-swr";
 import { formatPhone } from "@/lib/utils";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { useDynamicLimit } from "@/hooks/use-dynamic-limit";
 
 const ContatosPage: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -47,8 +48,9 @@ const ContatosPage: React.FC = () => {
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
   const [searchResults, setSearchResults] = useState<Contact[] | null>(null);
   const router = useRouter();
+  const dynamicLimit = useDynamicLimit();
 
-  const { contacts, totalPages, total, loading, mutate } = useContacts(page);
+  const { contacts, totalPages, total, loading, mutate } = useContacts(page, dynamicLimit);
 
   useEffect(() => {
     if (!loading) setIsFetched(true);
@@ -204,10 +206,7 @@ const ContatosPage: React.FC = () => {
                 {displayedContacts.map((contact) => (
                   <TableRow key={contact.id} className="hover:bg-gray-100">
                     <TableCell>
-                      <Avatar>
-                        <AvatarImage src={contact.pictureUrl} alt={contact.name} />
-                        <AvatarFallback>{contact.name[0]}</AvatarFallback>
-                      </Avatar>
+                      <UserAvatar name={contact.name} pictureUrl={contact.pictureUrl} />
                     </TableCell>
                     <TableCell>{contact.name}</TableCell>
                     <TableCell>{formatPhone(contact.phone)}</TableCell>

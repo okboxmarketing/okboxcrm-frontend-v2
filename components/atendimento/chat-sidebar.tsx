@@ -142,10 +142,14 @@ const ChatSidebar: React.FC = () => {
                   await acceptTicket(t.id);
                   fetchTickets("OPEN");
                   setTab("OPEN");
-                  selectChat({
-                    ...t,
-                    status: "OPEN"
-                  });
+                  const contatoFeitoStep = kanbanSteps.find(step => step.name === "Contato Feito");
+                  if (contatoFeitoStep) {
+                    selectChat({
+                      ...t,
+                      status: "OPEN",
+                      kanbanStepId: contatoFeitoStep.id
+                    });
+                  }
                 }}
                 loading={false}
                 showAcceptButton={user?.userRole !== "ADVISOR"}

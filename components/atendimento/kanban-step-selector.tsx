@@ -20,13 +20,15 @@ interface MoveTicketSelectProps {
 
 const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets, refreshKey }) => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
+  const [selectedStep, setSelectedStep] = useState<string>("");
   const { selectedChat } = useChatStore()
   const { toast } = useToast();
 
   const fetchKanbanData = async () => {
     try {
       const steps = await getKanbanSteps();
-      setKanbanSteps(steps);
+      const filteredSteps = steps.filter(step => step.name !== "Sem Contato");
+      setKanbanSteps(filteredSteps);
     } catch (error) {
       console.log(error);
       toast({ description: "Erro ao carregar etapas do Kanban" });
@@ -35,7 +37,13 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
 
   useEffect(() => {
     fetchKanbanData();
-  }, [refreshKey, selectedChat?.kanbanStepId]);
+  }, [refreshKey]);
+
+  useEffect(() => {
+    if (selectedChat?.kanbanStepId) {
+      setSelectedStep(selectedChat.kanbanStepId.toString());
+    }
+  }, [selectedChat?.kanbanStepId]);
 
   const handleMoveTicket = async (value: string) => {
     const stepId = Number(value);
@@ -44,6 +52,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
     try {
       if (stepId) {
         await moveTicket(ticketId, stepId.toString());
+        setSelectedStep(value);
       } else {
         console.error("ID da etapa inválido");
         return
@@ -59,7 +68,11 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
   };
 
   return (
-    <Select key={refreshKey} onValueChange={handleMoveTicket} value={selectedChat?.kanbanStepId?.toString() || ""}>
+    <Select
+      key={`${refreshKey}-${selectedStep}`}
+      onValueChange={handleMoveTicket}
+      value={selectedStep}
+    >
       <SelectTrigger className="bg-white">
         <SelectValue placeholder="Selecione a Etapa" className="w-1/2" />
       </SelectTrigger>
@@ -68,7 +81,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
           <SelectItem
             key={step.id}
             value={step.id.toString()}
-            disabled={step.name === "Sem Contato" || step.name === "Contato Feito"}>
+            disabled={step.name === "Perdido" || step.name === "Vendido"}>
             <p className="font-bold" style={{ color: step.color }}>
               {step.name}
             </p>

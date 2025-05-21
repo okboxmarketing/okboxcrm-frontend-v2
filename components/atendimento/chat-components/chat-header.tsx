@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, MoveDownRight, MoreVertical, Trash, EyeOff, ChevronRight } from "lucide-react";
 import MoveTicketSelect from "@/components/atendimento/kanban-step-selector";
@@ -21,6 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import useAuthStore from "@/store/authStore";
 import { useChatStore } from "@/store/chatStore";
 import Link from "next/link";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type Products = {
   id: string;
@@ -245,13 +245,10 @@ const ChatHeader: React.FC = () => {
   return (
     <div className="sticky top-0 flex items-center justify-between p-4 border-b bg-[#FAFAFA] z-10">
       <div className="flex items-center gap-3">
-        <Avatar>
-          {selectedChat.Contact.pictureUrl ? (
-            <AvatarImage src={selectedChat.Contact.pictureUrl} />
-          ) : (
-            <AvatarFallback>{selectedChat.Contact.name[0]}</AvatarFallback>
-          )}
-        </Avatar>
+        <UserAvatar
+          name={selectedChat.Contact.name}
+          pictureUrl={selectedChat.Contact.pictureUrl}
+        />
         <div>
           <h2 className="font-semibold">{selectedChat.Contact.name}</h2>
           {selectedChat.responsibleId && (

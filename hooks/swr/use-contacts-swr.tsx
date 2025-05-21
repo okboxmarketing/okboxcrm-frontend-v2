@@ -1,10 +1,10 @@
 import useSWR from 'swr';
 import { getContacts } from '@/service/contactService';
 
-export function useContacts(page: number) {
+export function useContacts(page: number, limit: number = 8) {
     const { data, error, isLoading, mutate, isValidating } = useSWR(
-        ['contacts', page],
-        () => getContacts(page),
+        ['contacts', page, limit],
+        () => getContacts(page, limit),
         {
             revalidateOnFocus: true,
             keepPreviousData: true,

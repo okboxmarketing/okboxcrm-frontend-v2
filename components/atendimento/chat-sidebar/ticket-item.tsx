@@ -1,5 +1,4 @@
 "use client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Check, ChevronDown, ChevronRight, EyeOff, Image as ImageIcon, Mic, Video } from "lucide-react";
 import { formatMessageTime, getContrastColor } from "@/lib/utils";
@@ -11,6 +10,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
 import { useChatStore } from "@/store/chatStore";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface TicketItemProps {
     ticket: Ticket;
@@ -75,14 +75,7 @@ export const TicketItem: React.FC<TicketItemProps> = ({
                 } ${isSelected ? "bg-gray-50" : ""}`}
         >
             <div className="flex items-center gap-3 w-full">
-                <Avatar>
-                    {ticket.Contact.pictureUrl ? (
-                        <AvatarImage src={ticket.Contact.pictureUrl} />
-                    ) : (
-                        <AvatarFallback>{ticket.Contact.name[0]}</AvatarFallback>
-                    )}
-                </Avatar>
-
+                <UserAvatar name={ticket.Contact.name} pictureUrl={ticket.Contact.pictureUrl} />
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center">
                         <p className={`truncate ${isUnreadMessage ? "font-bold text-black" : "text-gray-500"}`}>

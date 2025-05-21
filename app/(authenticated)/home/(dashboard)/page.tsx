@@ -86,7 +86,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Cards de métricas */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="bg-zinc-800 border-zinc-700 hover:bg-zinc-750 transition-colors shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2 text-zinc-100">
@@ -174,22 +174,6 @@ export default function DashboardPage() {
             <p className="text-3xl font-bold text-zinc-100">{data?.totalPerdas || 0}</p>
           </CardContent>
         </Card>
-        {/* }
-        <Card className="bg-zinc-800 border-zinc-700 hover:bg-zinc-750 transition-colors shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2 text-zinc-100">
-              <PieChart className="h-5 w-5 text-emerald-500" />
-              Tempo Médio de Resposta
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-zinc-100">
-              {data?.tempoMedioResposta?.toFixed(0) ?? 0} <span className="text-sm text-zinc-400">min</span>
-            </p>
-          </CardContent>
-        </Card>
-      {/* Gráficos */}
-
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
