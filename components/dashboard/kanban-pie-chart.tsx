@@ -1,22 +1,9 @@
-'use client'
+"use client"
+import { TrendingUp } from "lucide-react"
+import { Label, Pie, PieChart, Cell } from "recharts"
 
-import * as React from 'react'
-import { TrendingUp } from 'lucide-react'
-import { Label, Pie, PieChart, Cell } from 'recharts'
-
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card'
-import {
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-} from '@/components/ui/chart'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 type KanbanEtapa = {
     etapa: string
@@ -32,51 +19,32 @@ export function KanbanPieChart({ data }: Props) {
     const total = data.reduce((acc, curr) => acc + curr.quantidade, 0)
 
     return (
-        <Card className="flex flex-col">
-            <CardHeader className="items-center pb-0">
-                <CardTitle>Leads por Etapa</CardTitle>
-                <CardDescription>Leads por etapa</CardDescription>
+        <Card className="h-full bg-card hover:bg-card/80 transition-colors border-border/50 shadow-sm">
+            <CardHeader className="items-center pb-2">
+                <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Leads por Etapa
+                </CardTitle>
+                <CardDescription>Distribuição de leads no funil</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-0">
                 <ChartContainer config={{}} className="mx-auto aspect-square max-h-[250px]">
                     <PieChart>
-                        <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent hideLabel />}
-                        />
-                        <Pie
-                            data={data}
-                            dataKey="quantidade"
-                            nameKey="etapa"
-                            innerRadius={60}
-                            strokeWidth={5}
-                        >
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                        <Pie data={data} dataKey="quantidade" nameKey="etapa" innerRadius={60} strokeWidth={5}>
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
 
                             <Label
                                 content={({ viewBox }) => {
-                                    if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
                                         return (
-                                            <text
-                                                x={viewBox.cx}
-                                                y={viewBox.cy}
-                                                textAnchor="middle"
-                                                dominantBaseline="middle"
-                                            >
-                                                <tspan
-                                                    x={viewBox.cx}
-                                                    y={viewBox.cy}
-                                                    className="fill-foreground text-3xl font-bold"
-                                                >
+                                            <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                                                <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-3xl font-bold">
                                                     {total}
                                                 </tspan>
-                                                <tspan
-                                                    x={viewBox.cx}
-                                                    y={(viewBox.cy || 0) + 24}
-                                                    className="fill-muted-foreground"
-                                                >
+                                                <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 24} className="fill-muted-foreground">
                                                     Tickets
                                                 </tspan>
                                             </text>
@@ -92,9 +60,7 @@ export function KanbanPieChart({ data }: Props) {
                 <div className="flex items-center gap-2 font-medium leading-none">
                     Distribuição atual por etapa <TrendingUp className="h-4 w-4" />
                 </div>
-                <div className="leading-none text-muted-foreground">
-                    Cores e valores baseados nas etapas do Kanban
-                </div>
+                <div className="leading-none text-muted-foreground">Cores e valores baseados nas etapas do Kanban</div>
             </CardFooter>
         </Card>
     )

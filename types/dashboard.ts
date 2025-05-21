@@ -1,19 +1,27 @@
-export type DashboardData = {
+export interface FunilVendas {
+    etapa: string;
+    valor: number;
+    taxa: number;
+}
+
+export interface KanbanEtapa {
+    etapa: string;
+    quantidade: number;
+    color: string;
+}
+
+export interface DashboardData {
+    totalConversas: number;
     totalVendas: number;
     valorTotalVendas: number;
     ticketMedio: number;
-    totalConversas: number;
     taxaConversao: number;
     conversasPorDia: {
         dia: string;
         quantidade: number;
     }[];
     totalPerdas: number;
-    composicaoKanban: {
-        etapa: string;
-        quantidade: number;
-        color: string;
-    }[];
+    composicaoKanban: KanbanEtapa[];
     rankingMotivosPerda: {
         motivo: string;
         quantidade: number;
@@ -25,4 +33,5 @@ export type DashboardData = {
         tipo: 'ganho' | 'perdido';
         quantidade: number;
     }[];
-};
+    funilVendas: FunilVendas[];
+}
