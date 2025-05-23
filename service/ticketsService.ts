@@ -25,7 +25,6 @@ export const getTickets = async (
   cursor?: string,
   limit?: number,
   kanbanStepId?: number,
-  responsibleId?: string,
   onlyActive?: boolean
 ) => {
   const params = new URLSearchParams();
@@ -33,7 +32,6 @@ export const getTickets = async (
   if (cursor) params.append('cursor', cursor);
   if (limit) params.append('limit', limit.toString());
   if (kanbanStepId) params.append('kanbanStepId', kanbanStepId.toString());
-  if (responsibleId) params.append('responsibleId', responsibleId);
   if (onlyActive) params.append('onlyActive', 'true');
 
   return apiHelper.get<PaginatedResponse<Ticket>>(`/tickets?${params.toString()}`);

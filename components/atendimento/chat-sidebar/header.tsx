@@ -36,18 +36,6 @@ export const ChatSidebarHeader: React.FC<HeaderProps> = ({
         <div className="flex flex-col">
             <div className="p-4 border-b flex items-center">
                 <h1 className="text-xl font-semibold">Atendimento</h1>
-                {(userRole != "ADVISOR" && tab != "PENDING") && (
-                    <div className="ml-auto flex items-center gap-2">
-                        <Switch
-                            id="myTicketsSwitch"
-                            checked={showMyTickets}
-                            onCheckedChange={(checked: boolean) => setShowMyTickets(checked)}
-                        />
-                        <label htmlFor="myTicketsSwitch" className="text-sm">
-                            Meus Tickets
-                        </label>
-                    </div>
-                )}
             </div>
             <div className="p-4 border-b">
                 <div className="flex items-center gap-2">

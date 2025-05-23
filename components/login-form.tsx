@@ -35,7 +35,7 @@ export function LoginForm({
     setLoading(async () => {
       setError(null);
       try {
-        const response = await loginUser(data.email, data.password);
+        const response = await loginUser(data.email.toLowerCase(), data.password);
         if (response?.access_token) {
           await login(response.access_token)
         }

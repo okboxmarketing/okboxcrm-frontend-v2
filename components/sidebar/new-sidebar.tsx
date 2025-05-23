@@ -15,7 +15,8 @@ import {
     PlugZap,
     UserCheck,
     Building,
-    Ticket,
+    // Ticket,
+    Settings,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -54,7 +55,7 @@ const navItems = [
     { title: "Dashboard (Beta)", url: "/home", icon: PieChart },
     { title: "Kanban", url: "/home/kanban", icon: Kanban },
     { title: "Atendimento", url: "/home/atendimento", icon: MessageCircle },
-    { title: "Tickets", url: "/home/tickets", icon: Ticket },
+    // { title: "Tickets", url: "/home/tickets", icon: Ticket, isActive: false },
     { title: "Contatos", url: "/home/contatos", icon: Contact },
     { title: "Etapas do Funil", url: "/home/etapas-kanban", icon: Cone },
     {
@@ -80,7 +81,7 @@ const navItems = [
 const adminItems = [
     { name: "Empresa", url: "/home/minha-empresa", icon: Building2 },
     { name: "Conexão", url: "/home/conectar", icon: PlugZap },
-    // { name: "Configuração", url: "/home/configuracao", icon: Settings },
+    { name: "Configuração", url: "/home/configuracao", icon: Settings },
 ]
 
 const masterItems = [

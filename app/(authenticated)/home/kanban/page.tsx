@@ -2,9 +2,7 @@
 
 import { moveTicket } from '@/service/ticketsService';
 import { formatPhone } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { dropTargetForElements, draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import { useRouter } from 'next/navigation';
 import { useKanbanBoard } from '@/hooks/swr/use-kanban-board';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Loader2 } from 'lucide-react';
@@ -13,9 +11,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 export default function KanbanBoard() {
-  const router = useRouter();
   const { kanbanBoard, isLoading, error, loadMore, loadingMore, reload } = useKanbanBoard();
   const [draggingTicketId, setDraggingTicketId] = useState<number | null>(null);
   const [dragOverColumnId, setDragOverColumnId] = useState<number | null>(null);
@@ -23,10 +21,6 @@ export default function KanbanBoard() {
   const ordered = [...kanbanBoard]
     .filter((col) => col.name !== 'Vendido' && col.name !== 'Perdido')
     .sort((a, b) => a.position - b.position);
-
-  const handleTicketClick = (ticketId: number) => {
-    router.push(`/home/atendimento?ticketId=${ticketId}`);
-  };
 
   if (isLoading) {
     return (
@@ -136,11 +130,10 @@ export default function KanbanBoard() {
                         }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ duration: 0.2 }}
-                        className={`p-4 mb-3 bg-white rounded-lg border cursor-pointer hover:shadow-md flex gap-3 relative ${draggingTicketId === ticket.id
+                        className={`p-4 mb-3 bg-white rounded-lg border hover:shadow-md flex gap-3 relative ${draggingTicketId === ticket.id
                           ? 'border-primary/50 bg-primary/5'
                           : 'border-slate-200'
                           }`}
-                        onClick={() => handleTicketClick(ticket.id)}
                         ref={(el) => {
                           if (!el) return;
                           draggable({
@@ -158,15 +151,7 @@ export default function KanbanBoard() {
                           className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-lg"
                           style={{ backgroundColor: col.color }}
                         />
-                        <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                          {ticket.Contact?.pictureUrl ? (
-                            <AvatarImage src={ticket.Contact.pictureUrl} alt={ticket.Contact.name} />
-                          ) : (
-                            <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                              {ticket.Contact?.name[0]}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
+                        <UserAvatar name={ticket.Contact.name} pictureUrl={ticket.Contact.pictureUrl} />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-slate-800 truncate">
                             {ticket.Contact?.name}
