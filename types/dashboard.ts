@@ -34,4 +34,8 @@ export interface DashboardData {
         quantidade: number;
     }[];
     funilVendas: FunilVendas[];
+    etapaAoPerder: {
+        etapa: string;
+        quantidade: number;
+    }[];
 }

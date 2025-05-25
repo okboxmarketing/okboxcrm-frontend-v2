@@ -1,4 +1,3 @@
-import { Switch } from "@/components/ui/switch";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,14 +17,11 @@ interface HeaderProps {
 }
 
 export const ChatSidebarHeader: React.FC<HeaderProps> = ({
-    showMyTickets,
-    setShowMyTickets,
     searchTerm,
     setSearchTerm,
     selectedKanbanStep,
     handleFilterTickets,
     kanbanSteps,
-    userRole,
     tab
 }) => {
     const handleSearch = (value: string) => {

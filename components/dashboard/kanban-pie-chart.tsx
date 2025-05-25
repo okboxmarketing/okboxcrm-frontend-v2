@@ -2,7 +2,7 @@
 import { TrendingUp } from "lucide-react"
 import { Label, Pie, PieChart, Cell } from "recharts"
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardContent, CardFooter } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 type KanbanEtapa = {
@@ -19,14 +19,7 @@ export function KanbanPieChart({ data }: Props) {
     const total = data.reduce((acc, curr) => acc + curr.quantidade, 0)
 
     return (
-        <Card className="h-full bg-card hover:bg-card/80 transition-colors border-border/50 shadow-sm">
-            <CardHeader className="items-center pb-2">
-                <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                    Leads por Etapa
-                </CardTitle>
-                <CardDescription>Distribuição de leads no funil</CardDescription>
-            </CardHeader>
+        <div className="h-full">
             <CardContent className="flex-1 pb-0">
                 <ChartContainer config={{}} className="mx-auto aspect-square max-h-[250px]">
                     <PieChart>
@@ -62,6 +55,6 @@ export function KanbanPieChart({ data }: Props) {
                 </div>
                 <div className="leading-none text-muted-foreground">Cores e valores baseados nas etapas do Kanban</div>
             </CardFooter>
-        </Card>
+        </div>
     )
 }

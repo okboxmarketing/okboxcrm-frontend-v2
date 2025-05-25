@@ -112,9 +112,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 status,
                 cursor,
                 undefined,
-                kanbanStepId || undefined,
-                responsibleId || undefined,
-                onlyActive || undefined
+                kanbanStepId,
+                onlyActive
             );
             set({
                 tickets: cursor ? [...get().tickets, ...data] : data,

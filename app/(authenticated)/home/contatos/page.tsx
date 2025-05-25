@@ -3,7 +3,7 @@
 import React, { Fragment, useEffect, useState, useTransition } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Search, Trash } from "lucide-react";
+import { Search, Trash } from "lucide-react";
 import { syncContacts, createContact, findContact, deleteContact } from "@/service/contactService";
 import { Contact } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
@@ -28,8 +28,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { IMaskInput } from "react-imask";
-import { createTicket } from "@/service/ticketsService";
-import { useRouter } from "next/navigation";
 import { ContactListSkeleton } from "@/components/skeleton/contact-list-skeleton";
 import { useContacts } from "@/hooks/swr/use-contacts-swr";
 import { formatPhone } from "@/lib/utils";
@@ -47,7 +45,6 @@ const ContatosPage: React.FC = () => {
   const [creatingContact, setCreatingContact] = useState(false);
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
   const [searchResults, setSearchResults] = useState<Contact[] | null>(null);
-  const router = useRouter();
   const dynamicLimit = useDynamicLimit();
 
   const { contacts, totalPages, total, loading, mutate } = useContacts(page, dynamicLimit);
@@ -108,15 +105,6 @@ const ContatosPage: React.FC = () => {
       if (err instanceof Error) {
         toast({ description: err.message, variant: "destructive" });
       }
-    }
-  };
-
-  const handleCreateTicket = async (remoteJid: string) => {
-    try {
-      const ticketId = await createTicket(remoteJid);
-      router.push(`/home/atendimento?ticketId=${ticketId}`);
-    } catch {
-      console.log("Error creating ticket");
     }
   };
 
@@ -211,9 +199,9 @@ const ContatosPage: React.FC = () => {
                     <TableCell>{contact.name}</TableCell>
                     <TableCell>{formatPhone(contact.phone)}</TableCell>
                     <TableCell className="flex items-center gap-2">
-                      <button>
+                      {/* <button>
                         <MessageCircle onClick={() => handleCreateTicket(contact.remoteJid)} />
-                      </button>
+                      </button> */}
                       <Button variant="destructive" size="sm" onClick={() => handleDeleteContact(contact.id)}>
                         <Trash className="w-4 h-4" />
                       </Button>
