@@ -50,7 +50,7 @@ export function LoginForm({
             router.push("/home/empresas");
             break;
           default:
-            router.push("/home");
+            router.push("/home/atendimento");
             break;
         }
       } catch (error) {

@@ -48,10 +48,12 @@ export default function Configuracao() {
                 description: "Configurações atualizadas com sucesso",
             });
         } catch (error) {
-            console.error(error);
+            if (error instanceof Error) {
+                console.error(error);
+            }
             toast({
                 title: "Erro",
-                description: "Erro ao atualizar configurações",
+                description: "A roleta só pode ser ativada se houver pelo menos um usuário com role USER cadastrado.",
                 variant: "destructive"
             });
             setLeadRouletteEnabled(!checked);

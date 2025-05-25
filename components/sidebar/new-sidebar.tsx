@@ -51,12 +51,22 @@ import useAuthStore from "@/store/authStore"
 import { useEffect, useState } from "react"
 import { AdvisorCompaniesDialog } from "../advisor/advisor-companies-dialog"
 
-const navItems = [
-    { title: "Dashboard (Beta)", url: "/home", icon: PieChart },
+interface NavItem {
+    title: string;
+    url: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    icon: any;
+    items?: { title: string; url: string; }[];
+}
+
+const navItems: NavItem[] = [
     { title: "Kanban", url: "/home/kanban", icon: Kanban },
     { title: "Atendimento", url: "/home/atendimento", icon: MessageCircle },
     // { title: "Tickets", url: "/home/tickets", icon: Ticket, isActive: false },
-    { title: "Contatos", url: "/home/contatos", icon: Contact },
+]
+
+const adminItems: NavItem[] = [
+    { title: "Dashboard", url: "/home", icon: PieChart },
     { title: "Etapas do Funil", url: "/home/etapas-kanban", icon: Cone },
     {
         title: "Vendas",
@@ -76,12 +86,10 @@ const navItems = [
             { title: "Motivos", url: "/home/perdas/motivos" },
         ],
     },
-]
-
-const adminItems = [
-    { name: "Empresa", url: "/home/minha-empresa", icon: Building2 },
-    { name: "Conexão", url: "/home/conectar", icon: PlugZap },
-    { name: "Configuração", url: "/home/configuracao", icon: Settings },
+    { title: "Contatos", url: "/home/contatos", icon: Contact },
+    { title: "Empresa", url: "/home/minha-empresa", icon: Building2 },
+    { title: "Conexão", url: "/home/conectar", icon: PlugZap },
+    { title: "Configuração", url: "/home/configuracao", icon: Settings },
 ]
 
 const masterItems = [
@@ -201,13 +209,40 @@ export function AppSidebar() {
                         <SidebarGroupLabel>Administrador</SidebarGroupLabel>
                         <SidebarMenu>
                             {adminItems.map((item) => {
-                                const isActive = pathname === item.url
-                                return (
-                                    <SidebarMenuItem key={item.name}>
+                                const isActive = pathname === item.url || item.items?.some((subItem) => pathname === subItem.url)
+
+                                return item.items && item.items.length > 0 ? (
+                                    <Collapsible key={item.title} asChild defaultOpen={isActive} className="group/collapsible">
+                                        <SidebarMenuItem>
+                                            <CollapsibleTrigger asChild>
+                                                <SidebarMenuButton tooltip={item.title} className={isActive ? "bg-sidebar-accent" : ""}>
+                                                    {item.icon && <item.icon />}
+                                                    <span>{item.title}</span>
+                                                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                                </SidebarMenuButton>
+                                            </CollapsibleTrigger>
+                                            <CollapsibleContent>
+                                                <SidebarMenuSub>
+                                                    {item.items.map((subItem) => {
+                                                        const isSubActive = pathname === subItem.url
+                                                        return (
+                                                            <SidebarMenuSubItem key={subItem.title}>
+                                                                <SidebarMenuSubButton asChild isActive={isSubActive}>
+                                                                    <Link href={subItem.url}>{subItem.title}</Link>
+                                                                </SidebarMenuSubButton>
+                                                            </SidebarMenuSubItem>
+                                                        )
+                                                    })}
+                                                </SidebarMenuSub>
+                                            </CollapsibleContent>
+                                        </SidebarMenuItem>
+                                    </Collapsible>
+                                ) : (
+                                    <SidebarMenuItem key={item.title}>
                                         <SidebarMenuButton asChild isActive={isActive}>
                                             <Link href={item.url}>
                                                 <item.icon />
-                                                <span>{item.name}</span>
+                                                <span>{item.title}</span>
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
