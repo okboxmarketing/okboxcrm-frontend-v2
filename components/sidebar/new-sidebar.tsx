@@ -86,8 +86,11 @@ const adminItems: NavItem[] = [
             { title: "Motivos", url: "/home/perdas/motivos" },
         ],
     },
-    { title: "Contatos", url: "/home/contatos", icon: Contact },
     { title: "Empresa", url: "/home/minha-empresa", icon: Building2 },
+]
+
+const adminOnlyItems: NavItem[] = [
+    { title: "Contatos", url: "/home/contatos", icon: Contact },
     { title: "Conexão", url: "/home/conectar", icon: PlugZap },
     { title: "Configuração", url: "/home/configuracao", icon: Settings },
 ]
@@ -98,7 +101,7 @@ const masterItems = [
 ]
 
 const advisorItems = [
-    { name: "Empresa", url: "/home/empresas", icon: Building2 },
+    { name: "Minhas Empresas", url: "/home/empresas", icon: Building2 },
 ]
 
 export function AppSidebar() {
@@ -184,27 +187,7 @@ export function AppSidebar() {
                         </SidebarMenu>
                     </SidebarGroup>
                 ) : null}
-                {user?.userRole === "ADVISOR" ? (
-                    <SidebarGroup>
-                        <SidebarGroupLabel>Assessor</SidebarGroupLabel>
-                        <SidebarMenu>
-                            {advisorItems.map((item) => {
-                                const isActive = pathname === item.url
-                                return (
-                                    <SidebarMenuItem key={item.name}>
-                                        <SidebarMenuButton asChild isActive={isActive}>
-                                            <Link href={item.url}>
-                                                <item.icon />
-                                                <span>{item.name}</span>
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                )
-                            })}
-                        </SidebarMenu>
-                    </SidebarGroup>
-                ) : null}
-                {user?.userRole === "ADMIN" && (
+                {user?.userRole === "ADMIN" || (user?.userRole === "ADVISOR" && user?.companyId) ? (
                     <SidebarGroup>
                         <SidebarGroupLabel>Administrador</SidebarGroupLabel>
                         <SidebarMenu>
@@ -250,7 +233,47 @@ export function AppSidebar() {
                             })}
                         </SidebarMenu>
                     </SidebarGroup>
-                )}
+                ) : null}
+                {user?.userRole === "ADMIN" ? (
+                    <SidebarGroup>
+                        <SidebarGroupLabel>Configurações do Sistema</SidebarGroupLabel>
+                        <SidebarMenu>
+                            {adminOnlyItems.map((item) => {
+                                const isActive = pathname === item.url
+                                return (
+                                    <SidebarMenuItem key={item.title}>
+                                        <SidebarMenuButton asChild isActive={isActive}>
+                                            <Link href={item.url}>
+                                                <item.icon />
+                                                <span>{item.title}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )
+                            })}
+                        </SidebarMenu>
+                    </SidebarGroup>
+                ) : null}
+                {user?.userRole === "ADVISOR" ? (
+                    <SidebarGroup>
+                        <SidebarGroupLabel>Assessor</SidebarGroupLabel>
+                        <SidebarMenu>
+                            {advisorItems.map((item) => {
+                                const isActive = pathname === item.url
+                                return (
+                                    <SidebarMenuItem key={item.name}>
+                                        <SidebarMenuButton asChild isActive={isActive}>
+                                            <Link href={item.url}>
+                                                <item.icon />
+                                                <span>{item.name}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )
+                            })}
+                        </SidebarMenu>
+                    </SidebarGroup>
+                ) : null}
                 {user?.userRole === "MASTER" ? (
                     <SidebarGroup>
                         <SidebarGroupLabel>Okbox</SidebarGroupLabel>

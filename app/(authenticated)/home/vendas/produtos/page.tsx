@@ -172,47 +172,61 @@ const ProductsPage = () => {
       {loading ? (
         <ProductListSkeleton />
       ) : products.length > 0 ? (
-        <Table className="w-full table-fixed">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Data de Criação</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.id} className="hover:bg-gray-100">
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{formatDate(product.createdAt)}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleOpenEditDialog(product)}
-                    >
-                      <Pencil className="h-4 w-4 mr-1" /> Editar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleOpenDeleteDialog(product)}
-                    >
-                      <Trash className="h-4 w-4 mr-1" /> Excluir
-                    </Button>
-                  </div>
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Data de Criação</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products.map((product) => (
+                <TableRow key={product.id} className="hover:bg-gray-100">
+                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell>{formatDate(product.createdAt)}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenEditDialog(product)}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" /> Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleOpenDeleteDialog(product)}
+                      >
+                        <Trash className="h-4 w-4 mr-1" /> Excluir
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Data de Criação</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
+                  Nenhum produto cadastrado
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      ) : (
-        <div className="text-center text-gray-500 py-8">
-          <p>Nenhum produto cadastrado.</p>
-          <Button onClick={handleOpenCreateDialog} className="mt-4">
-            Cadastrar Primeiro Produto
-          </Button>
+            </TableBody>
+          </Table>
         </div>
       )}
 

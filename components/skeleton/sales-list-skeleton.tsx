@@ -3,14 +3,14 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 
 export const SalesListSkeleton = () => {
     return (
-        <div className="overflow-x-auto">
-            <Table className="w-full table-fixed">
+        <div className="border rounded-md">
+            <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[30%]">Data</TableHead>
-                        <TableHead className="w-[30%]">Cliente</TableHead>
-                        <TableHead className="w-[20%]">Responsável</TableHead>
-                        <TableHead className="w-[20%]">Valor Total</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Responsável</TableHead>
+                        <TableHead>Valor Total</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

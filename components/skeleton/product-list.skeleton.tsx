@@ -3,13 +3,13 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 
 export const ProductListSkeleton = () => {
     return (
-        <div className="overflow-x-auto">
-            <Table className="w-full table-fixed">
+        <div className="border rounded-md">
+            <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[40%]">Nome</TableHead>
-                        <TableHead className="w-[30%]">Data de Criação</TableHead>
-                        <TableHead className="w-[30%]">Ações</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Data de Criação</TableHead>
+                        <TableHead>Ações</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

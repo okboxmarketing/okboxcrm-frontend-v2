@@ -185,7 +185,7 @@ const SalesHistoryPage: React.FC = () => {
             {loading ? (
                 <SalesListSkeleton />
             ) : filteredSales.length > 0 ? (
-                <div className="space-y-6">
+                <div className="border rounded-md">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -200,17 +200,17 @@ const SalesHistoryPage: React.FC = () => {
                                 <>
                                     <TableRow
                                         key={sale.id}
-                                        className="cursor-pointer hover:bg-gray-100"
+                                        className="hover:bg-gray-100"
                                         onClick={() => toggleSaleDetails(sale.id)}
                                     >
                                         <TableCell>{formatDate(sale.createdAt)}</TableCell>
-                                        <TableCell>{sale.Ticket.Contact.name}</TableCell>
+                                        <TableCell className="font-medium">{sale.Ticket.Contact.name}</TableCell>
                                         <TableCell>{sale.Ticket.Responsible?.name || "N/A"}</TableCell>
-                                        <TableCell className="font-medium">{formatCurrency(sale.totalAmount)}</TableCell>
+                                        <TableCell>{formatCurrency(sale.totalAmount)}</TableCell>
                                     </TableRow>
                                     {expandedSale === sale.id && (
                                         <TableRow className="bg-gray-50">
-                                            <TableCell colSpan={5} className="p-4">
+                                            <TableCell colSpan={4} className="p-4">
                                                 <div className="text-sm">
                                                     <h3 className="font-medium mb-2">Itens da Venda</h3>
                                                     <Table>
@@ -243,8 +243,24 @@ const SalesHistoryPage: React.FC = () => {
                     </Table>
                 </div>
             ) : (
-                <div className="text-center text-gray-500 py-8">
-                    <p>Nenhuma venda encontrada com os filtros aplicados.</p>
+                <div className="border rounded-md">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Data</TableHead>
+                                <TableHead>Cliente</TableHead>
+                                <TableHead>Responsável</TableHead>
+                                <TableHead>Valor Total</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                                    Nenhuma venda encontrada com os filtros aplicados
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
                 </div>
             )}
         </div>

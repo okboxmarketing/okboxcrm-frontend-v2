@@ -173,51 +173,64 @@ const LossReasonsPage: React.FC = () => {
       {loading ? (
         <LossReasonListSkeleton />
       ) : lossReasons.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Data de Criação</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {lossReasons.map((reason) => (
-              <TableRow key={reason.id} className="hover:bg-gray-100">
-                <TableCell className="font-medium">{reason.description || "-"}</TableCell>
-                <TableCell>{formatDate(reason.createdAt)}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleOpenEditDialog(reason)}
-                    >
-                      <Pencil className="h-4 w-4 mr-1" /> Editar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleOpenDeleteDialog(reason)}
-                    >
-                      <Trash className="h-4 w-4 mr-1" /> Excluir
-                    </Button>
-                  </div>
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Data de Criação</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {lossReasons.map((reason) => (
+                <TableRow key={reason.id} className="hover:bg-gray-100">
+                  <TableCell className="font-medium">{reason.description || "-"}</TableCell>
+                  <TableCell>{formatDate(reason.createdAt)}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenEditDialog(reason)}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" /> Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleOpenDeleteDialog(reason)}
+                      >
+                        <Trash className="h-4 w-4 mr-1" /> Excluir
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Data de Criação</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
+                  Nenhum motivo de perda cadastrado
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      ) : (
-        <div className="text-center text-gray-500 py-8">
-          <p>Nenhum motivo de perda cadastrado.</p>
-          <Button onClick={handleOpenCreateDialog} className="mt-4">
-            Cadastrar Primeiro Motivo
-          </Button>
+            </TableBody>
+          </Table>
         </div>
       )}
 
-      {/* Dialog para criar/editar motivo de perda */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
           <DialogHeader>

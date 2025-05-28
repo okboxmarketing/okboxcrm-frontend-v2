@@ -176,8 +176,8 @@ const LossHistoryPage: React.FC = () => {
             {loading ? (
                 <LossHistorySkeleton />
             ) : filteredLosses.length > 0 ? (
-                <div className="space-y-6">
-                    <Table className="w-full table-fixed">
+                <div className="border rounded-md">
+                    <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Data</TableHead>
@@ -186,22 +186,22 @@ const LossHistoryPage: React.FC = () => {
                                 <TableHead>Motivo</TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody key={filteredLosses.length}>
+                        <TableBody>
                             {filteredLosses.map((loss) => (
                                 <Fragment key={loss.id}>
                                     <TableRow
                                         key={loss.id}
-                                        className="cursor-pointer hover:bg-gray-100"
+                                        className="hover:bg-gray-100"
                                         onClick={() => toggleLossDetails(loss.id)}
                                     >
                                         <TableCell>{formatDate(loss.createdAt)}</TableCell>
-                                        <TableCell>{loss.Ticket.Contact.name}</TableCell>
-                                        <TableCell>{loss.Ticket.Responsible?.name || "N/A"}</TableCell>
-                                        <TableCell className="font-medium">{loss.LossReason?.description || loss.lossReasonId}</TableCell>
+                                        <TableCell className="font-medium">{loss.Ticket.Contact.name}</TableCell>
+                                        <TableCell>{loss.Ticket.Responsible?.name || "Nenhum"}</TableCell>
+                                        <TableCell>{loss.LossReason?.description || loss.lossReasonId}</TableCell>
                                     </TableRow>
                                     {expandedLoss === loss.id && (
                                         <TableRow className="bg-gray-50">
-                                            <TableCell colSpan={5} className="p-4">
+                                            <TableCell colSpan={4} className="p-4">
                                                 <div className="text-sm">
                                                     <h3 className="font-medium mb-2">Detalhes da Perda</h3>
                                                     <div className="grid grid-cols-2 gap-4">
@@ -215,7 +215,7 @@ const LossHistoryPage: React.FC = () => {
                                                         </div>
                                                         <div>
                                                             <p className="text-gray-500">Responsável:</p>
-                                                            <p>{loss.Ticket.Responsible?.name || "N/A"}</p>
+                                                            <p>{loss.Ticket.Responsible?.name || "Nenhum"}</p>
                                                         </div>
                                                         <div>
                                                             <p className="text-gray-500">Data:</p>
@@ -240,8 +240,24 @@ const LossHistoryPage: React.FC = () => {
                     </Table>
                 </div>
             ) : (
-                <div className="text-center text-gray-500 py-8">
-                    <p>Nenhuma perda encontrada com os filtros aplicados.</p>
+                <div className="border rounded-md">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Data</TableHead>
+                                <TableHead>Cliente</TableHead>
+                                <TableHead>Responsável</TableHead>
+                                <TableHead>Motivo</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                                    Nenhuma perda encontrada com os filtros aplicados
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
                 </div>
             )}
         </div>

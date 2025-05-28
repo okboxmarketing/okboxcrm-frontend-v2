@@ -3,8 +3,8 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 
 export const LossHistorySkeleton = () => {
     return (
-        <div className="overflow-x-auto">
-            <Table className="w-full">
+        <div className="border rounded-md">
+            <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Data</TableHead>

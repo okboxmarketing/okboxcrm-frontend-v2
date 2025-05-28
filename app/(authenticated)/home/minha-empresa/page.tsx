@@ -147,7 +147,9 @@ const MinhaEmpresaPage: React.FC = () => {
               <TableHead>Nome</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Função</TableHead>
-              <TableHead className="w-[100px]">Ações</TableHead>
+              {requestUserRole === "ADMIN" && (
+                <TableHead className="w-[100px]">Ações</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -171,8 +173,8 @@ const MinhaEmpresaPage: React.FC = () => {
                     {user.role === "ADMIN" ? "Administrador" : "Usuário"}
                   </Badge>
                 </TableCell>
-                <TableCell className="flex gap-2">
-                  {requestUserRole === "ADMIN" && (
+                {requestUserRole === "ADMIN" && (
+                  <TableCell className="flex gap-2">
                     <Button
                       variant="destructive"
                       size="sm"
@@ -183,8 +185,8 @@ const MinhaEmpresaPage: React.FC = () => {
                     >
                       <Trash className="w-4 h-4" />
                     </Button>
-                  )}
-                </TableCell>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {(!company?.users || company.users.length === 0) && (

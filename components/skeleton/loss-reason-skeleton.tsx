@@ -10,8 +10,8 @@ import {
 
 export const LossReasonListSkeleton = () => {
     return (
-        <div className="overflow-x-auto">
-            <Table className="w-full">
+        <div className="border rounded-md">
+            <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Descrição</TableHead>

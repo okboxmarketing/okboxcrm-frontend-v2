@@ -28,6 +28,7 @@ const ChatSidebar: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedKanbanStep, setSelectedKanbanStep] = useState<string>("all");
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const { user } = useAuthStore();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef(false);
@@ -65,7 +66,11 @@ const ChatSidebar: React.FC = () => {
     const onlyActive = selectedKanbanStep === "active";
     const responsibleId = showMyTickets ? user?.userId : undefined;
 
-    fetchTickets(tab, undefined, kanbanStepId, responsibleId, onlyActive);
+    setIsInitialLoading(true);
+    fetchTickets(tab, undefined, kanbanStepId, responsibleId, onlyActive)
+      .finally(() => {
+        setIsInitialLoading(false);
+      });
     fetchTicketCounts();
   }, [tab, fetchTickets, fetchTicketCounts, selectedKanbanStep, showMyTickets, user?.userId]);
 
@@ -125,7 +130,7 @@ const ChatSidebar: React.FC = () => {
       <div className="flex-1 overflow-y-auto">
         {tab === "PENDING" ? (
           <>
-            {isLoadingMoreTickets && tickets.length === 0 ? (
+            {(isInitialLoading || (isLoadingMoreTickets && tickets.length === 0)) ? (
               <div className="h-full flex items-center justify-center">
                 <PuffLoader size={20} />
               </div>
@@ -151,7 +156,7 @@ const ChatSidebar: React.FC = () => {
                     });
                   }
                 }}
-                loading={false}
+                loading={isLoadingMoreTickets}
                 showAcceptButton={user?.userRole !== "ADVISOR"}
                 type="PENDING"
               />
@@ -168,7 +173,7 @@ const ChatSidebar: React.FC = () => {
           </>
         ) : (
           <>
-            {isLoadingMoreTickets && tickets.length === 0 ? (
+            {(isInitialLoading || (isLoadingMoreTickets && tickets.length === 0)) ? (
               <div className="h-full flex items-center justify-center">
                 <PuffLoader size={20} />
               </div>
@@ -181,7 +186,7 @@ const ChatSidebar: React.FC = () => {
                 tickets={filteredOpen}
                 selectedChat={selectedChat}
                 onSelectChat={selectChat}
-                loading={false}
+                loading={isLoadingMoreTickets}
                 type="OPEN"
               />
             )}
