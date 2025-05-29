@@ -12,11 +12,14 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import useAuthStore from '@/store/authStore';
 
 export default function KanbanBoard() {
   const { kanbanBoard, isLoading, error, loadMore, loadingMore, reload } = useKanbanBoard();
   const [draggingTicketId, setDraggingTicketId] = useState<number | null>(null);
   const [dragOverColumnId, setDragOverColumnId] = useState<number | null>(null);
+  const { user } = useAuthStore();
+  const isAdvisor = user?.userRole === "ADVISOR";
 
   const ordered = [...kanbanBoard]
     .filter((col) => col.name !== 'Vendido' && col.name !== 'Perdido')
@@ -133,9 +136,9 @@ export default function KanbanBoard() {
                         className={`p-4 mb-3 bg-white rounded-lg border hover:shadow-md flex gap-3 relative ${draggingTicketId === ticket.id
                           ? 'border-primary/50 bg-primary/5'
                           : 'border-slate-200'
-                          }`}
+                          } ${isAdvisor ? '' : 'cursor-grab'}`}
                         ref={(el) => {
-                          if (!el) return;
+                          if (!el || isAdvisor) return;
                           draggable({
                             element: el,
                             getInitialData: () => ({
@@ -152,13 +155,13 @@ export default function KanbanBoard() {
                           style={{ backgroundColor: col.color }}
                         />
                         <UserAvatar name={ticket.Contact.name} pictureUrl={ticket.Contact.pictureUrl} />
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 overflow-hidden">
                           <p className="font-medium text-slate-800 truncate">
                             {ticket.Contact?.name}
                           </p>
                           <div className="flex items-center text-xs text-slate-500 gap-1 mt-0.5">
-                            <Phone className="h-3 w-3" />
-                            <span>{formatPhone(ticket.Contact?.phone)}</span>
+                            <Phone className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{formatPhone(ticket.Contact?.phone)}</span>
                           </div>
                         </div>
                       </motion.div>

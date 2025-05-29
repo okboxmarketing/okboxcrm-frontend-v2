@@ -30,6 +30,7 @@ import {
   swapKanbanSteps,
 } from "@/service/kanbanStepsService";
 import { useKanbanSteps } from "@/hooks/swr/use-kanban-swr";
+import useAuthStore from "@/store/authStore";
 
 const KanbanStepsPage: React.FC = () => {
   const { kanbanSteps, mutate } = useKanbanSteps();
@@ -37,6 +38,7 @@ const KanbanStepsPage: React.FC = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [stepName, setStepName] = useState("");
+  const { user } = useAuthStore()
   const [color, setColor] = useState("#000000");
   const [stepToDelete, setStepToDelete] = useState<KanbanStep | null>(null);
   const [stepToEdit, setStepToEdit] = useState<KanbanStep | null>(null);
@@ -101,9 +103,11 @@ const KanbanStepsPage: React.FC = () => {
     <div className="flex-1 mx-auto p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Etapas do Kanban</h1>
-        <Button onClick={() => setOpenDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" /> Nova Etapa
-        </Button>
+        {user?.userRole === "ADMIN" && (
+          <Button onClick={() => setOpenDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Nova Etapa
+          </Button>
+        )}
       </div>
 
       <Table className="w-full table-fixed">
@@ -112,7 +116,9 @@ const KanbanStepsPage: React.FC = () => {
             <TableHead className="w-2/6">Nome</TableHead>
             <TableHead className="w-1/6">Cor</TableHead>
             <TableHead className="w-1/6">Tickets</TableHead>
-            <TableHead className="w-2/6">Ações</TableHead>
+            {user?.userRole === "ADMIN" && (
+              <TableHead className="w-2/6">Ações</TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -123,42 +129,44 @@ const KanbanStepsPage: React.FC = () => {
                 <div className="w-6 h-6 rounded" style={{ backgroundColor: step.color }} />
               </TableCell>
               <TableCell>{step.ticketCount}</TableCell>
-              <TableCell className="flex items-center gap-2">
-                <Button
-                  size="icon"
-                  variant="outline"
-                  disabled={idx === 0}
-                  onClick={() => moveStep(idx, idx - 1)}
-                >
-                  <ChevronUp className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  disabled={idx === kanbanSteps.length - 1}
-                  onClick={() => moveStep(idx, idx + 1)}
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-                <Button
-                  disabled={step.name === "Contato Feito" || step.name === "Sem Contato" || step.name === "Vendido" || step.name === "Perdido"}
-                  onClick={() => {
-                    setStepToEdit(step);
-                    setEditStepName(step.name);
-                    setEditColor(step.color);
-                    setEditDialogOpen(true);
-                  }}>
-                  Editar
-                </Button>
-                <Button
-                  disabled={step.name === "Contato Feito" || step.name === "Sem Contato" || step.name === "Vendido" || step.name === "Perdido"}
-                  variant="destructive" onClick={() => {
-                    setStepToDelete(step);
-                    setConfirmDialogOpen(true);
-                  }}>
-                  <Trash className="w-4 h-4" />
-                </Button>
-              </TableCell>
+              {user?.userRole === "ADMIN" && (
+                <TableCell className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    disabled={idx === 0}
+                    onClick={() => moveStep(idx, idx - 1)}
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    disabled={idx === kanbanSteps.length - 1}
+                    onClick={() => moveStep(idx, idx + 1)}
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    disabled={step.name === "Contato Feito" || step.name === "Sem Contato" || step.name === "Vendido" || step.name === "Perdido"}
+                    onClick={() => {
+                      setStepToEdit(step);
+                      setEditStepName(step.name);
+                      setEditColor(step.color);
+                      setEditDialogOpen(true);
+                    }}>
+                    Editar
+                  </Button>
+                  <Button
+                    disabled={step.name === "Contato Feito" || step.name === "Sem Contato" || step.name === "Vendido" || step.name === "Perdido"}
+                    variant="destructive" onClick={() => {
+                      setStepToDelete(step);
+                      setConfirmDialogOpen(true);
+                    }}>
+                    <Trash className="w-4 h-4" />
+                  </Button>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

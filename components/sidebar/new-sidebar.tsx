@@ -17,6 +17,7 @@ import {
     Building,
     // Ticket,
     Settings,
+    HelpCircle,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -62,6 +63,7 @@ interface NavItem {
 const navItems: NavItem[] = [
     { title: "Kanban", url: "/home/kanban", icon: Kanban },
     { title: "Atendimento", url: "/home/atendimento", icon: MessageCircle },
+    { title: "Ajuda", url: "/home/ajuda", icon: HelpCircle },
     // { title: "Tickets", url: "/home/tickets", icon: Ticket, isActive: false },
 ]
 
@@ -294,6 +296,21 @@ export function AppSidebar() {
                         </SidebarMenu>
                     </SidebarGroup>
                 ) : null}
+                {user?.userRole === "MASTER" && (
+                    <SidebarGroup>
+                        <SidebarGroupLabel>Ajuda</SidebarGroupLabel>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={pathname === "/home/ajuda"}>
+                                    <Link href="/home/ajuda">
+                                        <HelpCircle />
+                                        <span>Ajuda</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroup>
+                )}
 
             </SidebarContent>
             <h1 className="px-4 text-xs">Em Desenvolvimento - v1.0.0</h1>

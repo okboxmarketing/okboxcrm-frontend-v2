@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash } from "lucide-react";
 import { getProducts, createProduct, updateProduct, deleteProduct } from "@/service/productService";
 import { ProductListSkeleton } from "@/components/skeleton/product-list.skeleton";
+import useAuthStore from "@/store/authStore";
 
 interface Product {
   id: string;
@@ -25,6 +26,7 @@ const ProductsPage = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const { user } = useAuthStore()
   const [formData, setFormData] = useState({
     name: "",
   });
@@ -165,7 +167,9 @@ const ProductsPage = () => {
           <Badge className="bg-black text-white px-3 py-1 text-sm">
             {products.length}
           </Badge>
-          <Button onClick={handleOpenCreateDialog}>Novo Produto</Button>
+          {user?.userRole === "ADMIN" && (
+            <Button onClick={handleOpenCreateDialog}>Novo Produto</Button>
+          )}
         </div>
       </div>
 
@@ -178,7 +182,9 @@ const ProductsPage = () => {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Data de Criação</TableHead>
-                <TableHead>Ações</TableHead>
+                {user?.userRole === "ADMIN" && (
+                  <TableHead>Ações</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -186,24 +192,26 @@ const ProductsPage = () => {
                 <TableRow key={product.id} className="hover:bg-gray-100">
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{formatDate(product.createdAt)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleOpenEditDialog(product)}
-                      >
-                        <Pencil className="h-4 w-4 mr-1" /> Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleOpenDeleteDialog(product)}
-                      >
-                        <Trash className="h-4 w-4 mr-1" /> Excluir
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {user?.userRole === "ADMIN" && (
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenEditDialog(product)}
+                        >
+                          <Pencil className="h-4 w-4 mr-1" /> Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleOpenDeleteDialog(product)}
+                        >
+                          <Trash className="h-4 w-4 mr-1" /> Excluir
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -216,7 +224,9 @@ const ProductsPage = () => {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Data de Criação</TableHead>
-                <TableHead>Ações</TableHead>
+                {user?.userRole === "ADMIN" && (
+                  <TableHead>Ações</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>

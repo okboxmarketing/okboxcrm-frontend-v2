@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash } from "lucide-react";
 import { getLossReasons, createLossReason, updateLossReason, deleteLossReason } from "@/service/lossService";
 import { LossReasonListSkeleton } from "@/components/skeleton/loss-reason-skeleton";
+import useAuthStore from "@/store/authStore";
 
 interface LossReason {
   id: string;
@@ -34,6 +35,7 @@ const LossReasonsPage: React.FC = () => {
   });
   const [selectedReason, setSelectedReason] = useState<LossReason | null>(null);
   const { toast } = useToast();
+  const { user } = useAuthStore()
 
   const fetchLossReasons = async () => {
     setLoading(true);
@@ -166,7 +168,9 @@ const LossReasonsPage: React.FC = () => {
           <Badge className="bg-black text-white px-3 py-1 text-sm">
             {lossReasons.length}
           </Badge>
-          <Button onClick={handleOpenCreateDialog}>Novo Motivo</Button>
+          {user?.userRole === "ADMIN" && (
+            <Button onClick={handleOpenCreateDialog}>Novo Motivo</Button>
+          )}
         </div>
       </div>
 
@@ -179,7 +183,9 @@ const LossReasonsPage: React.FC = () => {
               <TableRow>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Data de Criação</TableHead>
-                <TableHead>Ações</TableHead>
+                {user?.userRole === "ADMIN" && (
+                  <TableHead>Ações</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -187,24 +193,26 @@ const LossReasonsPage: React.FC = () => {
                 <TableRow key={reason.id} className="hover:bg-gray-100">
                   <TableCell className="font-medium">{reason.description || "-"}</TableCell>
                   <TableCell>{formatDate(reason.createdAt)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleOpenEditDialog(reason)}
-                      >
-                        <Pencil className="h-4 w-4 mr-1" /> Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleOpenDeleteDialog(reason)}
-                      >
-                        <Trash className="h-4 w-4 mr-1" /> Excluir
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {user?.userRole === "ADMIN" && (
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenEditDialog(reason)}
+                        >
+                          <Pencil className="h-4 w-4 mr-1" /> Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleOpenDeleteDialog(reason)}
+                        >
+                          <Trash className="h-4 w-4 mr-1" /> Excluir
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
