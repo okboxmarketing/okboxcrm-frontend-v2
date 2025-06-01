@@ -1,6 +1,6 @@
 "use client";
 import { Badge } from "@/components/ui/badge";
-import { Check, ChevronDown, ChevronRight, EyeOff, FileIcon, Image as ImageIcon, Mic, Video } from "lucide-react";
+import { CheckCheck, ChevronDown, ChevronRight, EyeOff, FileIcon, Image as ImageIcon, Mic, Video } from "lucide-react";
 import { formatMessageTime, getContrastColor } from "@/lib/utils";
 import { MediaEnum, Ticket } from "@/lib/types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -35,7 +35,7 @@ export const TicketItem: React.FC<TicketItemProps> = ({
 
     const renderLastMessage = () => {
         if (!ticket.lastMessage) return null;
-        const checkIcon = ticket.lastMessage.fromMe && <Check className="h-4 w-4 text-gray-400" />;
+        const checkIcon = ticket.lastMessage.fromMe && <CheckCheck className="h-4 w-4 text-gray-400" />;
         switch (ticket.lastMessage.mediaType) {
             case MediaEnum.IMAGE:
                 return (
