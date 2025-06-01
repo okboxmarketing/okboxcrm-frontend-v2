@@ -23,3 +23,7 @@ export const deleteUser = async (userId: string, companyId?: string) => {
 export const deleteUserMaster = async (userId: string) => {
   return apiHelper.delete(`/users/master/${userId}`);
 }
+
+export const getUsers = async () => {
+  return apiHelper.get("/users");
+}

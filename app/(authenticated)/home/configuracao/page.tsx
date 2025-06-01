@@ -62,7 +62,7 @@ export default function Configuracao() {
 
     if (loading) {
         return (
-            <div className="container py-8">
+            <div className="container p-6">
                 <Skeleton className="h-8 w-[200px] mb-4" />
                 <Skeleton className="h-[200px] w-full" />
             </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, MoveDownRight, MoreVertical, Trash, EyeOff, ChevronRight } from "lucide-react";
+import { ShoppingCart, MoveDownRight, MoreVertical, Trash, EyeOff, ChevronRight, ArrowRightLeft, Loader2 } from "lucide-react";
 import MoveTicketSelect from "@/components/atendimento/kanban-step-selector";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -14,13 +14,14 @@ import { createSale } from "@/service/saleService";
 import { createLoss } from "@/service/lossService";
 import { getLossReasons } from "@/service/lossService";
 import { getProducts } from "@/service/productService";
-import { LossReason } from "@/lib/types";
-import { deleteTicket, hideTicket, refreshTicket } from "@/service/ticketsService";
+import { LossReason, User } from "@/lib/types";
+import { deleteTicket, hideTicket, refreshTicket, transferTicket } from "@/service/ticketsService";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import useAuthStore from "@/store/authStore";
 import { useChatStore } from "@/store/chatStore";
 import Link from "next/link";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { findMyCompany } from "@/service/companyService";
 
 type Products = {
   id: string;
@@ -46,6 +47,10 @@ const ChatHeader: React.FC = () => {
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [confirmHideOpen, setConfirmHideOpen] = useState(false);
+  const [confirmTransferOpen, setConfirmTransferOpen] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [transferringUserId, setTransferringUserId] = useState<string | null>(null);
 
   const [lossDialogOpen, setLossDialogOpen] = useState(false);
   const [lossReasons, setLossReasons] = useState<LossReason[]>([]);
@@ -55,6 +60,24 @@ const ChatHeader: React.FC = () => {
   });
 
   const { user } = useAuthStore()
+
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const data = await findMyCompany()
+      if (data) {
+        setUsers(data.users)
+      }
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+      toast({
+        description: "Erro ao carregar usuários",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingUsers(false);
+    }
+  }
 
   const fetchProducts = async () => {
     try {
@@ -166,7 +189,6 @@ const ChatHeader: React.FC = () => {
     if (!selectedChat || selectedProducts.length === 0) return;
 
     try {
-      console.log("SaleData: ", selectedProducts);
       const saleData = {
         ticketId: selectedChat.id,
         items: selectedProducts.map(item => ({
@@ -176,7 +198,6 @@ const ChatHeader: React.FC = () => {
         }))
       };
 
-      console.log("Formatted sale data being sent to API:", saleData);
       await createSale(saleData);
 
       toast({
@@ -283,6 +304,13 @@ const ChatHeader: React.FC = () => {
               <DropdownMenuItem onClick={() => setConfirmDeleteOpen(true)} className="flex items-center gap-2 text-red-500 hover:bg-red-100">
                 <Trash />
                 Excluir Ticket
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                fetchUsers()
+                setConfirmTransferOpen(true)
+              }} className="flex items-center gap-2 text-green-400 hover:bg-green-100">
+                <ArrowRightLeft />
+                Transferir Ticket
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -495,6 +523,72 @@ const ChatHeader: React.FC = () => {
               disabled={!lossData.reasonId}
             >
               Registrar Perda
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={confirmTransferOpen} onOpenChange={setConfirmTransferOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Selecione o novo responsável</DialogTitle>
+          </DialogHeader>
+          {loadingUsers ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="animate-spin h-8 w-8" />
+            </div>
+          ) : (
+            <div className="py-4 space-y-2">
+              {users.map((thisUser) => (
+                <div key={thisUser.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <UserAvatar name={thisUser.name} pictureUrl={thisUser.profileImage} />
+                    <span>{thisUser.name}</span>
+                  </div>
+                  <Button
+                    isLoading={transferringUserId === thisUser.id}
+                    variant="outline"
+                    disabled={thisUser.id === selectedChat.responsibleId}
+                    onClick={async () => {
+                      if (!selectedChat) return;
+                      setTransferringUserId(thisUser.id);
+                      try {
+                        await transferTicket(selectedChat.id, thisUser.id);
+                        toast({
+                          description: "Ticket transferido com sucesso!",
+                        });
+                        if (user?.userRole === "USER") {
+                          selectChat(null);
+                          removeTicket(selectedChat.id);
+                        } else {
+                          selectChat({
+                            ...selectedChat,
+                            responsibleId: thisUser.id,
+                            Responsible: {
+                              name: thisUser.name,
+                            }
+                          });
+                        }
+                        setConfirmTransferOpen(false);
+                      } catch (error) {
+                        console.error("Erro ao transferir ticket:", error);
+                        toast({
+                          description: "Erro ao transferir ticket",
+                          variant: "destructive",
+                        });
+                      } finally {
+                        setTransferringUserId(null);
+                      }
+                    }}
+                  >
+                    Transferir
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmTransferOpen(false)}>
+              Cancelar
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -110,3 +110,7 @@ interface TicketCounts {
 export const getTicketCounts = async () => {
   return apiHelper.get<TicketCounts>('/tickets/counts');
 };
+
+export const transferTicket = async (ticketId: number, userId: string) => {
+  return apiHelper.post(`/tickets/transfer/${ticketId}/${userId}`);
+}

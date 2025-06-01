@@ -88,13 +88,13 @@ const adminItems: NavItem[] = [
             { title: "Motivos", url: "/home/perdas/motivos" },
         ],
     },
-    { title: "Empresa", url: "/home/minha-empresa", icon: Building2 },
 ]
 
 const adminOnlyItems: NavItem[] = [
     { title: "Contatos", url: "/home/contatos", icon: Contact },
     { title: "Conexão", url: "/home/conectar", icon: PlugZap },
     { title: "Configuração", url: "/home/configuracao", icon: Settings },
+    { title: "Empresa", url: "/home/minha-empresa", icon: Building2 },
 ]
 
 const masterItems = [

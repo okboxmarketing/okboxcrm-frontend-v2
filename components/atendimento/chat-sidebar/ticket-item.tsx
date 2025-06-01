@@ -1,6 +1,6 @@
 "use client";
 import { Badge } from "@/components/ui/badge";
-import { Check, ChevronDown, ChevronRight, EyeOff, Image as ImageIcon, Mic, Video } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, EyeOff, FileIcon, Image as ImageIcon, Mic, Video } from "lucide-react";
 import { formatMessageTime, getContrastColor } from "@/lib/utils";
 import { MediaEnum, Ticket } from "@/lib/types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -56,6 +56,13 @@ export const TicketItem: React.FC<TicketItemProps> = ({
                     <>
                         {checkIcon}
                         <Video className="h-4 w-4 text-gray-400" /> Vídeo
+                    </>
+                );
+            case MediaEnum.DOCUMENT:
+                return (
+                    <>
+                        {checkIcon}
+                        <FileIcon className="h-4 w-4 text-gray-400" /> Documento
                     </>
                 );
             default:
