@@ -31,7 +31,7 @@ export const TicketItem: React.FC<TicketItemProps> = ({
 }) => {
     const isUnreadMessage = ticket.lastMessage && !ticket.lastMessage.fromMe && !ticket.lastMessage.read;
     const [confirmHideOpen, setConfirmHideOpen] = useState(false);
-    const { removeTicket } = useChatStore()
+    const { removeTicket, selectChat } = useChatStore()
 
     const renderLastMessage = () => {
         if (!ticket.lastMessage) return null;
@@ -168,11 +168,17 @@ export const TicketItem: React.FC<TicketItemProps> = ({
                         <Button variant="outline" onClick={() => setConfirmHideOpen(false)}>
                             Cancelar
                         </Button>
-                        <Button onClick={() => {
-                            hideTicket(ticket.id)
-                            setConfirmHideOpen(false)
-                            removeTicket(ticket.id)
-                        }}>
+                        <Button
+                            onClick={async () => {
+                                try {
+                                    await hideTicket(ticket.id);
+                                    removeTicket(ticket.id);
+                                    selectChat(null);
+                                    setConfirmHideOpen(false);
+                                } catch (error) {
+                                    console.error("Erro ao ocultar ticket:", error);
+                                }
+                            }}>
                             Ocultar
                         </Button>
                     </DialogFooter>

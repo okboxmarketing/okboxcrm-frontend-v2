@@ -18,6 +18,7 @@ import {
     // Ticket,
     Settings,
     HelpCircle,
+    Ticket,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -63,8 +64,8 @@ interface NavItem {
 const navItems: NavItem[] = [
     { title: "Kanban", url: "/home/kanban", icon: Kanban },
     { title: "Atendimento", url: "/home/atendimento", icon: MessageCircle },
+    { title: "Tickets", url: "/home/tickets", icon: Ticket },
     { title: "Ajuda", url: "/home/ajuda", icon: HelpCircle },
-    // { title: "Tickets", url: "/home/tickets", icon: Ticket, isActive: false },
 ]
 
 const adminItems: NavItem[] = [
@@ -92,9 +93,9 @@ const adminItems: NavItem[] = [
 
 const adminOnlyItems: NavItem[] = [
     { title: "Contatos", url: "/home/contatos", icon: Contact },
-    { title: "Conexão", url: "/home/conectar", icon: PlugZap },
-    { title: "Configuração", url: "/home/configuracao", icon: Settings },
     { title: "Empresa", url: "/home/minha-empresa", icon: Building2 },
+    { title: "Conexão", url: "/home/conectar", icon: PlugZap },
+    { title: "Configurações", url: "/home/configuracao", icon: Settings },
 ]
 
 const masterItems = [

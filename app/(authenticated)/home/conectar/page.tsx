@@ -237,8 +237,8 @@ const ConectarPage: React.FC = () => {
 
   return (
     <div className="flex flex-col container mx-auto p-6 w-full min-h-[80vh] gap-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Conexão WhatsApp</h1>
+      <div className="">
+        <h1 className="text-2xl font-bold tracking-tight">Conexão WhatsApp</h1>
         <p className="text-muted-foreground">Conecte seu WhatsApp para aproveitar todas as funcionalidades do CRM</p>
       </div>
 
