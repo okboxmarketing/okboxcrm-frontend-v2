@@ -95,7 +95,6 @@ const adminItems: NavItem[] = [
 const adminOnlyItems: NavItem[] = [
     { title: "Contatos", url: "/home/contatos", icon: Contact },
     { title: "Empresa", url: "/home/minha-empresa", icon: Building2 },
-    { title: "Integração", url: "/home/integracao", icon: Webhook },
     { title: "Conexão", url: "/home/conectar", icon: PlugZap },
     { title: "Configurações", url: "/home/configuracao", icon: Settings },
 ]
@@ -107,6 +106,7 @@ const masterItems = [
 
 const advisorItems = [
     { name: "Minhas Empresas", url: "/home/empresas", icon: Building2 },
+    { name: "Integração", url: "/home/integracao", icon: Webhook },
 ]
 
 export function AppSidebar() {

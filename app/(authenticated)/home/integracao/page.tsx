@@ -53,8 +53,8 @@ export default function IntegracaoPage() {
         } catch (error) {
             console.error("Erro ao buscar URL de integração:", error)
             toast({
-                title: "Erro ao buscar URL de integração",
-                description: "Não foi possível carregar a URL de integração",
+                title: "Você não tem uma empresa ativa",
+                description: "Por favor, selecione uma empresa para continuar",
                 variant: "destructive",
             })
         } finally {
