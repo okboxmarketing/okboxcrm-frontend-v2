@@ -19,6 +19,7 @@ import {
     Settings,
     HelpCircle,
     Ticket,
+    Webhook,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -94,6 +95,7 @@ const adminItems: NavItem[] = [
 const adminOnlyItems: NavItem[] = [
     { title: "Contatos", url: "/home/contatos", icon: Contact },
     { title: "Empresa", url: "/home/minha-empresa", icon: Building2 },
+    { title: "Integração", url: "/home/integracao", icon: Webhook },
     { title: "Conexão", url: "/home/conectar", icon: PlugZap },
     { title: "Configurações", url: "/home/configuracao", icon: Settings },
 ]
@@ -314,7 +316,7 @@ export function AppSidebar() {
                 )}
 
             </SidebarContent>
-            <h1 className="px-4 text-xs">Em Desenvolvimento - v1.0.0</h1>
+            <h1 className="px-4 text-xs">Versão {process.env.NEXT_PUBLIC_VERSION}</h1>
             <SidebarFooter>
                 <SidebarMenu>
                     {user?.userRole === "ADVISOR" ? (

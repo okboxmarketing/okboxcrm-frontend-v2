@@ -75,12 +75,14 @@ const ChatSidebar: React.FC = () => {
   }, [tab, fetchTickets, fetchTicketCounts, selectedKanbanStep, showMyTickets, user?.userId]);
 
   const sortedTickets = useMemo(() => {
-    return [...tickets]
-      .filter(t => t.lastMessage)
-      .sort((a, b) =>
-        new Date(b.lastMessage!.createdAt).getTime()
-        - new Date(a.lastMessage!.createdAt).getTime()
-      );
+    return [...tickets].sort((a, b) => {
+      if (a.lastMessage && b.lastMessage) {
+        return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
+      }
+      if (a.lastMessage) return -1;
+      if (b.lastMessage) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }, [tickets]);
 
   const openTickets = sortedTickets.filter(t => ["OPEN", "SOLD", "LOSS"].includes(t.status));

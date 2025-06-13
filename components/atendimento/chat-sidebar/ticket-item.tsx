@@ -34,7 +34,13 @@ export const TicketItem: React.FC<TicketItemProps> = ({
     const { removeTicket, selectChat } = useChatStore()
 
     const renderLastMessage = () => {
-        if (!ticket.lastMessage) return null;
+        if (!ticket.lastMessage) {
+            return (
+                <span className="text-blue-500 italic">
+                    Inicie a conversa.
+                </span>
+            );
+        }
         const checkIcon = ticket.lastMessage.fromMe && <CheckCheck className="h-4 w-4 text-gray-400" />;
         switch (ticket.lastMessage.mediaType) {
             case MediaEnum.IMAGE:

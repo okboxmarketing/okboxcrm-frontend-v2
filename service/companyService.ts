@@ -57,3 +57,11 @@ export const getCompaniesByAdvisor = async () => {
 export const setActiveCompany = async (companyId: string) => {
   return await apiHelper.post<{ access_token: string, user: any }>('/company/set-active', { companyId });
 }
+
+export const getIntegrationToken = async () => {
+  return await apiHelper.get<string>("/company/integration-token");
+}
+
+export const generateIntegrationToken = async () => {
+  return await apiHelper.get<string>("/company/generate-integration-token");
+}
