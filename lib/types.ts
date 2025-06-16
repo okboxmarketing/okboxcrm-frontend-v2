@@ -125,6 +125,7 @@ export interface Ticket {
     phone: string;
     pictureUrl: string | null;
     remoteJid: string
+    origin: string
   };
   KanbanStep: {
     id: number;

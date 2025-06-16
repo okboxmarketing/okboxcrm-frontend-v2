@@ -16,10 +16,12 @@ import { findMyCompany } from "@/service/companyService";
 import { User } from "@/lib/types";
 import SaleButton from "./header-buttons/sale-button";
 import LossButton from "./header-buttons/loss-button";
+import InfoSidebar from "./info-sidebar";
 
 const ChatHeader: React.FC = () => {
   const { selectedChat, fetchTickets, selectChat, removeTicket } = useChatStore();
   const { toast } = useToast();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleFetchTickets = useCallback(() => {
     return fetchTickets("OPEN");
@@ -94,16 +96,23 @@ const ChatHeader: React.FC = () => {
 
   return (
     <div className="sticky top-0 flex items-center justify-between p-4 border-b bg-[#FAFAFA] z-10">
-      <div className="flex items-center gap-3">
+      <div
+        className="flex items-center gap-3 cursor-pointer hover:bg-gray-100 p-2 rounded-lg transition-colors"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsSidebarOpen(true);
+        }}
+      >
         <UserAvatar
           name={selectedChat.Contact.name}
           pictureUrl={selectedChat.Contact.pictureUrl}
+          expanded={false}
         />
         <div>
           <h2 className="font-semibold">{selectedChat.Contact.name}</h2>
           {selectedChat.responsibleId && (
             <p className="text-sm text-black/40">
-              Acompanhado por: {selectedChat.Responsible?.name}
+              Clique para ver mais informações
             </p>
           )}
         </div>
@@ -244,6 +253,7 @@ const ChatHeader: React.FC = () => {
           </Dialog>
         </div>
       )}
+      <InfoSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </div>
   );
 };

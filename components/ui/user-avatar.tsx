@@ -17,9 +17,10 @@ interface UserAvatarProps {
     name: string;
     pictureUrl?: string | null;
     className?: string;
+    expanded?: boolean;
 }
 
-export function UserAvatar({ name, pictureUrl, className }: UserAvatarProps) {
+export function UserAvatar({ name, pictureUrl, className, expanded = true }: UserAvatarProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [isValidImage, setIsValidImage] = useState(false);
@@ -60,9 +61,9 @@ export function UserAvatar({ name, pictureUrl, className }: UserAvatarProps) {
     const shouldShowImage = pictureUrl && !imageError && isValidImage;
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={expanded ? setIsOpen : undefined}>
             {shouldShowImage ? (
-                <DialogTrigger asChild>
+                <DialogTrigger asChild className={`${expanded ? "hover:opacity-80 transition-opacity" : ""}`}>
                     <Avatar className={`cursor-pointer ${className}`}>
                         <AvatarImage
                             src={pictureUrl}
