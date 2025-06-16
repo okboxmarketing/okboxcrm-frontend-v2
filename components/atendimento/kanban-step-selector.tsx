@@ -15,10 +15,9 @@ interface KanbanStep {
 interface MoveTicketSelectProps {
   ticketId: number;
   fetchTickets: (status: TicketStatusEnum, cursor?: string, kanbanStepId?: number, responsibleId?: string, onlyActive?: boolean) => Promise<void>;
-  refreshKey: number;
 }
 
-const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets, refreshKey }) => {
+const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets }) => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedStep, setSelectedStep] = useState<string>("");
   const { selectedChat } = useChatStore()
@@ -37,7 +36,7 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
 
   useEffect(() => {
     fetchKanbanData();
-  }, [refreshKey]);
+  }, []);
 
   useEffect(() => {
     if (selectedChat?.kanbanStepId) {
@@ -69,7 +68,6 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
 
   return (
     <Select
-      key={`${refreshKey}-${selectedStep}`}
       onValueChange={handleMoveTicket}
       value={selectedStep}
     >

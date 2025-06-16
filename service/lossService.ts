@@ -1,5 +1,6 @@
 import { apiHelper } from "@/lib/apiHelper";
 import { Loss, LossReason } from "@/lib/types";
+import { CreateLossDto } from "@/types/loss";
 
 
 export const getLosses = async () => {
@@ -20,7 +21,7 @@ export const getLossById = async (id: string) => {
   }
 };
 
-export const createLoss = async (data: { ticketId: number; lossReasonId: string; description?: string }) => {
+export const createLoss = async (data: CreateLossDto) => {
   try {
     return await apiHelper.post<Loss>(`/losses`, data);
   } catch (error) {
@@ -67,7 +68,7 @@ export const updateLossReason = async (id: string, data: { description: string }
 
 export const deleteLossReason = async (id: string) => {
   try {
-    return await apiHelper.delete<void>(`/loss-reasons/${id}`);
+    return await apiHelper.delete(`/loss-reasons/${id}`);
   } catch (error) {
     console.error("Error deleting loss reason:", error);
     throw error;
