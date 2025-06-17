@@ -169,15 +169,30 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
                             )}
 
                             <InfoItem icon={MapPin} label="Origem">
-                                <span className="font-medium">{selectedChat.Contact.origin || "Não informado"}</span>
+                                <span className="font-medium">
+                                    <span className={selectedChat.Contact.origin === "Whatsapp" ? "text-green-500" : selectedChat.Contact.origin === "Criativo" ? "text-blue-500" : ""}>
+                                        {selectedChat.Contact.origin || "Não informado"}
+                                    </span>
+
+                                </span>
                             </InfoItem>
+
+                            {selectedChat.Creative && (
+                                <InfoItem icon={Tag} label="Criativo">
+                                    <span className="font-medium">{selectedChat.Creative.title}</span>
+                                    <p className="text-xs text-muted-foreground">
+                                        {selectedChat.Creative?._count.Ticket} Leads captados neste criativo
+                                    </p>
+                                </InfoItem>
+                            )}
 
                             <InfoItem icon={CalendarArrowUp} label="Data de Criação">
                                 <span className="font-medium">{formatDate(new Date(selectedChat.createdAt), "dd/MM/yyyy HH:mm")}</span>
                             </InfoItem>
 
                             <InfoItem icon={CalendarCheck} label="Aceito em">
-                                <span className="font-medium">{formatDate(new Date(selectedChat.acceptedAt), "dd/MM/yyyy HH:mm")}</span>
+                                <span className={`font-medium ${selectedChat.acceptedAt ? "" : "text-muted-foreground text-xs"
+                                    }`} >{selectedChat.acceptedAt ? formatDate(new Date(selectedChat.acceptedAt), "dd/MM/yyyy HH:mm") : "Aceite para obter mais informações"}</span>
                             </InfoItem>
 
                             <InfoItem icon={NotepadTextDashed} label="Observação">

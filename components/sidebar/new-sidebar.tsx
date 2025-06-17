@@ -20,6 +20,7 @@ import {
     HelpCircle,
     Ticket,
     Webhook,
+    FileVideo,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -107,6 +108,7 @@ const masterItems = [
 const advisorItems = [
     { name: "Minhas Empresas", url: "/home/empresas", icon: Building2 },
     { name: "Integração", url: "/home/integracao", icon: Webhook },
+    { name: "Criativos", url: "/home/criativos", icon: FileVideo },
 ]
 
 export function AppSidebar() {

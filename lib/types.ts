@@ -121,6 +121,14 @@ export interface Ticket {
   acceptedAt: string;
   kanbanStepId: number;
   observation?: string;
+  Creative?: {
+    keyphrase: string;
+    title: string;
+    id: string;
+    _count: {
+      Ticket: number;
+    }
+  }
   Contact: {
     id: string;
     name: string;
