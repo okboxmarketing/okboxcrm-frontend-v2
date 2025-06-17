@@ -11,6 +11,8 @@ import {
     CalendarCheck,
     ShoppingCart,
     AlertTriangle,
+    NotepadTextDashed,
+    Pencil,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -26,6 +28,9 @@ import { useEffect, useState } from "react"
 import { getSalesByTicketId } from "@/service/saleService"
 import { getLossesByTicketId } from "@/service/lossService"
 import type { Sale, Loss } from "@/lib/types"
+import { Textarea } from "@/components/ui/textarea"
+import { addObservation } from "@/service/ticketsService"
+import { useToast } from "@/hooks/use-toast"
 
 interface InfoSidebarProps {
     isOpen: boolean
@@ -43,16 +48,18 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
     const { selectedChat } = useChatStore()
     const [sales, setSales] = useState<Sale[]>([])
     const [losses, setLosses] = useState<Loss[]>([])
+    const [observation, setObservation] = useState<string>("")
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [editMode, setEditMode] = useState<boolean>(false)
+    const { toast } = useToast()
 
     useEffect(() => {
         const fetchSalesAndLosses = async () => {
             if (selectedChat?.id) {
                 try {
                     const salesData = await getSalesByTicketId(selectedChat.id)
-                    console.log("VENDAS", salesData)
                     setSales(salesData)
                     const lossesData = await getLossesByTicketId(selectedChat.id)
-                    console.log("PERDAS", lossesData)
                     setLosses(lossesData)
                 } catch (error) {
                     console.error("Erro ao buscar dados:", error)
@@ -61,7 +68,35 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
         }
 
         fetchSalesAndLosses()
-    }, [selectedChat?.id])
+        if (selectedChat?.observation) {
+            setObservation(selectedChat.observation)
+        } else {
+            setObservation("")
+        }
+    }, [selectedChat?.id, selectedChat?.observation])
+
+    const handleAddObservation = async () => {
+        if (selectedChat?.id) {
+            try {
+                setIsLoading(true)
+                await addObservation(selectedChat.id, observation)
+                setEditMode(false)
+                selectedChat.observation = observation
+                toast({
+                    title: "Observação adicionada com sucesso",
+                })
+            } catch (error) {
+                console.error("Erro ao adicionar observação:", error)
+                toast({
+                    title: "Erro ao adicionar observação",
+                    description: "Erro ao adicionar observação",
+                    variant: "destructive",
+                })
+            } finally {
+                setIsLoading(false)
+            }
+        }
+    }
 
     if (!selectedChat) return null
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -144,7 +179,29 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
                             <InfoItem icon={CalendarCheck} label="Aceito em">
                                 <span className="font-medium">{formatDate(new Date(selectedChat.acceptedAt), "dd/MM/yyyy HH:mm")}</span>
                             </InfoItem>
+
+                            <InfoItem icon={NotepadTextDashed} label="Observação">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium">{selectedChat.observation || "Não informado"}</span>
+                                    <Button variant="ghost" size="icon" onClick={() => setEditMode(!editMode)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </InfoItem>
+                            {editMode && (
+                                <div className="flex flex-col gap-2">
+                                    <Textarea
+                                        placeholder="Observação"
+                                        value={observation}
+                                        onChange={(e) => setObservation(e.target.value)}
+                                    />
+                                    <Button onClick={handleAddObservation} isLoading={isLoading}>Adicionar Observação</Button>
+                                </div>
+                            )}
                         </div>
+
+
+
 
                         <Separator />
 

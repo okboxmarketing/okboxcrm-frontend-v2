@@ -120,6 +120,7 @@ export interface Ticket {
   updatedAt: string;
   acceptedAt: string;
   kanbanStepId: number;
+  observation?: string;
   Contact: {
     id: string;
     name: string;

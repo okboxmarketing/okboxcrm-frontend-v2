@@ -114,3 +114,8 @@ export const getTicketCounts = async () => {
 export const transferTicket = async (ticketId: number, userId: string) => {
   return apiHelper.post(`/tickets/transfer/${ticketId}/${userId}`);
 }
+
+export const addObservation = async (ticketId: number, observation: string) => {
+  console.log("Adding observation", ticketId, observation)
+  return apiHelper.post(`/tickets/observation/${ticketId}`, { observation });
+}
