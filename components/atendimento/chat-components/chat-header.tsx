@@ -95,9 +95,9 @@ const ChatHeader: React.FC = () => {
   if (!selectedChat) return null;
 
   return (
-    <div className="sticky top-0 flex items-center justify-between p-4 border-b bg-[#FAFAFA] z-10">
+    <div className="sticky top-0 flex items-center justify-between border-b bg-[#FAFAFA] z-10">
       <div
-        className="flex items-center gap-3 cursor-pointer hover:bg-gray-100 p-2 rounded-lg transition-colors"
+        className="flex items-center gap-3 cursor-pointer hover:bg-gray-100 p-2 rounded-lg transition-colors w-full"
         onClick={(e) => {
           e.stopPropagation();
           setIsSidebarOpen(true);

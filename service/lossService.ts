@@ -74,3 +74,12 @@ export const deleteLossReason = async (id: string) => {
     throw error;
   }
 };
+
+export const getLossesByTicketId = async (ticketId: number) => {
+  try {
+    return await apiHelper.get<Loss[]>(`/losses/ticket/${ticketId}`);
+  } catch (error) {
+    console.error("Erro ao buscar perdas:", error);
+    throw error;
+  }
+};

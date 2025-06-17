@@ -118,6 +118,7 @@ export interface Ticket {
   status: TicketStatusEnum;
   createdAt: string;
   updatedAt: string;
+  acceptedAt: string;
   kanbanStepId: number;
   Contact: {
     id: string;
