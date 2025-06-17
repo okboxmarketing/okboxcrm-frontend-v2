@@ -73,6 +73,7 @@ const navItems: NavItem[] = [
 const adminItems: NavItem[] = [
     { title: "Dashboard", url: "/home", icon: PieChart },
     { title: "Etapas do Funil", url: "/home/etapas-kanban", icon: Cone },
+    { title: "Criativos", url: "/home/criativos", icon: FileVideo },
     {
         title: "Vendas",
         url: "#",
@@ -108,7 +109,6 @@ const masterItems = [
 const advisorItems = [
     { name: "Minhas Empresas", url: "/home/empresas", icon: Building2 },
     { name: "Integração", url: "/home/integracao", icon: Webhook },
-    { name: "Criativos", url: "/home/criativos", icon: FileVideo },
 ]
 
 export function AppSidebar() {
