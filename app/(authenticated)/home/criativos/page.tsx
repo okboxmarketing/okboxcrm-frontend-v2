@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Ticket } from "@/lib/types";
 
-interface Creative {
+export interface Creative {
     id: string;
     title: string;
     keyphrase: string;

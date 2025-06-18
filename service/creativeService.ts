@@ -1,3 +1,4 @@
+import { Creative } from "@/app/(authenticated)/home/criativos/page"
 import { apiHelper } from "@/lib/apiHelper"
 
 interface CreateCreativeDto {
@@ -10,5 +11,9 @@ export const createCreative = async (data: CreateCreativeDto) => {
 }
 
 export const getCreatives = async () => {
-    return apiHelper.get('/creative')
+    return apiHelper.get<Creative[]>('/creative')
+}
+
+export const assignCreative = async (ticketId: number, creativeId: number) => {
+    return apiHelper.post(`/tickets/assign/creative/${ticketId}`, { creativeId })
 }

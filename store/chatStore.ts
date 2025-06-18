@@ -44,6 +44,7 @@ interface ChatState {
     sendMessage: (text: string) => Promise<void>;
     initialize: () => void;
     removeTicket: (id: number) => void;
+    updateChat: (ticket: Ticket) => void;
 
     // Contagens de tickets
     ticketCounts: {
@@ -291,36 +292,43 @@ export const useChatStore = create<ChatState>((set, get) => ({
             contentUrl: undefined,
             content: text,
         };
-        set((state) => ({
-            messages: [...state.messages, newMsg],
-            tickets: state.tickets.map((t) =>
-                t.id === chat.id
-                    ? {
-                        ...t,
-                        lastMessage: {
-                            content: text,
-                            fromMe: true,
-                            createdAt: new Date(now).toISOString(),
-                            mediaType: MediaEnum.TEXT,
-                            read: true,
-                        },
-                    }
-                    : t
-            ),
-            selectedChat:
-                state.selectedChat?.id === chat.id
-                    ? {
-                        ...state.selectedChat,
-                        lastMessage: {
-                            content: text,
-                            fromMe: true,
-                            createdAt: new Date(now).toISOString(),
-                            mediaType: MediaEnum.TEXT,
-                            read: true,
-                        },
-                    }
-                    : state.selectedChat,
-        }));
+
+        set((state) => {
+            const updatedMessages = state.messages.some(m => m.data.key.id === tempId)
+                ? state.messages
+                : [...state.messages, newMsg];
+
+            return {
+                messages: updatedMessages,
+                tickets: state.tickets.map((t) =>
+                    t.id === chat.id
+                        ? {
+                            ...t,
+                            lastMessage: {
+                                content: text,
+                                fromMe: true,
+                                createdAt: new Date(now).toISOString(),
+                                mediaType: MediaEnum.TEXT,
+                                read: true,
+                            },
+                        }
+                        : t
+                ),
+                selectedChat:
+                    state.selectedChat?.id === chat.id
+                        ? {
+                            ...state.selectedChat,
+                            lastMessage: {
+                                content: text,
+                                fromMe: true,
+                                createdAt: new Date(now).toISOString(),
+                                mediaType: MediaEnum.TEXT,
+                                read: true,
+                            },
+                        }
+                        : state.selectedChat,
+            };
+        });
 
         try {
             await sendTextMessage(chat.Contact.remoteJid, text);
@@ -350,59 +358,71 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         socket.on('newMessage', (payload: NewMessagePayload) => {
             let ts = payload.data.messageTimestamp;
-            if (ts < 1e12) ts = ts * 1000;
+            if (ts < 1e12) ts *= 1000;        // normaliza
             payload.data.messageTimestamp = ts;
 
-            if (payload.data.key.fromMe) {
-                set((state) => ({
-                    tickets: state.tickets.map((t) =>
-                        t.Contact?.remoteJid === payload.contactId
-                            ? {
-                                ...t,
-                                lastMessage: {
-                                    content:
-                                        payload.data.message.conversation || '',
-                                    fromMe: true,
-                                    createdAt: new Date(ts).toISOString(),
-                                    mediaType: payload.mediaType,
-                                    read: true,
-                                },
-                            }
-                            : t
-                    ),
-                }));
-                return;
-            }
-
             set((state) => {
+                // evita duplicar
                 const exists = state.messages.some(
-                    (m) => m.data.key.id === payload.data.key.id
+                    (m) => m.data.key.id === payload.data.key.id ||
+                        (m.data.key.fromMe && m.data.message.conversation === payload.data.message.conversation)
                 );
-                const messages = exists
-                    ? state.messages
-                    : [...state.messages, payload];
+
+                const messages = !exists ? [...state.messages, payload] : state.messages;
+
                 const tickets = state.tickets.map((t) =>
                     t.Contact?.remoteJid === payload.contactId
                         ? {
                             ...t,
                             lastMessage: {
-                                content:
-                                    payload.data.message.conversation || '',
+                                content: payload.data.message.conversation || '',
                                 fromMe: payload.data.key.fromMe,
                                 createdAt: new Date(ts).toISOString(),
                                 mediaType: payload.mediaType,
-                                read: false,
+                                read: state.selectedChat?.Contact.remoteJid === payload.contactId,
                             },
                         }
                         : t
                 );
-                return { messages, tickets };
+
+                const selectedChat =
+                    state.selectedChat?.Contact.remoteJid === payload.contactId
+                        ? {
+                            ...state.selectedChat,
+                            lastMessage: tickets.find((t) => t.Contact.remoteJid === payload.contactId)?.lastMessage || {
+                                content: payload.data.message.conversation || '',
+                                fromMe: payload.data.key.fromMe,
+                                createdAt: new Date(ts).toISOString(),
+                                mediaType: payload.mediaType,
+                                read: true
+                            }
+                        }
+                        : state.selectedChat;
+
+                return { messages, tickets, selectedChat };
             });
+
+            // Recalcula contagens, se necessário
             get().fetchTicketCounts();
         });
+
 
         set({ socket });
         get().fetchTickets(get().tab);
         get().fetchTicketCounts();
+    },
+
+    updateChat: (ticket) => {
+        set((state) => {
+            const updatedTickets = state.tickets.map((t) =>
+                t.id === ticket.id ? ticket : t
+            );
+            return {
+                selectedChat: ticket,
+                tickets: updatedTickets,
+                messages: state.messages,
+                ticketCounts: state.ticketCounts
+            };
+        });
     },
 }));

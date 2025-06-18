@@ -31,6 +31,9 @@ import type { Sale, Loss } from "@/lib/types"
 import { Textarea } from "@/components/ui/textarea"
 import { addObservation } from "@/service/ticketsService"
 import { useToast } from "@/hooks/use-toast"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Creative } from "@/app/(authenticated)/home/criativos/page"
+import { assignCreative, getCreatives } from "@/service/creativeService"
 
 interface InfoSidebarProps {
     isOpen: boolean
@@ -45,12 +48,15 @@ const formatCurrency = (value: number) => {
 }
 
 const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
-    const { selectedChat } = useChatStore()
+    const { selectedChat, updateChat } = useChatStore()
     const [sales, setSales] = useState<Sale[]>([])
     const [losses, setLosses] = useState<Loss[]>([])
     const [observation, setObservation] = useState<string>("")
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [editMode, setEditMode] = useState<boolean>(false)
+    const [creativeFlowDialog, setCreativeFlowDialog] = useState<boolean>(false)
+    const [creatives, setCreatives] = useState<Creative[]>([])
+    const [selectedCreative, setSelectedCreative] = useState<Creative | null>(null)
     const { toast } = useToast()
 
     useEffect(() => {
@@ -81,7 +87,10 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
                 setIsLoading(true)
                 await addObservation(selectedChat.id, observation)
                 setEditMode(false)
-                selectedChat.observation = observation
+                updateChat({
+                    ...selectedChat,
+                    observation: observation
+                })
                 toast({
                     title: "Observação adicionada com sucesso",
                 })
@@ -98,7 +107,51 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
         }
     }
 
+    const handleCreativeFlow = async () => {
+        try {
+            setCreativeFlowDialog(true)
+            const creatives = await getCreatives()
+            setCreatives(creatives)
+        } catch (error) {
+            console.error("Erro ao buscar criativos:", error)
+        }
+    }
+
+    const handleAssignCreative = async (creativeId: number) => {
+        try {
+            if (selectedChat?.id) {
+                await assignCreative(selectedChat.id, creativeId)
+                setCreativeFlowDialog(false)
+                toast({
+                    title: "Criativo atribuído com sucesso",
+                })
+
+                const updatedChat = {
+                    ...selectedChat,
+                    origin: "Criativo",
+                    Creative: {
+                        id: String(creativeId),
+                        title: selectedCreative?.title || "",
+                        keyphrase: selectedCreative?.keyphrase || "",
+                        _count: {
+                            Ticket: selectedCreative?._count?.Ticket || 0
+                        }
+                    }
+                }
+
+                updateChat(updatedChat)
+            }
+        } catch (error) {
+            console.error("Erro ao atribuir criativo:", error)
+            toast({
+                title: "Erro ao atribuir criativo",
+                variant: "destructive"
+            })
+        }
+    }
+
     if (!selectedChat) return null
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const InfoItem = ({ icon: Icon, label, children }: { icon: any; label: string; children: React.ReactNode }) => (
         <div className="flex items-start gap-3 py-2">
@@ -114,15 +167,13 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
         <>
             {/* Overlay */}
             <div
-                className={`fixed inset-0 bg-black/50 transition-opacity duration-300 z-40 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-                    }`}
+                className={`fixed inset-0 bg-black/50 transition-opacity duration-300 z-40 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
                 onClick={onClose}
             />
 
             {/* Sidebar */}
             <div
-                className={`fixed right-0 top-0 h-full w-full sm:w-96 lg:w-80 xl:w-96 bg-background border-l shadow-xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"
-                    }`}
+                className={`fixed right-0 top-0 h-full w-full sm:w-96 lg:w-80 xl:w-96 bg-background border-l shadow-xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"}`}
             >
                 {/* Header */}
                 <div className="flex-shrink-0 p-4 border-b bg-muted/30">
@@ -169,13 +220,72 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
                             )}
 
                             <InfoItem icon={MapPin} label="Origem">
-                                <span className="font-medium">
-                                    <span className={selectedChat.Contact.origin === "Whatsapp" ? "text-green-500" : selectedChat.Contact.origin === "Criativo" ? "text-blue-500" : ""}>
-                                        {selectedChat.Contact.origin || "Não informado"}
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium">
+                                        {selectedChat.Creative ? (
+                                            <span className="text-blue-500">Criativo</span>
+                                        ) : selectedChat.Contact.origin === "Whatsapp" ? (
+                                            <span className="text-green-500">Whatsapp</span>
+                                        ) : (
+                                            selectedChat.Contact.origin || "Não informado"
+                                        )}
                                     </span>
-
-                                </span>
+                                    <Button variant="ghost" size="icon" onClick={handleCreativeFlow}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </InfoItem>
+                            <Dialog open={creativeFlowDialog} onOpenChange={setCreativeFlowDialog}>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Atribuir Lead a um Criativo</DialogTitle>
+                                    </DialogHeader>
+                                    <p>Selecione o criativo que deseja atribuir ao lead.</p>
+                                    <div className="mt-4">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead className="text-xs h-8">Criativo</TableHead>
+                                                    <TableHead className="text-xs h-8">Chave</TableHead>
+                                                    <TableHead className="text-xs h-8">Quantidade de Leads</TableHead>
+                                                    <TableHead className="text-xs h-8 text-right">Ação</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {creatives.map((creative) => (
+                                                    <TableRow key={creative.id}>
+                                                        <TableCell className="text-xs py-2 font-medium">
+                                                            {creative.title}
+                                                        </TableCell>
+                                                        <TableCell className="text-xs py-2 font-medium text-ellipsis overflow-hidden">
+                                                            {creative.keyphrase}
+                                                        </TableCell>
+                                                        <TableCell className="text-xs py-2 font-medium">
+                                                            {creative._count?.Ticket || 0}
+                                                        </TableCell>
+                                                        <TableCell className="text-xs py-2 text-right">
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    setSelectedCreative(creative)
+                                                                    handleAssignCreative(Number(creative.id))
+                                                                }}
+                                                            >
+                                                                Atribuir
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                    <DialogFooter>
+                                        <Button variant="outline" onClick={() => setCreativeFlowDialog(false)}>
+                                            Voltar
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
 
                             {selectedChat.Creative && (
                                 <InfoItem icon={Tag} label="Criativo">
@@ -191,8 +301,9 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
                             </InfoItem>
 
                             <InfoItem icon={CalendarCheck} label="Aceito em">
-                                <span className={`font-medium ${selectedChat.acceptedAt ? "" : "text-muted-foreground text-xs"
-                                    }`} >{selectedChat.acceptedAt ? formatDate(new Date(selectedChat.acceptedAt), "dd/MM/yyyy HH:mm") : "Aceite para obter mais informações"}</span>
+                                <span className={`font-medium ${selectedChat.acceptedAt ? "" : "text-muted-foreground text-xs"}`}>
+                                    {selectedChat.acceptedAt ? formatDate(new Date(selectedChat.acceptedAt), "dd/MM/yyyy HH:mm") : "Aceite para obter mais informações"}
+                                </span>
                             </InfoItem>
 
                             <InfoItem icon={NotepadTextDashed} label="Observação">
@@ -214,9 +325,6 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
                                 </div>
                             )}
                         </div>
-
-
-
 
                         <Separator />
 

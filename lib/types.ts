@@ -121,6 +121,7 @@ export interface Ticket {
   acceptedAt: string;
   kanbanStepId: number;
   observation?: string;
+  origin: string;
   Creative?: {
     keyphrase: string;
     title: string;

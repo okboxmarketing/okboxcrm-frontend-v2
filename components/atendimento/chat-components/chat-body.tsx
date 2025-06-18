@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, Pause, Play } from "lucide-react";
 import { MediaEnum, NewMessagePayload } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { isLink } from "@/lib/utils";
 import { useChatStore } from "@/store/chatStore";
 import { PuffLoader, PulseLoader } from "react-spinners";
 import MessageTimestamp from "./message/message-timestamp";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import useAuthStore from "@/store/authStore";
 
 const ChatBody: React.FC = () => {
   const {
@@ -19,12 +21,15 @@ const ChatBody: React.FC = () => {
     isLoadingMore,
     isLoadingMessages,
   } = useChatStore();
+  const { user } = useAuthStore();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [playingAudio, setPlayingAudio] = useState<string | null>(null);
 
   const renderMessageContent = (
     msg: NewMessagePayload,
-    fromMe: boolean
+    fromMe: boolean,
+    showTimestamp: boolean
   ) => {
     switch (msg.mediaType) {
       case MediaEnum.IMAGE:
@@ -40,19 +45,90 @@ const ChatBody: React.FC = () => {
                 }
               }}
             />
-            <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
+            {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
         );
       case MediaEnum.AUDIO:
         return (
           <div className="relative max-w-full">
-            <audio controls className="max-w-full w-64">
-              <source src={msg.contentUrl} type="audio/ogg" />
-              Seu navegador não suporta áudio.
-            </audio>
-            <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
+            <div
+              className={`p-4 shadow-sm ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
+                } w-64`}
+            >
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className={`rounded-full  w-10 h-10 p-0 flex-shrink-0 ${fromMe ? "hover:bg-gray-800 text-white" : "hover:bg-gray-100 text-gray-700"
+                    }`}
+                  onClick={() => {
+                    const audio = document.getElementById(`audio-${msg.data.key.id}`) as HTMLAudioElement
+                    if (playingAudio === msg.data.key.id) {
+                      audio.pause()
+                      setPlayingAudio(null)
+                    } else {
+                      if (playingAudio) {
+                        const currentAudio = document.getElementById(`audio-${playingAudio}`) as HTMLAudioElement
+                        currentAudio?.pause()
+                      }
+                      audio.play()
+                      setPlayingAudio(msg.data.key.id)
+                    }
+                  }}
+                >
+                  {playingAudio === msg.data.key.id ? (
+                    <Pause className="h-5 w-5" />
+                  ) : (
+                    <Play className="h-5 w-5 ml-0.5" />
+                  )}
+                </Button>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-1">
+                      {[...Array(20)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`w-0.5 rounded-full transition-all duration-200 ${fromMe ? "bg-gray-600" : "bg-gray-300"
+                            }`}
+                          style={{
+                            height: `${Math.random() * 16 + 8}px`,
+                            opacity: playingAudio === msg.data.key.id && i < 8 ? 1 : 0.6,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>
+                      {playingAudio === msg.data.key.id ? "Reproduzindo..." : "Áudio"}
+                    </span>
+                    <span className={`text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>0:32</span>
+                  </div>
+                </div>
+              </div>
+
+              <audio
+                id={`audio-${msg.data.key.id}`}
+                src={msg.contentUrl}
+                onEnded={() => setPlayingAudio(null)}
+                onLoadedMetadata={(e) => {
+                  const audio = e.target as HTMLAudioElement
+                  const duration = Math.floor(audio.duration)
+                  const minutes = Math.floor(duration / 60)
+                  const seconds = duration % 60
+                  const timeElement = document.querySelector(`#time-${msg.data.key.id}`)
+                  if (timeElement) {
+                    timeElement.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`
+                  }
+                }}
+                className="hidden"
+              />
+            </div>
+            {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
-        );
+        )
       case MediaEnum.VIDEO:
         return (
           <div className="relative max-w-full">
@@ -60,7 +136,7 @@ const ChatBody: React.FC = () => {
               <source src={msg.contentUrl} type="video/mp4" />
               Seu navegador não suporta vídeos.
             </video>
-            <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
+            {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
         );
       case MediaEnum.DOCUMENT:
@@ -86,7 +162,7 @@ const ChatBody: React.FC = () => {
                 <Download className="h-4 w-4 flex-shrink-0" />
                 <span>Baixar</span>
               </Button>
-              <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
+              {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
             </div>
           </div>
         );
@@ -115,10 +191,9 @@ const ChatBody: React.FC = () => {
                 messageText
               )}
             </p>
-            <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />
+            {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
         );
-
     }
   };
 
@@ -165,6 +240,34 @@ const ChatBody: React.FC = () => {
     }
   };
 
+  const groupedMessages = React.useMemo(() => {
+    if (!orderedMessages.length) return [];
+
+    const groups: NewMessagePayload[][] = [];
+    let currentGroup: NewMessagePayload[] = [];
+    let currentSender = orderedMessages[0].data.key.fromMe;
+
+    orderedMessages.forEach((msg, index) => {
+      const isFromMe = msg.data.key.fromMe;
+
+      if (isFromMe !== currentSender) {
+        if (currentGroup.length > 0) {
+          groups.push([...currentGroup]);
+        }
+        currentGroup = [msg];
+        currentSender = isFromMe;
+      } else {
+        currentGroup.push(msg);
+      }
+
+      if (index === orderedMessages.length - 1) {
+        groups.push(currentGroup);
+      }
+    });
+
+    return groups;
+  }, [orderedMessages]);
+
   if (!selectedChat) return null;
 
   if (page === 1 && isLoadingMessages) {
@@ -194,19 +297,37 @@ const ChatBody: React.FC = () => {
           />
         </div>
       )}
-      {orderedMessages.map((msg) => {
-        const fromMe = msg.data.key.fromMe;
+      {groupedMessages.map((group, groupIndex) => {
+        const fromMe = group[0].data.key.fromMe;
         return (
           <div
-            key={msg.data.key.id}
-            className={`flex ${fromMe ? "justify-end" : "justify-start"
-              } w-full mb-2`}
+            key={`${group[0].data.key.id}-${groupIndex}`}
+            className={`flex ${fromMe ? "justify-end" : "justify-start"} w-full mb-2`}
           >
-            <div
-              className={`max-w-[70%] ${fromMe ? "ml-auto" : "mr-auto"
-                }`}
-            >
-              {renderMessageContent(msg, fromMe)}
+            <div className={`max-w-[70%] ${fromMe ? "ml-auto" : "mr-auto"} flex items-start gap-2 ${fromMe ? "flex-row-reverse" : ""}`}>
+              {!fromMe ? (
+                <UserAvatar
+                  name={selectedChat.Contact.name}
+                  pictureUrl={selectedChat.Contact.pictureUrl}
+                  className="w-8 h-8 flex-shrink-0 mt-1"
+                />
+              ) : (
+                <UserAvatar
+                  name={user?.userName || ""}
+                  pictureUrl={user?.companyImage}
+                  className="w-8 h-8 flex-shrink-0 mt-1"
+                />
+              )}
+              <div className={`flex flex-col ${fromMe ? "items-end" : "items-start"}`}>
+                {group.map((msg, msgIndex) => {
+                  const isLastMessage = msgIndex === group.length - 1;
+                  return (
+                    <div key={msg.data.key.id} className="mb-1">
+                      {renderMessageContent(msg, fromMe, isLastMessage)}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         );
