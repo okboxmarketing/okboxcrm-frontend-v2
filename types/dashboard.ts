@@ -38,4 +38,15 @@ export interface DashboardData {
         etapa: string;
         quantidade: number;
     }[];
+
+    // Métricas dos criativos
+    totalCaptacoesPorCriativos: number;
+    rankingCaptacoesPorCriativos: {
+        criativo: string;
+        quantidade: number;
+    }[];
+    rankingCaptacoesPorOrigem: {
+        origem: string;
+        quantidade: number;
+    }[];
 }

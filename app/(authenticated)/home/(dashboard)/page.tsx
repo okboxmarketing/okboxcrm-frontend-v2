@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { KanbanPieChart } from "@/components/dashboard/kanban-pie-chart"
-import { CalendarIcon, BarChart3, PieChart, TrendingUp } from 'lucide-react'
+import { CalendarIcon, BarChart3, PieChart, TrendingUp, Users, Target } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
@@ -257,6 +257,87 @@ export default function DashboardPage() {
                 <div className="flex flex-col items-center justify-center h-[200px] text-center">
                   <p className="text-muted-foreground mb-2">Nenhum dado disponível</p>
                   <p className="text-sm text-muted-foreground/70">Os dados serão exibidos assim que houver leads perdidos no sistema</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Novos cards para rankings dos criativos */}
+        <div className="md:col-span-2 lg:col-span-2">
+          <Card className="bg-white border-zinc-200 hover:bg-zinc-50 transition-colors shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-zinc-900">
+                <Target className="h-5 w-5 text-blue-500" />
+                Ranking de Criativos
+              </CardTitle>
+              <p className="text-zinc-500 text-sm">
+                Total: {data?.totalCaptacoesPorCriativos || 0} captações | Top 5 criativos
+              </p>
+            </CardHeader>
+            <CardContent>
+              {data?.rankingCaptacoesPorCriativos && data.rankingCaptacoesPorCriativos.length > 0 ? (
+                <div className="space-y-3">
+                  {data.rankingCaptacoesPorCriativos.slice(0, 5).map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </div>
+                        <span className="font-medium text-zinc-900 truncate">{item.criativo}</span>
+                      </div>
+                      <span className="text-lg font-bold text-blue-600">{item.quantidade}</span>
+                    </div>
+                  ))}
+                  {data.rankingCaptacoesPorCriativos.length > 5 && (
+                    <p className="text-sm text-zinc-500 text-center">
+                      +{data.rankingCaptacoesPorCriativos.length - 5} mais criativos
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[200px] text-center">
+                  <p className="text-muted-foreground mb-2">Nenhum dado disponível</p>
+                  <p className="text-sm text-muted-foreground/70">Os dados serão exibidos assim que houver criativos no sistema</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="md:col-span-2 lg:col-span-2">
+          <Card className="bg-white border-zinc-200 hover:bg-zinc-50 transition-colors shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-zinc-900">
+                <Users className="h-5 w-5 text-purple-500" />
+                Ranking por Origem
+              </CardTitle>
+              <p className="text-zinc-500 text-sm">Top 5 origens com mais captações</p>
+            </CardHeader>
+            <CardContent>
+              {data?.rankingCaptacoesPorOrigem && data.rankingCaptacoesPorOrigem.length > 0 ? (
+                <div className="space-y-3">
+                  {data.rankingCaptacoesPorOrigem.slice(0, 5).map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </div>
+                        <span className="font-medium text-zinc-900 truncate">{item.origem}</span>
+                      </div>
+                      <span className="text-lg font-bold text-purple-600">{item.quantidade}</span>
+                    </div>
+                  ))}
+                  {data.rankingCaptacoesPorOrigem.length > 5 && (
+                    <p className="text-sm text-zinc-500 text-center">
+                      +{data.rankingCaptacoesPorOrigem.length - 5} mais origens
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[200px] text-center">
+                  <p className="text-muted-foreground mb-2">Nenhum dado disponível</p>
+                  <p className="text-sm text-muted-foreground/70">Os dados serão exibidos assim que houver origens no sistema</p>
                 </div>
               )}
             </CardContent>
