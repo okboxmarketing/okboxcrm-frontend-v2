@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { assignAccessorToCompany, deleteCompany, findCompanyById } from "@/service/companyService";
-import { createUser, deleteUser } from "@/service/userService";
+import { deleteUser, inviteUser } from "@/service/userService";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -21,6 +21,7 @@ import useAuthStore from "@/store/authStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import PendingInvites from "@/components/invites/pending-invites";
 
 const EmpresaPage: React.FC = () => {
   const pathname = usePathname();
@@ -30,7 +31,7 @@ const EmpresaPage: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openAdvisorDialog, setOpenAdvisorDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [loadingCreateUser, setTransition] = useTransition();
+  const [loadingInviteUser, setTransitionInviteUser] = useTransition();
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const { user } = useAuthStore();
@@ -51,7 +52,6 @@ const EmpresaPage: React.FC = () => {
     defaultValues: {
       name: "",
       email: "",
-      password: "",
       userRole: "USER",
       companyId: companyId || ""
     },
@@ -78,14 +78,14 @@ const EmpresaPage: React.FC = () => {
   }, [companyId, setValue]);
 
   const onSubmit = async (data: UserSchemaType) => {
-    setTransition(async () => {
+    setTransitionInviteUser(async () => {
       try {
-        await createUser(data);
+        await inviteUser(data);
         reset();
         setOpenDialog(false);
         setCompany(await findCompanyById(companyId!));
         toast({
-          description: "Usuário cadastrado com sucesso!",
+          description: "Usuário convidado com sucesso!",
         });
       } catch (error) {
         if (error instanceof Error) {
@@ -227,6 +227,10 @@ const EmpresaPage: React.FC = () => {
         </Table>
       </div>
 
+      <div className="pt-6">
+        <PendingInvites companyId={companyId} />
+      </div>
+
       <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
         <DialogContent>
           <DialogHeader>
@@ -274,7 +278,7 @@ const EmpresaPage: React.FC = () => {
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cadastrar Novo Usuário</DialogTitle>
+            <DialogTitle>Convidar Usuário para {company?.name}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
@@ -286,11 +290,6 @@ const EmpresaPage: React.FC = () => {
               <Label>Email</Label>
               <Input type="email" {...register("email")} placeholder="Digite o email" />
               {errors.email && <p className="text-red-500">{errors.email.message}</p>}
-            </div>
-            <div>
-              <Label>Senha</Label>
-              <Input type="password" {...register("password")} placeholder="Digite a senha" />
-              {errors.password && <p className="text-red-500">{errors.password.message}</p>}
             </div>
             <div>
               <Label>Função</Label>
@@ -310,8 +309,8 @@ const EmpresaPage: React.FC = () => {
               <Button type="button" variant="outline" onClick={() => setOpenDialog(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" isLoading={loadingCreateUser}>
-                Cadastrar
+              <Button type="submit" isLoading={loadingInviteUser}>
+                Convidar
               </Button>
             </DialogFooter>
           </form>

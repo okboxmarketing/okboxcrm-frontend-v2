@@ -17,7 +17,6 @@ export const apiHelper = {
       let responseData: T;
       try {
         responseData = JSON.parse(text) as T;
-        console.log(`Response [GET ${url} JSON]:`, responseData);
       } catch {
         responseData = text as T;
       }
@@ -48,7 +47,6 @@ export const apiHelper = {
 
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
-      console.log(`Response [POST ${url}]:`, responseData);
 
       if (!response.ok) {
         throw new Error((responseData as Error).message || "Erro desconhecido");
@@ -62,29 +60,34 @@ export const apiHelper = {
   },
   delete: async <T>(
     url: string,
-    data?: unknown
+    params?: Record<string, unknown>
   ): Promise<T> => {
-    const token = localStorage.getItem("authToken");
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-        body: data ? JSON.stringify(data) : null,
+    try {
+      const token = localStorage.getItem("authToken");
+      const queryString = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}${url}${queryString}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        }
+      );
+
+      const text = await response.text();
+      const responseData = text ? (JSON.parse(text) as T) : ({} as T);
+
+      if (!response.ok) {
+        throw new Error((responseData as Error).message || "Erro desconhecido");
       }
-    );
-
-    const text = await response.text();
-    const responseData = text ? (JSON.parse(text) as T) : ({} as T);
-    console.log(`Response [DELETE ${url}]:`, responseData);
-
-    if (!response.ok) {
-      throw new Error((responseData as Error).message || "Erro desconhecido");
+      return responseData;
+    } catch (error) {
+      console.error(`Erro [DELETE ${url}]:`, error);
+      throw error;
     }
-    return responseData;
   },
   patch: async <T>(url: string, data?: unknown): Promise<T> => {
     try {
@@ -101,7 +104,6 @@ export const apiHelper = {
 
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
-      console.log(`Response [PATCH ${url}]:`, responseData);
 
       if (!response.ok) {
         throw new Error((responseData as Error).message || "Erro desconhecido");

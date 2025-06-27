@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { findMyCompany } from "@/service/companyService";
-import { createUser, deleteUser } from "@/service/userService";
+import { deleteUser, inviteUser } from "@/service/userService";
 import {
   Table,
   TableBody,
@@ -38,42 +38,41 @@ import useAuthStore from "@/store/authStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
+import PendingInvites, { PendingInvitesRef } from "@/components/invites/pending-invites";
 
 const MinhaEmpresaPage: React.FC = () => {
-  const [company, setCompany] = useState<Company>();
   const { user } = useAuthStore();
-  const requestUserRole = user?.userRole;
+  const [company, setCompany] = useState<Company | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [creatingUser, setCreatingUser] = useState(false);
-  const { toast } = useToast();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const { toast } = useToast();
+  const pendingInvitesRef = useRef<PendingInvitesRef>(null);
 
   const {
     register,
     handleSubmit,
-    setValue,
-    reset,
     control,
+    reset,
     formState: { errors },
   } = useForm<UserSchemaType>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       name: "",
       email: "",
-      password: "",
       userRole: "USER",
-      companyId: "",
     },
   });
 
+  const requestUserRole = user?.userRole;
+
   const fetchCompany = async () => {
     try {
-      const data = await findMyCompany();
-      setCompany(data);
-      setValue("companyId", data.id);
-    } catch (err) {
-      console.log(err);
+      const companyData = await findMyCompany();
+      setCompany(companyData);
+    } catch (error) {
+      console.error("Erro ao buscar empresa:", error);
     }
   };
 
@@ -85,17 +84,24 @@ const MinhaEmpresaPage: React.FC = () => {
     console.log(data);
     setCreatingUser(true);
     try {
-      await createUser(data);
+      await inviteUser(data);
       toast({
-        description: "Usuário cadastrado com sucesso!",
+        description: "Usuário convidado com sucesso!",
       });
-      reset({ ...data, name: "", email: "", password: "" });
+      reset({ ...data, name: "", email: "" });
       setOpenDialog(false);
+
+      // Atualiza a empresa
       const updated = await findMyCompany();
       setCompany(updated);
+
+      // Atualiza automaticamente os convites pendentes
+      if (pendingInvitesRef.current) {
+        await pendingInvitesRef.current.refreshInvites();
+      }
     } catch (error) {
       console.log(error);
-      toast({ variant: "destructive", description: "Erro ao cadastrar usuário." });
+      toast({ variant: "destructive", description: String(error) });
     } finally {
       setCreatingUser(false);
     }
@@ -200,10 +206,16 @@ const MinhaEmpresaPage: React.FC = () => {
         </Table>
       </div>
 
+      {user?.userRole === "ADMIN" && (
+        <div className="pt-6">
+          <PendingInvites ref={pendingInvitesRef} />
+        </div>
+      )}
+
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cadastrar Novo Usuário</DialogTitle>
+            <DialogTitle>Convidar Usuário para {company?.name}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
@@ -215,11 +227,6 @@ const MinhaEmpresaPage: React.FC = () => {
               <Label>Email</Label>
               <Input type="email" {...register("email")} placeholder="Digite o email" />
               {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
-            </div>
-            <div>
-              <Label>Senha</Label>
-              <Input type="password" {...register("password")} placeholder="Digite a senha" />
-              {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
             </div>
             <div>
               <Label>Função</Label>
@@ -245,7 +252,7 @@ const MinhaEmpresaPage: React.FC = () => {
                 Cancelar
               </Button>
               <Button type="submit" disabled={creatingUser} isLoading={creatingUser}>
-                Cadastrar
+                Convidar
               </Button>
             </DialogFooter>
           </form>
