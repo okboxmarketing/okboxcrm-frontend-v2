@@ -32,6 +32,7 @@ interface ChatState {
     selectedChat: Ticket | null;
     tab: TicketStatusEnum;
     socket: Socket | null;
+    isInitialized: boolean;
     fetchTickets: (
         status: TicketStatusEnum,
         cursor?: string,
@@ -91,6 +92,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     currentKanbanStepId: undefined,
     currentResponsibleId: undefined,
     currentOnlyActive: undefined,
+    isInitialized: false,
 
     fetchTicketCounts: debounce(async () => {
         try {
@@ -340,7 +342,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     initialize: () => {
         const user = useAuthStore.getState().user;
-        if (get().socket) return;
+        const isAuthenticated = useAuthStore.getState().isAuthenticated;
+
+        // Se já está inicializado ou não tem socket, não inicializa novamente
+        if (get().isInitialized || get().socket) return;
+
+        // Se não estiver autenticado, não inicializa
+        if (!isAuthenticated || !user) {
+            console.log('Usuário não autenticado, aguardando para inicializar chat');
+            return;
+        }
+
         const socket = io(
             process.env.NEXT_PUBLIC_BACKEND_URL || '',
             { transports: ['websocket'] }
@@ -406,10 +418,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
             get().fetchTicketCounts();
         });
 
-
         set({ socket });
         get().fetchTickets(get().tab);
         get().fetchTicketCounts();
+        set({ isInitialized: true });
     },
 
     updateChat: (ticket) => {
