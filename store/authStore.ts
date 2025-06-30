@@ -38,8 +38,8 @@ const useAuthStore = create<AuthState>((set) => ({
     },
 
     logout: () => {
-        set({ user: null, token: null, isAuthenticated: false });
         localStorage.removeItem('authToken');
+        set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     },
 
     initializeAuth: () => {

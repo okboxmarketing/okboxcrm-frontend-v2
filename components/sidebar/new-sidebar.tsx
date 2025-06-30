@@ -126,9 +126,17 @@ export function AppSidebar() {
         initializeAuth()
     }, [initializeAuth])
 
-    const handleLogout = () => {
-        logout()
-        window.location.href = "/"
+    const handleLogout = async () => {
+        try {
+            logout()
+
+            await new Promise(resolve => setTimeout(resolve, 50))
+
+            window.location.href = "/"
+        } catch (error) {
+            console.error('Erro durante logout:', error)
+            window.location.href = "/"
+        }
     }
 
     return (

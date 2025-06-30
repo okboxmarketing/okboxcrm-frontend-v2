@@ -15,6 +15,7 @@ import { setActiveCompany } from "@/service/companyService";
 import { Company } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import useAuthStore from "@/store/authStore";
+import { useRouter } from "next/navigation";
 
 interface AdvisorCompaniesDialogProps {
     open: boolean;
@@ -31,6 +32,7 @@ export function AdvisorCompaniesDialog({
     const { toast } = useToast();
     const { user, login } = useAuthStore();
     const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchCompanies = async () => {
@@ -62,14 +64,34 @@ export function AdvisorCompaniesDialog({
         try {
             setActivating(companyId);
             const response = await setActiveCompany(companyId);
-            await login(response.access_token)
+
+            login(response.access_token);
+
+            const checkAuth = () => {
+                return new Promise<void>((resolve) => {
+                    const unsubscribe = useAuthStore.subscribe((state) => {
+                        if (state.isAuthenticated) {
+                            unsubscribe();
+                            resolve();
+                        }
+                    });
+
+                    setTimeout(() => {
+                        unsubscribe();
+                        resolve();
+                    }, 2000);
+                });
+            };
+
+            await checkAuth();
+
             setActiveCompanyId(companyId);
 
             toast({
                 description: "Empresa ativada com sucesso!",
             });
 
-            window.location.href = '/home/atendimento';
+            router.push('/home/atendimento');
             onOpenChange(false);
         } catch (error) {
             console.error("Erro ao ativar empresa:", error);
