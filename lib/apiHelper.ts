@@ -1,3 +1,16 @@
+interface ErrorResponse {
+  statusCode: number;
+  timestamp: string;
+  path: string;
+  error: string | ErrorObject;
+}
+
+interface ErrorObject {
+  message?: string;
+  error?: string;
+  [key: string]: unknown;
+}
+
 export const apiHelper = {
   get: async <T>(url: string, params?: Record<string, unknown>): Promise<T> => {
     try {
@@ -22,13 +35,14 @@ export const apiHelper = {
       }
 
       if (!response.ok) {
-        const errorData = (responseData as any)?.error;
+        const errorData = (responseData as ErrorResponse)?.error;
         let errorMessage = "Erro desconhecido";
 
         if (typeof errorData === 'string') {
           errorMessage = errorData;
         } else if (errorData && typeof errorData === 'object') {
-          errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+          const errorObj = errorData as ErrorObject;
+          errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
         }
 
         throw new Error(errorMessage);
@@ -58,13 +72,14 @@ export const apiHelper = {
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
       if (!response.ok) {
-        const errorData = (responseData as any)?.error;
+        const errorData = (responseData as ErrorResponse)?.error;
         let errorMessage = "Erro desconhecido";
 
         if (typeof errorData === 'string') {
           errorMessage = errorData;
         } else if (errorData && typeof errorData === 'object') {
-          errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+          const errorObj = errorData as ErrorObject;
+          errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
         }
 
         throw new Error(errorMessage);
@@ -99,13 +114,14 @@ export const apiHelper = {
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
       if (!response.ok) {
-        const errorData = (responseData as any)?.error;
+        const errorData = (responseData as ErrorResponse)?.error;
         let errorMessage = "Erro desconhecido";
 
         if (typeof errorData === 'string') {
           errorMessage = errorData;
         } else if (errorData && typeof errorData === 'object') {
-          errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+          const errorObj = errorData as ErrorObject;
+          errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
         }
 
         throw new Error(errorMessage);
@@ -133,13 +149,14 @@ export const apiHelper = {
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
       if (!response.ok) {
-        const errorData = (responseData as any)?.error;
+        const errorData = (responseData as ErrorResponse)?.error;
         let errorMessage = "Erro desconhecido";
 
         if (typeof errorData === 'string') {
           errorMessage = errorData;
         } else if (errorData && typeof errorData === 'object') {
-          errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+          const errorObj = errorData as ErrorObject;
+          errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
         }
 
         throw new Error(errorMessage);
