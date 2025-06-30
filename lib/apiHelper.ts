@@ -22,7 +22,16 @@ export const apiHelper = {
       }
 
       if (!response.ok) {
-        throw new Error((responseData as Error).message || "Erro desconhecido");
+        const errorData = (responseData as any)?.error;
+        let errorMessage = "Erro desconhecido";
+
+        if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData && typeof errorData === 'object') {
+          errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+        }
+
+        throw new Error(errorMessage);
       }
 
       return responseData;
@@ -49,7 +58,16 @@ export const apiHelper = {
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
       if (!response.ok) {
-        throw new Error((responseData as Error).message || "Erro desconhecido");
+        const errorData = (responseData as any)?.error;
+        let errorMessage = "Erro desconhecido";
+
+        if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData && typeof errorData === 'object') {
+          errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+        }
+
+        throw new Error(errorMessage);
       }
 
       return responseData;
@@ -81,7 +99,16 @@ export const apiHelper = {
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
       if (!response.ok) {
-        throw new Error((responseData as Error).message || "Erro desconhecido");
+        const errorData = (responseData as any)?.error;
+        let errorMessage = "Erro desconhecido";
+
+        if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData && typeof errorData === 'object') {
+          errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+        }
+
+        throw new Error(errorMessage);
       }
       return responseData;
     } catch (error) {
@@ -106,7 +133,16 @@ export const apiHelper = {
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
       if (!response.ok) {
-        throw new Error((responseData as Error).message || "Erro desconhecido");
+        const errorData = (responseData as any)?.error;
+        let errorMessage = "Erro desconhecido";
+
+        if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData && typeof errorData === 'object') {
+          errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+        }
+
+        throw new Error(errorMessage);
       }
 
       return responseData;
