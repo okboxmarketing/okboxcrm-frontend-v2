@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/store/authStore";
 import FormError from "./ui/form-error";
+import Link from "next/link";
 
 type AuthCredentialsType = {
   email: string
@@ -86,10 +87,9 @@ export function LoginForm({
         </Button>
       </div>
       <div className="text-center text-sm">
-        Ainda não tem conta?{" "}
-        <a href="#" className="underline underline-offset-4">
-          Entre em contato conosco!
-        </a>
+        <Link href="/esqueci-a-senha">
+          Esqueceu sua senha?
+        </Link>
       </div>
     </form>
   )
