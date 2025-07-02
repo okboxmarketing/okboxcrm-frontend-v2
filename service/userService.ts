@@ -16,7 +16,7 @@ export const deleteUser = async (userId: string, companyId?: string) => {
   );
 };
 
-export const inviteUser = async (user: UserSchemaType) => {
+export const inviteUser = async (user: UserSchemaType | { email: string; name: string; role: "USER" | "ADMIN"; companyId?: string }) => {
   return apiHelper.post("/user-invites/invite", user);
 };
 export const getInviteByToken = async (token: string) => {

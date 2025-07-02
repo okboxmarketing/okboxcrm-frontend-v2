@@ -80,7 +80,14 @@ const EmpresaPage: React.FC = () => {
   const onSubmit = async (data: UserSchemaType) => {
     setTransitionInviteUser(async () => {
       try {
-        await inviteUser(data);
+        const inviteData = {
+          email: data.email,
+          name: data.name,
+          role: data.userRole,
+          companyId: data.companyId
+        };
+
+        await inviteUser(inviteData);
         reset();
         setOpenDialog(false);
         setCompany(await findCompanyById(companyId!));

@@ -84,7 +84,14 @@ const MinhaEmpresaPage: React.FC = () => {
     console.log(data);
     setCreatingUser(true);
     try {
-      await inviteUser(data);
+      const inviteData = {
+        email: data.email,
+        name: data.name,
+        role: data.userRole,
+        companyId: data.companyId
+      };
+
+      await inviteUser(inviteData);
       toast({
         description: "Usuário convidado com sucesso!",
       });

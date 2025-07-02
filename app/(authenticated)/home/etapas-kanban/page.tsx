@@ -103,7 +103,7 @@ const KanbanStepsPage: React.FC = () => {
     <div className="flex-1 mx-auto p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Etapas do Kanban</h1>
-        {user?.userRole === "ADMIN" && (
+        {(user?.userRole === "ADMIN" || user?.userRole === "ADVISOR") && (
           <Button onClick={() => setOpenDialog(true)}>
             <Plus className="w-4 h-4 mr-2" /> Nova Etapa
           </Button>
@@ -116,7 +116,7 @@ const KanbanStepsPage: React.FC = () => {
             <TableHead className="w-2/6">Nome</TableHead>
             <TableHead className="w-1/6">Cor</TableHead>
             <TableHead className="w-1/6">Tickets</TableHead>
-            {user?.userRole === "ADMIN" && (
+            {(user?.userRole === "ADMIN" || user?.userRole === "ADVISOR") && (
               <TableHead className="w-2/6">Ações</TableHead>
             )}
           </TableRow>
@@ -129,7 +129,7 @@ const KanbanStepsPage: React.FC = () => {
                 <div className="w-6 h-6 rounded" style={{ backgroundColor: step.color }} />
               </TableCell>
               <TableCell>{step.ticketCount}</TableCell>
-              {user?.userRole === "ADMIN" && (
+              {(user?.userRole === "ADMIN" || user?.userRole === "ADVISOR") && (
                 <TableCell className="flex items-center gap-2">
                   <Button
                     size="icon"
@@ -221,7 +221,6 @@ const KanbanStepsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirm Dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Confirmar remoção</DialogTitle></DialogHeader>
