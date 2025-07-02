@@ -1,3 +1,5 @@
+import useAuthStore from '@/store/authStore';
+
 interface ErrorResponse {
   statusCode: number;
   timestamp: string;
@@ -9,6 +11,68 @@ interface ErrorObject {
   message?: string;
   error?: string;
   [key: string]: unknown;
+}
+
+function handleLogout() {
+  useAuthStore.getState().logout();
+  window.location.href = '/';
+}
+
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleResponse(response: Response, responseData: any) {
+  if (response.status === 401) {
+    // Verificar se é erro de token expirado/inválido
+    const errorData = (responseData as ErrorResponse)?.error;
+    let errorMessage = "";
+
+    if (typeof errorData === 'string') {
+      errorMessage = errorData;
+    } else if (errorData && typeof errorData === 'object') {
+      const errorObj = errorData as ErrorObject;
+      errorMessage = errorObj.message || errorObj.error || "";
+    }
+
+    // Só faz logout se for especificamente token expirado/inválido
+    if (errorMessage === 'TOKEN_EXPIRED_OR_INVALID') {
+      console.log('Token expirado ou inválido. Fazendo logout automático...');
+      handleLogout();
+      return;
+    }
+
+    // Para outros erros 401 (não autorizado para recurso), apenas lança o erro
+    console.log('Usuário não autorizado para este recurso:', errorMessage);
+  }
+
+  if (response.status === 403) {
+    // Verificar se é erro de permissões insuficientes
+    const errorData = (responseData as ErrorResponse)?.error;
+    let errorMessage = "";
+
+    if (typeof errorData === 'string') {
+      errorMessage = errorData;
+    } else if (errorData && typeof errorData === 'object') {
+      const errorObj = errorData as ErrorObject;
+      errorMessage = errorObj.message || errorObj.error || "";
+    }
+
+    if (errorMessage === 'INSUFFICIENT_PERMISSIONS') {
+      console.log('Usuário não tem permissões suficientes para este recurso');
+    }
+  }
+
+  if (!response.ok) {
+    const errorData = (responseData as ErrorResponse)?.error;
+    let errorMessage = "Erro desconhecido";
+
+    if (typeof errorData === 'string') {
+      errorMessage = errorData;
+    } else if (errorData && typeof errorData === 'object') {
+      const errorObj = errorData as ErrorObject;
+      errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
+    }
+
+    throw new Error(errorMessage);
+  }
 }
 
 export const apiHelper = {
@@ -34,19 +98,7 @@ export const apiHelper = {
         responseData = text as T;
       }
 
-      if (!response.ok) {
-        const errorData = (responseData as ErrorResponse)?.error;
-        let errorMessage = "Erro desconhecido";
-
-        if (typeof errorData === 'string') {
-          errorMessage = errorData;
-        } else if (errorData && typeof errorData === 'object') {
-          const errorObj = errorData as ErrorObject;
-          errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
-        }
-
-        throw new Error(errorMessage);
-      }
+      handleResponse(response, responseData);
 
       return responseData;
     } catch (error) {
@@ -71,19 +123,7 @@ export const apiHelper = {
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
-      if (!response.ok) {
-        const errorData = (responseData as ErrorResponse)?.error;
-        let errorMessage = "Erro desconhecido";
-
-        if (typeof errorData === 'string') {
-          errorMessage = errorData;
-        } else if (errorData && typeof errorData === 'object') {
-          const errorObj = errorData as ErrorObject;
-          errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
-        }
-
-        throw new Error(errorMessage);
-      }
+      handleResponse(response, responseData);
 
       return responseData;
     } catch (error) {
@@ -113,19 +153,8 @@ export const apiHelper = {
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
-      if (!response.ok) {
-        const errorData = (responseData as ErrorResponse)?.error;
-        let errorMessage = "Erro desconhecido";
+      handleResponse(response, responseData);
 
-        if (typeof errorData === 'string') {
-          errorMessage = errorData;
-        } else if (errorData && typeof errorData === 'object') {
-          const errorObj = errorData as ErrorObject;
-          errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
-        }
-
-        throw new Error(errorMessage);
-      }
       return responseData;
     } catch (error) {
       console.error(`Erro [DELETE ${url}]:`, error);
@@ -148,19 +177,7 @@ export const apiHelper = {
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
-      if (!response.ok) {
-        const errorData = (responseData as ErrorResponse)?.error;
-        let errorMessage = "Erro desconhecido";
-
-        if (typeof errorData === 'string') {
-          errorMessage = errorData;
-        } else if (errorData && typeof errorData === 'object') {
-          const errorObj = errorData as ErrorObject;
-          errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
-        }
-
-        throw new Error(errorMessage);
-      }
+      handleResponse(response, responseData);
 
       return responseData;
     } catch (error) {
