@@ -12,18 +12,54 @@ import {
 import useAuthStore from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 
-// Função de debounce
-const debounce = (func: Function, wait: number) => {
-    let timeout: NodeJS.Timeout;
-    return (...args: any[]): Promise<void> => {
-        return new Promise((resolve) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                func(...args);
-                resolve();
-            }, wait);
-        });
-    };
+// Variáveis globais para controle de debounce
+let fetchTicketCountsTimeout: NodeJS.Timeout | null = null;
+let isFetchingCounts = false;
+let lastFetchTime = 0;
+const CACHE_DURATION = 5000; // 5 segundos
+
+// Controle global para evitar múltiplas inicializações
+let globalSocket: Socket | null = null;
+let isInitializing = false;
+
+// Função debounced para fetchTicketCounts
+const debouncedFetchTicketCounts = async () => {
+    const now = Date.now();
+
+    // Se já está buscando, não faz nada
+    if (isFetchingCounts) {
+        console.log('Fetch de contagens já em andamento, ignorando...');
+        return;
+    }
+
+    // Se o cache ainda é válido, não busca novamente
+    if (now - lastFetchTime < CACHE_DURATION) {
+        console.log('Cache ainda válido, pulando fetchTicketCounts');
+        return;
+    }
+
+    // Limpa timeout anterior
+    if (fetchTicketCountsTimeout) {
+        clearTimeout(fetchTicketCountsTimeout);
+    }
+
+    // Cria novo timeout
+    fetchTicketCountsTimeout = setTimeout(async () => {
+        try {
+            console.log('Executando fetchTicketCounts...');
+            isFetchingCounts = true;
+            lastFetchTime = Date.now();
+
+            const counts = await getTicketCounts();
+            useChatStore.setState({ ticketCounts: counts });
+
+            console.log('FetchTicketCounts concluído:', counts);
+        } catch (err) {
+            console.error('Erro ao buscar contagens de tickets:', err);
+        } finally {
+            isFetchingCounts = false;
+        }
+    }, 1000);
 };
 
 interface ChatState {
@@ -33,6 +69,7 @@ interface ChatState {
     tab: TicketStatusEnum;
     socket: Socket | null;
     isInitialized: boolean;
+    isFetchingTickets: boolean;
     fetchTickets: (
         status: TicketStatusEnum,
         cursor?: string,
@@ -93,15 +130,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     currentResponsibleId: undefined,
     currentOnlyActive: undefined,
     isInitialized: false,
+    isFetchingTickets: false,
 
-    fetchTicketCounts: debounce(async () => {
-        try {
-            const counts = await getTicketCounts();
-            set({ ticketCounts: counts });
-        } catch (err) {
-            console.error('Erro ao buscar contagens de tickets:', err);
-        }
-    }, 1000), // 1 segundo de debounce
+    fetchTicketCounts: debouncedFetchTicketCounts,
 
     fetchTickets: async (
         status: TicketStatusEnum,
@@ -110,6 +141,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         responsibleId?: string,
         onlyActive?: boolean
     ) => {
+        // Evita múltiplas chamadas simultâneas
+        if (get().isFetchingTickets && !cursor) {
+            console.log('Fetch de tickets já em andamento, ignorando...');
+            return;
+        }
+
+        set({ isFetchingTickets: true });
         try {
             const { data, meta } = await getTickets(
                 status,
@@ -124,11 +162,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 hasMoreTickets: meta.hasNextPage,
                 currentKanbanStepId: kanbanStepId,
                 currentResponsibleId: responsibleId,
-                currentOnlyActive: onlyActive
+                currentOnlyActive: onlyActive,
+                isFetchingTickets: false
             });
-            get().fetchTicketCounts();
+            // Só atualiza contagens se não for paginação
+            if (!cursor) {
+                debouncedFetchTicketCounts();
+            }
         } catch (err) {
             console.error('Erro ao buscar tickets:', err);
+            set({ isFetchingTickets: false });
         }
     },
 
@@ -168,6 +211,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 chat.Contact.remoteJid,
                 page
             );
+            console.log("Messages", data)
             const formatted: NewMessagePayload[] = data.map((msg: Message) => {
                 let mediaType = MediaEnum.TEXT;
                 let contentUrl: string | undefined;
@@ -204,7 +248,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     data: {
                         key: {
                             fromMe: msg.fromMe,
-                            id: msg.id.toString(),
+                            id: msg.evolutionMessageId || msg.id.toString(),
                             remoteJid: msg.contactId,
                         },
                         message: { conversation },
@@ -216,6 +260,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     mediaType,
                     contentUrl,
                     content: msg.content,
+                    caption: msg.caption,
+                    quotedMessageEvolutionId: msg.quotedMessageEvolutionId,
+                    audioDuration: msg.audioDuration,
                 };
             });
 
@@ -238,6 +285,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     setTab: (tab) => {
+        // Evita re-fetch se já está na mesma tab
+        if (get().tab === tab) return;
+
         set({ tab, tickets: [], ticketsCursor: null, hasMoreTickets: false });
         get().fetchTickets(tab);
     },
@@ -344,14 +394,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const user = useAuthStore.getState().user;
         const isAuthenticated = useAuthStore.getState().isAuthenticated;
 
+        // Controle global para evitar múltiplas inicializações
+        if (isInitializing) {
+            console.log('Inicialização já em andamento, ignorando...');
+            return;
+        }
+
         // Se já está inicializado ou não tem socket, não inicializa novamente
-        if (get().isInitialized || get().socket) return;
+        if (get().isInitialized || get().socket || globalSocket) {
+            console.log('Socket já inicializado, ignorando...');
+            return;
+        }
 
         // Se não estiver autenticado, não inicializa
         if (!isAuthenticated || !user) {
             console.log('Usuário não autenticado, aguardando para inicializar chat');
             return;
         }
+
+        isInitializing = true;
 
         const socket = io(
             process.env.NEXT_PUBLIC_BACKEND_URL || '',
@@ -365,47 +426,89 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
 
         socket.on('newTicket', async () => {
-            await get().fetchTickets(get().tab);
+            // Usa debounce para evitar múltiplas chamadas
+            if (!get().isFetchingTickets) {
+                await get().fetchTickets(get().tab);
+            }
         });
 
         socket.on('newMessage', (payload: NewMessagePayload) => {
+            console.log('WebSocket payload received:', payload);
             let ts = payload.data.messageTimestamp;
             if (ts < 1e12) ts *= 1000;        // normaliza
             payload.data.messageTimestamp = ts;
 
+            // Processa o payload para garantir que todos os campos estejam corretos
+            let contentUrl = payload.contentUrl;
+            let caption = payload.caption;
+            let audioDuration = payload.audioDuration;
+
+            console.log('Processing message - mediaType:', payload.mediaType, 'audioDuration:', payload.audioDuration);
+
+            // Se for imagem, pega o imageUrl do payload
+            if (payload.mediaType === MediaEnum.IMAGE && payload.imageUrl) {
+                contentUrl = payload.imageUrl;
+            }
+
+            if (payload.mediaType === MediaEnum.VIDEO && payload.videoUrl) {
+                contentUrl = payload.videoUrl;
+            }
+            // Se for áudio, pega o audioDuration do payload
+            if (payload.mediaType === MediaEnum.AUDIO && payload.audioDuration) {
+                audioDuration = payload.audioDuration;
+                console.log('Audio duration from WebSocket:', payload.audioDuration);
+            }
+
+            const processedPayload: NewMessagePayload = {
+                ...payload,
+                data: {
+                    ...payload.data,
+                    key: {
+                        ...payload.data.key,
+                        id: payload.data.key.id || payload.data.instanceId,
+                    },
+                },
+                quotedMessageEvolutionId: payload.quotedMessageEvolutionId,
+                caption: caption,
+                contentUrl: contentUrl,
+                audioDuration: audioDuration,
+            };
+
+            console.log('Processed payload audioDuration:', processedPayload.audioDuration);
+
             set((state) => {
                 // evita duplicar
                 const exists = state.messages.some(
-                    (m) => m.data.key.id === payload.data.key.id ||
-                        (m.data.key.fromMe && m.data.message.conversation === payload.data.message.conversation)
+                    (m) => m.data.key.id === processedPayload.data.key.id ||
+                        (m.data.key.fromMe && m.data.message.conversation === processedPayload.data.message.conversation)
                 );
 
-                const messages = !exists ? [...state.messages, payload] : state.messages;
+                const messages = !exists ? [...state.messages, processedPayload] : state.messages;
 
                 const tickets = state.tickets.map((t) =>
-                    t.Contact?.remoteJid === payload.contactId
+                    t.Contact?.remoteJid === processedPayload.contactId
                         ? {
                             ...t,
                             lastMessage: {
-                                content: payload.data.message.conversation || '',
-                                fromMe: payload.data.key.fromMe,
+                                content: processedPayload.data.message.conversation || processedPayload.caption || '',
+                                fromMe: processedPayload.data.key.fromMe,
                                 createdAt: new Date(ts).toISOString(),
-                                mediaType: payload.mediaType,
-                                read: state.selectedChat?.Contact.remoteJid === payload.contactId,
+                                mediaType: processedPayload.mediaType,
+                                read: state.selectedChat?.Contact.remoteJid === processedPayload.contactId,
                             },
                         }
                         : t
                 );
 
                 const selectedChat =
-                    state.selectedChat?.Contact.remoteJid === payload.contactId
+                    state.selectedChat?.Contact.remoteJid === processedPayload.contactId
                         ? {
                             ...state.selectedChat,
-                            lastMessage: tickets.find((t) => t.Contact.remoteJid === payload.contactId)?.lastMessage || {
-                                content: payload.data.message.conversation || '',
-                                fromMe: payload.data.key.fromMe,
+                            lastMessage: tickets.find((t) => t.Contact.remoteJid === processedPayload.contactId)?.lastMessage || {
+                                content: processedPayload.data.message.conversation || processedPayload.caption || '',
+                                fromMe: processedPayload.data.key.fromMe,
                                 createdAt: new Date(ts).toISOString(),
-                                mediaType: payload.mediaType,
+                                mediaType: processedPayload.mediaType,
                                 read: true
                             }
                         }
@@ -414,14 +517,45 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 return { messages, tickets, selectedChat };
             });
 
-            // Recalcula contagens, se necessário
-            get().fetchTicketCounts();
+            // Recalcula contagens apenas se a mensagem não for do chat atual e não for uma mensagem enviada pelo usuário
+            const currentState = get();
+            if (currentState.selectedChat?.Contact.remoteJid !== processedPayload.contactId && !processedPayload.data.key.fromMe) {
+                debouncedFetchTicketCounts();
+            }
         });
 
+        // Novo listener para atualizações de contadores em tempo real
+        socket.on('ticketCountsUpdate', (counts: { pending: number; unread: number }) => {
+            set({ ticketCounts: counts });
+        });
+
+        // Listener para mudanças de status de ticket
+        socket.on('ticketStatusChanged', (data: { ticketId: number; oldStatus: string; newStatus: string }) => {
+            // Atualiza o ticket localmente se necessário
+            set((state) => ({
+                tickets: state.tickets.map((t) =>
+                    t.id === data.ticketId
+                        ? { ...t, status: data.newStatus as TicketStatusEnum }
+                        : t
+                ),
+                selectedChat: state.selectedChat?.id === data.ticketId
+                    ? { ...state.selectedChat, status: data.newStatus as TicketStatusEnum }
+                    : state.selectedChat
+            }));
+        });
+
+        // Limpa o socket global quando desconectar
+        socket.on('disconnect', () => {
+            globalSocket = null;
+            isInitializing = false;
+        });
+
+        globalSocket = socket;
         set({ socket });
         get().fetchTickets(get().tab);
-        get().fetchTicketCounts();
+        // fetchTicketCounts será chamado automaticamente pelo fetchTickets
         set({ isInitialized: true });
+        isInitializing = false;
     },
 
     updateChat: (ticket) => {

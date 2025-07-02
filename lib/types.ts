@@ -211,9 +211,17 @@ export interface NewMessagePayload {
     pushName?: string;
     status?: string;
   };
+  audioDuration?: number;
   mediaType: MediaEnum;
   contentUrl?: string;
   content?: string;
+  caption?: string;
+  quotedMessageEvolutionId?: string;
+  audioMessage?: {
+    seconds: number;
+  };
+  imageUrl?: string; // Campo específico para imagens vindas do WebSocket
+  videoUrl?: string; // Campo específico para vídeos vindas do WebSocket
 }
 
 export interface Message {
@@ -225,4 +233,9 @@ export interface Message {
   createdAt: string;
   mediaType: MediaEnum;
   status: string;
+  caption?: string;
+  contentUrl?: string;
+  quotedMessageEvolutionId?: string;
+  evolutionMessageId?: string;
+  audioDuration?: number;
 }

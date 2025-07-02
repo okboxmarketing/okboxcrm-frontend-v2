@@ -10,6 +10,7 @@ import { PuffLoader, PulseLoader } from "react-spinners";
 import MessageTimestamp from "./message/message-timestamp";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import useAuthStore from "@/store/authStore";
+import QuotedMessage from "./message/quoted-message";
 
 const ChatBody: React.FC = () => {
   const {
@@ -25,28 +26,55 @@ const ChatBody: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
+  const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  const handleQuoteClick = (messageId: string) => {
+    const messageElement = messageRefs.current[messageId];
+    if (messageElement) {
+      messageElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+
+      // Adiciona um destaque temporário na mensagem
+      messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+      setTimeout(() => {
+        messageElement.style.backgroundColor = '';
+      }, 2000);
+    }
+  };
 
   const renderMessageContent = (
     msg: NewMessagePayload,
     fromMe: boolean,
     showTimestamp: boolean
   ) => {
+    const quotedMessage = msg.quotedMessageEvolutionId
+      ? messages.find(m => m.data.key.id === msg.quotedMessageEvolutionId)
+      : null;
     switch (msg.mediaType) {
       case MediaEnum.IMAGE:
         return (
           <div className="relative max-w-full">
-            <img
-              src={msg.contentUrl}
-              alt={fromMe ? "Imagem enviada" : "Imagem recebida"}
-              className="max-w-full w-64 h-64 object-cover rounded-lg cursor-pointer"
-              onClick={() => {
-                if (msg.contentUrl) {
-                  setPreviewUrl(msg.contentUrl);
-                }
-              }}
-            />
+            <div className={`p-2 shadow-sm flex flex-col gap-2 ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
+              } w-64`}>
+              {quotedMessage && (
+                <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
+              )}
+              <img
+                src={msg.contentUrl}
+                alt={fromMe ? "Imagem enviada" : "Imagem recebida"}
+                className="max-w-full w-64 h-64 object-cover rounded-lg cursor-pointer"
+                onClick={() => {
+                  if (msg.contentUrl) {
+                    setPreviewUrl(msg.contentUrl);
+                  }
+                }}
+              />
+              {msg.caption && <p className={`${fromMe ? "text-white" : "text-black"}`}> {msg.caption}</p>}
+            </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
-          </div>
+          </div >
         );
       case MediaEnum.AUDIO:
         return (
@@ -55,6 +83,9 @@ const ChatBody: React.FC = () => {
               className={`p-4 shadow-sm ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
                 } w-64`}
             >
+              {quotedMessage && (
+                <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
+              )}
               <div className="flex items-center gap-3">
                 <Button
                   size="sm"
@@ -104,7 +135,9 @@ const ChatBody: React.FC = () => {
                     <span className={`text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>
                       {playingAudio === msg.data.key.id ? "Reproduzindo..." : "Áudio"}
                     </span>
-                    <span className={`text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>0:32</span>
+                    <span className={`text-xs ${fromMe ? "text-gray-300" : "text-gray-500"}`}>
+                      {msg.audioDuration ? `${Math.floor(msg.audioDuration / 60)}:${(msg.audioDuration % 60).toString().padStart(2, "0")}` : ""}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -132,10 +165,17 @@ const ChatBody: React.FC = () => {
       case MediaEnum.VIDEO:
         return (
           <div className="relative max-w-full">
-            <video controls className="max-w-full w-64 h-64 object-cover rounded-lg cursor-pointer">
-              <source src={msg.contentUrl} type="video/mp4" />
-              Seu navegador não suporta vídeos.
-            </video>
+            <div className={`p-2 shadow-sm flex flex-col gap-2 ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
+              } w-64`}>
+              {quotedMessage && (
+                <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
+              )}
+              <video controls className="max-w-full w-64 h-64 object-cover rounded-lg cursor-pointer">
+                <source src={msg.contentUrl} type="video/mp4" />
+                Seu navegador não suporta vídeos.
+              </video>
+              {msg.caption && <p className={`${fromMe ? "text-white" : "text-black"}`}> {msg.caption}</p>}
+            </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
         );
@@ -145,6 +185,9 @@ const ChatBody: React.FC = () => {
         return (
           <div className="relative max-w-full">
             <div className={`p-4 rounded-lg ${fromMe ? "bg-black text-white" : "bg-white"} w-full`}>
+              {quotedMessage && (
+                <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
+              )}
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="h-6 w-6 flex-shrink-0" />
                 <span className="text-sm font-medium truncate">{fileName}</span>
@@ -162,6 +205,7 @@ const ChatBody: React.FC = () => {
                 <Download className="h-4 w-4 flex-shrink-0" />
                 <span>Baixar</span>
               </Button>
+              {msg.caption && <p className={`${fromMe ? "text-white" : "text-black"} mt-2`}> {msg.caption}</p>}
               {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
             </div>
           </div>
@@ -172,25 +216,28 @@ const ChatBody: React.FC = () => {
         const isLinkMessage = isLink(messageText);
         return (
           <div className="relative max-w-full">
-            <p
-              className={`px-4 py-2 whitespace-pre-wrap break-all ${fromMe
-                ? "bg-black text-white rounded-l-xl rounded-t-xl"
-                : "bg-white rounded-r-xl rounded-t-xl"
-                }`}
-            >
-              {isLinkMessage ? (
-                <a
-                  href={messageText}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline break-all whitespace-pre-wrap"
-                >
-                  {messageText}
-                </a>
-              ) : (
-                messageText
+            <div className={`px-4 py-2 whitespace-pre-wrap break-all ${fromMe
+              ? "bg-black text-white rounded-l-xl rounded-t-xl"
+              : "bg-white rounded-r-xl rounded-t-xl"
+              }`}>
+              {quotedMessage && (
+                <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
               )}
-            </p>
+              <p>
+                {isLinkMessage ? (
+                  <a
+                    href={messageText}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline break-all whitespace-pre-wrap"
+                  >
+                    {messageText}
+                  </a>
+                ) : (
+                  messageText
+                )}
+              </p>
+            </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
         );
@@ -322,7 +369,13 @@ const ChatBody: React.FC = () => {
                 {group.map((msg, msgIndex) => {
                   const isLastMessage = msgIndex === group.length - 1;
                   return (
-                    <div key={msg.data.key.id} className="mb-1">
+                    <div
+                      key={msg.data.key.id}
+                      className="mb-1"
+                      ref={(el) => {
+                        messageRefs.current[msg.data.key.id] = el;
+                      }}
+                    >
                       {renderMessageContent(msg, fromMe, isLastMessage)}
                     </div>
                   );

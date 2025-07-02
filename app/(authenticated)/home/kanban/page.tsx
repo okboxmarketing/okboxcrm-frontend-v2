@@ -73,6 +73,7 @@ export default function KanbanBoard() {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const { ticketId, sourceStepId, sourceStepName } = source.data as any;
                     if (sourceStepId !== col.id) {
+                      // Verifica se está tentando mover de "Sem Contato"
                       if (sourceStepName === "Sem Contato") {
                         toast({
                           title: 'Movimentação não permitida',
@@ -81,6 +82,17 @@ export default function KanbanBoard() {
                         });
                         return;
                       }
+
+                      // Verifica se está tentando mover para "Sem Contato"
+                      if (col.name === "Sem Contato") {
+                        toast({
+                          title: 'Movimentação não permitida',
+                          description: 'Não é possível mover tickets para a etapa "Sem Contato". Esta etapa é reservada para novos contatos.',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+
                       try {
                         await moveTicket(ticketId, col.id.toString());
                         await reload();

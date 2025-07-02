@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { KanbanStep, Ticket } from "@/lib/types";
 import { acceptTicket } from "@/service/ticketsService";
 import { getKanbanSteps } from "@/service/kanbanStepsService";
@@ -21,8 +21,7 @@ const ChatSidebar: React.FC = () => {
     fetchMoreTickets,
     hasMoreTickets,
     isLoadingMoreTickets,
-    ticketCounts,
-    fetchTicketCounts
+    ticketCounts
   } = useChatStore()
   const [showMyTickets, setShowMyTickets] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,8 +31,9 @@ const ChatSidebar: React.FC = () => {
   const { user } = useAuthStore();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef(false);
+  const lastParamsRef = useRef<string>('');
 
-  const lastTicketRef = useCallback((node: HTMLDivElement) => {
+  const lastTicketRef = (node: HTMLDivElement) => {
     if (isLoadingMoreTickets || loadingRef.current) return;
     if (observerRef.current) observerRef.current.disconnect();
 
@@ -50,7 +50,7 @@ const ChatSidebar: React.FC = () => {
     });
 
     if (node) observerRef.current.observe(node);
-  }, [isLoadingMoreTickets, hasMoreTickets, fetchMoreTickets]);
+  };
 
   useEffect(() => {
     getKanbanSteps().then(setKanbanSteps).catch(console.error);
@@ -66,13 +66,21 @@ const ChatSidebar: React.FC = () => {
     const onlyActive = selectedKanbanStep === "active";
     const responsibleId = showMyTickets ? user?.userId : undefined;
 
+    // Evita chamadas desnecessárias se os parâmetros não mudaram
+    const currentParams = JSON.stringify({ tab, kanbanStepId, responsibleId, onlyActive });
+
+    if (lastParamsRef.current === currentParams) {
+      return; // Parâmetros não mudaram, não faz nova chamada
+    }
+
+    lastParamsRef.current = currentParams;
     setIsInitialLoading(true);
     fetchTickets(tab, undefined, kanbanStepId, responsibleId, onlyActive)
       .finally(() => {
         setIsInitialLoading(false);
       });
-    fetchTicketCounts();
-  }, [tab, fetchTickets, fetchTicketCounts, selectedKanbanStep, showMyTickets, user?.userId]);
+    // fetchTicketCounts é chamado automaticamente pelo fetchTickets
+  }, [tab, selectedKanbanStep, showMyTickets, user?.userId]);
 
   const sortedTickets = useMemo(() => {
     return [...tickets].sort((a, b) => {
