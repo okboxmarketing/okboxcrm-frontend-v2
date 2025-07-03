@@ -81,6 +81,14 @@ export const createTicket = async (remoteJid: string) => {
   return apiHelper.post(`/tickets`, { remoteJid });
 }
 
+export const createTicketFromCRM = async (contactId: string) => {
+  return apiHelper.post(`/tickets/crm`, { contactId });
+}
+
+export const getTicketByContactId = async (contactId: string) => {
+  return apiHelper.get<Ticket>(`/tickets/contact/${contactId}`);
+}
+
 export const deleteTicket = async (ticketId: number) => {
   return apiHelper.delete(`/tickets/${ticketId}`);
 }

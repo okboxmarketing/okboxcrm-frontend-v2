@@ -6,7 +6,7 @@ import { MoreVertical, Trash, EyeOff, ChevronRight, ArrowRightLeft, Loader2 } fr
 import MoveTicketSelect from "@/components/atendimento/kanban-step-selector";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { deleteTicket, hideTicket, transferTicket } from "@/service/ticketsService";
+import { deleteTicket, hideTicket, transferTicket, acceptTicket } from "@/service/ticketsService";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import useAuthStore from "@/store/authStore";
 import { useChatStore } from "@/store/chatStore";
@@ -92,6 +92,31 @@ const ChatHeader: React.FC = () => {
     setConfirmHideOpen(false);
   }
 
+  const handleAcceptTicket = async () => {
+    if (!selectedChat) return;
+    try {
+      await acceptTicket(selectedChat.id);
+      toast({
+        description: "Ticket aceito com sucesso!",
+      });
+      // Atualiza o ticket no store
+      selectChat({
+        ...selectedChat,
+        status: "OPEN",
+      });
+      // Busca tickets atualizados e muda para tab OPEN
+      fetchTickets("OPEN");
+      // Força a mudança da tab para OPEN
+      useChatStore.setState({ tab: "OPEN" });
+    } catch (error) {
+      console.error("Erro ao aceitar ticket:", error);
+      toast({
+        description: "Erro ao aceitar ticket",
+        variant: "destructive",
+      });
+    }
+  }
+
   if (!selectedChat) return null;
 
   return (
@@ -117,13 +142,25 @@ const ChatHeader: React.FC = () => {
           )}
         </div>
       </div>
-      {selectedChat.status !== "PENDING" && user?.userRole !== "ADVISOR" && (
-        <div className="flex items-center gap-4">
-          <MoveTicketSelect ticketId={selectedChat.id} fetchTickets={handleFetchTickets} />
-          <SaleButton />
-          {selectedChat.status !== "LOSS" && (
-            <LossButton />
-          )}
+      <div className="flex items-center gap-4">
+        {selectedChat.status === "PENDING" && user?.userRole !== "ADVISOR" && (
+          <Button
+            onClick={handleAcceptTicket}
+            className="bg-green-500 hover:bg-green-500/70 whitespace-nowrap"
+          >
+            ACEITAR
+          </Button>
+        )}
+        {selectedChat.status !== "PENDING" && user?.userRole !== "ADVISOR" && (
+          <>
+            <MoveTicketSelect ticketId={selectedChat.id} fetchTickets={handleFetchTickets} />
+            <SaleButton />
+            {selectedChat.status !== "LOSS" && (
+              <LossButton />
+            )}
+          </>
+        )}
+        {user?.userRole !== "ADVISOR" && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="p-2">
@@ -148,111 +185,111 @@ const ChatHeader: React.FC = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        )}
 
-          <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Confirmar Exclusão</DialogTitle>
-              </DialogHeader>
-              <p>Tem certeza que deseja excluir este ticket? Esta ação não pode ser desfeita.</p>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button variant="destructive" onClick={handleDeleteTicket}>
-                  Excluir
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          <Dialog open={confirmHideOpen} onOpenChange={setConfirmHideOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Você tem certeza?</DialogTitle>
-              </DialogHeader>
-              <p>Tem certeza que deseja ocultar este ticket? Ele não vai mais participar de seu atendimento, métricas e kanban.</p>
-              <Link href={'/home/tickets'} className="flex items-center gap-2 text-blue-500 hover:text-blue-300 text-sm">
-                <ChevronRight />
-                Ver Tickets Ocultos
-              </Link>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setConfirmHideOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleHideTicket}>
-                  Ocultar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          <Dialog open={confirmTransferOpen} onOpenChange={setConfirmTransferOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Selecione o novo responsável</DialogTitle>
-              </DialogHeader>
-              {loadingUsers ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="animate-spin h-8 w-8" />
-                </div>
-              ) : (
-                <div className="py-4 space-y-2">
-                  {users.map((thisUser) => (
-                    <div key={thisUser.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <UserAvatar name={thisUser.name} pictureUrl={thisUser.profileImage} />
-                        <span>{thisUser.name}</span>
-                      </div>
-                      <Button
-                        isLoading={transferringUserId === thisUser.id}
-                        variant="outline"
-                        disabled={thisUser.id === selectedChat.responsibleId}
-                        onClick={async () => {
-                          if (!selectedChat) return;
-                          setTransferringUserId(thisUser.id);
-                          try {
-                            await transferTicket(selectedChat.id, thisUser.id);
-                            toast({
-                              description: "Ticket transferido com sucesso!",
-                            });
-                            if (user?.userRole === "USER") {
-                              selectChat(null);
-                              removeTicket(selectedChat.id);
-                            } else {
-                              selectChat({
-                                ...selectedChat,
-                                responsibleId: thisUser.id,
-                                Responsible: {
-                                  name: thisUser.name,
-                                }
-                              });
-                            }
-                            setConfirmTransferOpen(false);
-                          } catch (error) {
-                            console.error("Erro ao transferir ticket:", error);
-                            toast({
-                              description: "Erro ao transferir ticket",
-                              variant: "destructive",
-                            });
-                          } finally {
-                            setTransferringUserId(null);
-                          }
-                        }}
-                      >
-                        Transferir
-                      </Button>
+        <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar Exclusão</DialogTitle>
+            </DialogHeader>
+            <p>Tem certeza que deseja excluir este ticket? Esta ação não pode ser desfeita.</p>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteTicket}>
+                Excluir
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={confirmHideOpen} onOpenChange={setConfirmHideOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Você tem certeza?</DialogTitle>
+            </DialogHeader>
+            <p>Tem certeza que deseja ocultar este ticket? Ele não vai mais participar de seu atendimento, métricas e kanban.</p>
+            <Link href={'/home/tickets'} className="flex items-center gap-2 text-blue-500 hover:text-blue-300 text-sm">
+              <ChevronRight />
+              Ver Tickets Ocultos
+            </Link>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmHideOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleHideTicket}>
+                Ocultar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={confirmTransferOpen} onOpenChange={setConfirmTransferOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Selecione o novo responsável</DialogTitle>
+            </DialogHeader>
+            {loadingUsers ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="animate-spin h-8 w-8" />
+              </div>
+            ) : (
+              <div className="py-4 space-y-2">
+                {users.map((thisUser) => (
+                  <div key={thisUser.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <UserAvatar name={thisUser.name} pictureUrl={thisUser.profileImage} />
+                      <span>{thisUser.name}</span>
                     </div>
-                  ))}
-                </div>
-              )}
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setConfirmTransferOpen(false)}>
-                  Cancelar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
+                    <Button
+                      isLoading={transferringUserId === thisUser.id}
+                      variant="outline"
+                      disabled={thisUser.id === selectedChat.responsibleId}
+                      onClick={async () => {
+                        if (!selectedChat) return;
+                        setTransferringUserId(thisUser.id);
+                        try {
+                          await transferTicket(selectedChat.id, thisUser.id);
+                          toast({
+                            description: "Ticket transferido com sucesso!",
+                          });
+                          if (user?.userRole === "USER") {
+                            selectChat(null);
+                            removeTicket(selectedChat.id);
+                          } else {
+                            selectChat({
+                              ...selectedChat,
+                              responsibleId: thisUser.id,
+                              Responsible: {
+                                name: thisUser.name,
+                              }
+                            });
+                          }
+                          setConfirmTransferOpen(false);
+                        } catch (error) {
+                          console.error("Erro ao transferir ticket:", error);
+                          toast({
+                            description: "Erro ao transferir ticket",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setTransferringUserId(null);
+                        }
+                      }}
+                    >
+                      Transferir
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmTransferOpen(false)}>
+                Cancelar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
       <InfoSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </div>
   );

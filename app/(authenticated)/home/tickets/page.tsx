@@ -71,9 +71,15 @@ function TicketsTable({ tickets, isHiddenTickets = false, onUnhide }: TicketsTab
                             </TableCell>
                             {!isHiddenTickets && (
                                 <TableCell className="max-w-[150px]">
-                                    <Badge style={{ backgroundColor: ticket.KanbanStep.color }} className="min-w-[100px] text-center truncate" title={ticket.KanbanStep.name}>
-                                        {ticket.KanbanStep.name}
-                                    </Badge>
+                                    {ticket.KanbanStep ? (
+                                        <Badge style={{ backgroundColor: ticket.KanbanStep.color }} className="min-w-[100px] text-center truncate" title={ticket.KanbanStep.name}>
+                                            {ticket.KanbanStep.name}
+                                        </Badge>
+                                    ) : (
+                                        <Badge className="min-w-[100px] text-center truncate bg-gray-500">
+                                            Sem Etapa
+                                        </Badge>
+                                    )}
                                 </TableCell>
                             )}
                             <TableCell className="max-w-[200px]">

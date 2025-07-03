@@ -3,8 +3,8 @@
 import React, { Fragment, useEffect, useState, useTransition } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Search, Trash } from "lucide-react";
-import { syncContacts, createContact, findContact, deleteContact } from "@/service/contactService";
+import { Search, Trash, MessageCircle } from "lucide-react";
+import { syncContacts, createContact, findContact, deleteContact, createContactFromCRM } from "@/service/contactService";
 import { Contact } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -33,6 +33,9 @@ import { useContacts } from "@/hooks/swr/use-contacts-swr";
 import { formatPhone } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useDynamicLimit } from "@/hooks/use-dynamic-limit";
+import { useRouter } from "next/navigation";
+import { useChatStore } from "@/store/chatStore";
+import { getTicketByContactId, createTicketFromCRM } from "@/service/ticketsService";
 
 const ContatosPage: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -46,6 +49,8 @@ const ContatosPage: React.FC = () => {
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
   const [searchResults, setSearchResults] = useState<Contact[] | null>(null);
   const dynamicLimit = useDynamicLimit();
+  const router = useRouter();
+  const chatStore = useChatStore();
 
   const { contacts, totalPages, total, loading, mutate } = useContacts(page, dynamicLimit);
 
@@ -121,6 +126,34 @@ const ContatosPage: React.FC = () => {
         }
       }
     });
+  };
+
+  const handleCreateTicket = async (contact: Contact) => {
+    try {
+      // Primeiro, verifica se já existe um ticket para este contato
+      const existingTicket = await getTicketByContactId(contact.id);
+
+      if (existingTicket) {
+        // Se existe ticket, seleciona e navega
+        chatStore.selectChat(existingTicket);
+        router.push('/home/atendimento');
+      } else {
+        // Se não existe ticket, cria um novo com origem CRM
+        const newTicket = await createTicketFromCRM(contact.id);
+
+        // Busca o ticket completo para selecionar
+        const fullTicket = await getTicketByContactId(contact.id);
+        if (fullTicket) {
+          chatStore.selectChat(fullTicket);
+          router.push('/home/atendimento');
+        } else {
+          toast({ description: "Erro ao carregar informações do ticket.", variant: "destructive" });
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao criar ou encontrar ticket:", err);
+      toast({ description: "Erro ao criar ou encontrar ticket.", variant: "destructive" });
+    }
   };
 
   const displayedContacts = searchResults ?? contacts;
@@ -199,9 +232,9 @@ const ContatosPage: React.FC = () => {
                     <TableCell>{contact.name}</TableCell>
                     <TableCell>{formatPhone(contact.phone)}</TableCell>
                     <TableCell className="flex items-center gap-2">
-                      {/* <button>
-                        <MessageCircle onClick={() => handleCreateTicket(contact.remoteJid)} />
-                      </button> */}
+                      <Button size="sm" onClick={() => handleCreateTicket(contact)}>
+                        <MessageCircle className="w-4 h-4" />
+                      </Button>
                       <Button variant="destructive" size="sm" onClick={() => handleDeleteContact(contact.id)}>
                         <Trash className="w-4 h-4" />
                       </Button>
