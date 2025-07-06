@@ -25,6 +25,7 @@ export default function KanbanBoard() {
   const chatStore = useChatStore();
   const isAdvisor = user?.userRole === "ADVISOR";
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleTicketClick = (ticket: any) => {
     // Se estiver arrastando, não executa o clique
     if (draggingTicketId !== null) {

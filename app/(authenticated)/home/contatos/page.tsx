@@ -4,7 +4,7 @@ import React, { Fragment, useEffect, useState, useTransition } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Search, Trash, MessageCircle } from "lucide-react";
-import { syncContacts, createContact, findContact, deleteContact, createContactFromCRM } from "@/service/contactService";
+import { syncContacts, createContact, findContact, deleteContact } from "@/service/contactService";
 import { Contact } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -139,7 +139,7 @@ const ContatosPage: React.FC = () => {
         router.push('/home/atendimento');
       } else {
         // Se não existe ticket, cria um novo com origem CRM
-        const newTicket = await createTicketFromCRM(contact.id);
+        await createTicketFromCRM(contact.id);
 
         // Busca o ticket completo para selecionar
         const fullTicket = await getTicketByContactId(contact.id);
