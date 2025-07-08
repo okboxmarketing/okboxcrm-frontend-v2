@@ -334,7 +334,7 @@ const ChatBody: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 space-y-4" ref={scrollRef} onScroll={handleScroll}>
+    <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 space-y-4 pt-4" ref={scrollRef} onScroll={handleScroll}>
       {isLoadingMore && (
         <div className="flex justify-center py-2">
           <PulseLoader

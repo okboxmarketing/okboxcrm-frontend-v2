@@ -3,7 +3,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getKanbanSteps } from "@/service/kanbanStepsService";
 import { moveTicket } from "@/service/ticketsService";
-import { TicketStatusEnum } from "@/lib/types";
 import { useChatStore } from "@/store/chatStore";
 
 interface KanbanStep {
@@ -14,13 +13,12 @@ interface KanbanStep {
 
 interface MoveTicketSelectProps {
   ticketId: number;
-  fetchTickets: (status: TicketStatusEnum, cursor?: string, kanbanStepId?: number, responsibleId?: string, onlyActive?: boolean) => Promise<void>;
 }
 
-const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets }) => {
+const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedStep, setSelectedStep] = useState<string>("");
-  const { selectedChat } = useChatStore()
+  const { selectedChat, updateChat } = useChatStore()
   const { toast } = useToast();
 
   const fetchKanbanData = async () => {
@@ -52,11 +50,26 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
       if (stepId) {
         await moveTicket(ticketId, stepId.toString());
         setSelectedStep(value);
+
+        // Busca as informações da nova etapa
+        const newStep = kanbanSteps.find(step => step.id === stepId);
+
+        if (selectedChat && newStep) {
+          const updatedTicket = {
+            ...selectedChat,
+            kanbanStepId: stepId,
+            KanbanStep: {
+              id: newStep.id,
+              name: newStep.name,
+              color: newStep.color
+            }
+          };
+          updateChat(updatedTicket);
+        }
       } else {
         console.error("ID da etapa inválido");
         return
       }
-      fetchTickets("OPEN", undefined, stepId, undefined, true);
     } catch (error) {
       console.log(error);
       toast({
