@@ -4,11 +4,13 @@ import { ShoppingCart } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { createSale } from "@/service/saleService";
 import { getProducts } from "@/service/productService";
 import { useChatStore } from "@/store/chatStore";
+import { Combobox } from "@/components/ui/combobox";
+import NewProductButton from "@/components/vendas/new-product-button";
+import { formatPrice, formatCurrencyInput, parseCurrencyInput } from "@/lib/utils";
 
 type Products = {
     id: string;
@@ -16,15 +18,30 @@ type Products = {
     price?: number;
 };
 
+type SelectedProduct = {
+    id: string;
+    quantity: number;
+    price: number;
+};
+
+type CurrentProduct = {
+    id: string;
+    quantity: number;
+    price: number;
+};
+
 const SaleButton: React.FC = () => {
     const { selectedChat, fetchTickets } = useChatStore();
     const { toast } = useToast();
     const [saleDialogOpen, setSaleDialogOpen] = useState(false);
     const [products, setProducts] = useState<Products[]>([]);
-    const [selectedProducts, setSelectedProducts] = useState<{ id: string, quantity: number, price: number }[]>([]);
-    const [currentProduct, setCurrentProduct] = useState<{ id: string, quantity: string, price: string }>(
-        { id: "", quantity: "1", price: "" }
-    );
+    const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
+    const [currentProduct, setCurrentProduct] = useState<CurrentProduct>({
+        id: "",
+        quantity: 1,
+        price: 0
+    });
+    const [priceInputValue, setPriceInputValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchProducts = async () => {
@@ -34,9 +51,8 @@ const SaleButton: React.FC = () => {
                 setProducts(data);
             }
         } catch (error) {
-            console.error("Erro ao carregar produtos:", error);
             toast({
-                description: "Erro ao carregar produtos",
+                description: `Erro ao carregar produtos: ${error}`,
                 variant: "destructive",
             });
         }
@@ -45,12 +61,17 @@ const SaleButton: React.FC = () => {
     const handleOpenSaleDialog = () => {
         fetchProducts();
         setSelectedProducts([]);
-        setCurrentProduct({ id: "", quantity: "1", price: "" });
+        setCurrentProduct({
+            id: "",
+            quantity: 1,
+            price: 0
+        });
+        setPriceInputValue("");
         setSaleDialogOpen(true);
     };
 
     const handleAddProduct = () => {
-        if (!currentProduct.id || parseInt(currentProduct.quantity) <= 0 || !currentProduct.price) return;
+        if (!currentProduct.id || currentProduct.quantity <= 0 || currentProduct.price <= 0) return;
 
         const product = products.find(p => p.id === currentProduct.id);
         if (!product) return;
@@ -59,12 +80,17 @@ const SaleButton: React.FC = () => {
             ...selectedProducts,
             {
                 id: product.id,
-                quantity: parseInt(currentProduct.quantity),
-                price: parseFloat(currentProduct.price)
+                quantity: currentProduct.quantity,
+                price: currentProduct.price
             }
         ]);
 
-        setCurrentProduct({ id: "", quantity: "1", price: "" });
+        setCurrentProduct({
+            id: "",
+            quantity: 1,
+            price: 0
+        });
+        setPriceInputValue("");
     };
 
     const handleRemoveProduct = (index: number) => {
@@ -112,6 +138,20 @@ const SaleButton: React.FC = () => {
         }, 0);
     };
 
+    const productOptions = products.map(product => ({
+        value: product.id,
+        label: product.name
+    }));
+
+    const handleProductCreated = (newProductId?: string) => {
+        // Recarrega a lista de produtos
+        fetchProducts();
+        // Seleciona automaticamente o produto recém-criado se um ID foi fornecido
+        if (newProductId) {
+            setCurrentProduct(prev => ({ ...prev, id: newProductId }));
+        }
+    };
+
     return (
         <>
             <Button onClick={handleOpenSaleDialog} className="bg-green-500 hover:bg-green-500/70">
@@ -128,21 +168,23 @@ const SaleButton: React.FC = () => {
                             <Label htmlFor="product" className="text-right">
                                 Produto
                             </Label>
-                            <Select
+                            <Combobox
+                                options={productOptions}
                                 value={currentProduct.id}
                                 onValueChange={(value) => setCurrentProduct({ ...currentProduct, id: value })}
-                            >
-                                <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Selecione um produto" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {products.map((product) => (
-                                        <SelectItem key={product.id} value={product.id}>
-                                            {product.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Selecione um produto"
+                                searchPlaceholder="Pesquisar produtos..."
+                                emptyMessage="Nenhum produto encontrado."
+                                className="col-span-3"
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <div className="col-span-1"></div>
+                            <span className="col-span-3">
+                                <NewProductButton
+                                    onProductCreated={handleProductCreated}
+                                />
+                            </span>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="quantity" className="text-right">
@@ -153,7 +195,7 @@ const SaleButton: React.FC = () => {
                                 type="number"
                                 min="1"
                                 value={currentProduct.quantity}
-                                onChange={(e) => setCurrentProduct({ ...currentProduct, quantity: e.target.value })}
+                                onChange={(e) => setCurrentProduct({ ...currentProduct, quantity: parseInt(e.target.value) || 1 })}
                                 className="col-span-3"
                             />
                         </div>
@@ -163,13 +205,16 @@ const SaleButton: React.FC = () => {
                             </Label>
                             <Input
                                 id="price"
-                                type="number"
-                                min="0.01"
-                                step="0.01"
-                                value={currentProduct.price}
-                                onChange={(e) => setCurrentProduct({ ...currentProduct, price: e.target.value })}
+                                type="text"
+                                value={priceInputValue}
+                                onChange={(e) => {
+                                    const formattedValue = formatCurrencyInput(e.target.value);
+                                    setPriceInputValue(formattedValue);
+                                    const numericValue = parseCurrencyInput(e.target.value);
+                                    setCurrentProduct({ ...currentProduct, price: numericValue });
+                                }}
                                 className="col-span-3"
-                                placeholder="Informe o preço para este produto"
+                                placeholder="R$ 0,00"
                             />
                         </div>
                         <div className="flex justify-end">
@@ -187,18 +232,12 @@ const SaleButton: React.FC = () => {
                                                 <div>
                                                     <span className="font-medium">{product?.name}</span>
                                                     <span className="text-sm text-gray-500 ml-2">
-                                                        {item.quantity} x {new Intl.NumberFormat('pt-BR', {
-                                                            style: 'currency',
-                                                            currency: 'BRL'
-                                                        }).format(item.price)}
+                                                        {item.quantity} x {formatPrice(item.price)}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center">
                                                     <span className="mr-4">
-                                                        {new Intl.NumberFormat('pt-BR', {
-                                                            style: 'currency',
-                                                            currency: 'BRL'
-                                                        }).format(item.price * item.quantity)}
+                                                        {formatPrice(item.price * item.quantity)}
                                                     </span>
                                                     <Button
                                                         variant="ghost"
@@ -214,10 +253,7 @@ const SaleButton: React.FC = () => {
                                     <div className="flex justify-between items-center pt-2 border-t mt-2">
                                         <span className="font-bold">Total:</span>
                                         <span className="font-bold">
-                                            {new Intl.NumberFormat('pt-BR', {
-                                                style: 'currency',
-                                                currency: 'BRL'
-                                            }).format(calculateTotal())}
+                                            {formatPrice(calculateTotal())}
                                         </span>
                                     </div>
                                 </div>

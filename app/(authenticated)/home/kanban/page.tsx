@@ -13,13 +13,30 @@ import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import useAuthStore from '@/store/authStore';
+import { useRouter } from 'next/navigation';
+import { useChatStore } from '@/store/chatStore';
 
 export default function KanbanBoard() {
   const { kanbanBoard, isLoading, error, loadMore, loadingMore, reload } = useKanbanBoard();
   const [draggingTicketId, setDraggingTicketId] = useState<number | null>(null);
   const [dragOverColumnId, setDragOverColumnId] = useState<number | null>(null);
   const { user } = useAuthStore();
+  const router = useRouter();
+  const chatStore = useChatStore();
   const isAdvisor = user?.userRole === "ADVISOR";
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleTicketClick = (ticket: any) => {
+    // Se estiver arrastando, não executa o clique
+    if (draggingTicketId !== null) {
+      return;
+    }
+
+    // Seleciona o chat no store
+    chatStore.selectChat(ticket);
+    // Redireciona para a página de atendimento
+    router.push('/home/atendimento');
+  };
 
   const ordered = [...kanbanBoard]
     .filter((col) => col.name !== 'Vendido' && col.name !== 'Perdido')
@@ -145,10 +162,11 @@ export default function KanbanBoard() {
                         }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ duration: 0.2 }}
-                        className={`p-4 mb-3 bg-white rounded-lg border hover:shadow-md flex gap-3 relative ${draggingTicketId === ticket.id
+                        className={`p-4 mb-3 bg-white rounded-lg border hover:shadow-md flex gap-3 relative transition-all duration-200 ${draggingTicketId === ticket.id
                           ? 'border-primary/50 bg-primary/5'
-                          : 'border-slate-200'
-                          } ${isAdvisor ? '' : 'cursor-grab'}`}
+                          : 'border-slate-200 hover:border-primary/30 hover:bg-slate-50'
+                          } ${isAdvisor ? '' : 'cursor-grab'} cursor-pointer`}
+                        onClick={() => handleTicketClick(ticket)}
                         ref={(el) => {
                           if (!el || isAdvisor) return;
                           draggable({

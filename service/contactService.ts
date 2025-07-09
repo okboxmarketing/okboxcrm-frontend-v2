@@ -9,8 +9,12 @@ export const getContacts = async (page = 1, limit = 8) => {
   return apiHelper.get<{ data: Contact[]; totalPages: number; total: number }>(`/contacts?page=${page}&limit=${limit}`);
 };
 
-export const createContact = async (number: string, name: string) => {
-  return apiHelper.post("/contacts/new", { number, name });
+export const createContact = async (number: string, name: string,) => {
+  return apiHelper.post("/contacts/new", { number, name, origin: "CRM" });
+}
+
+export const createContactFromCRM = async (number: string, name: string) => {
+  return apiHelper.post("/contacts/crm", { number, name });
 }
 
 export const findContact = async (name: string) => {

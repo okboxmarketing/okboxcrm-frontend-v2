@@ -69,3 +69,34 @@ export const getInitials = (name: string) => {
     .toUpperCase()
     .substring(0, 2);
 };
+
+export const formatPrice = (price: number, currency: string = 'BRL') => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: currency
+  }).format(price);
+};
+
+export const formatCurrencyInput = (value: string): string => {
+  // Remove tudo que não é número
+  const numericValue = value.replace(/\D/g, '');
+
+  // Converte para número e divide por 100 para considerar centavos
+  const number = parseFloat(numericValue) / 100;
+
+  // Formata como moeda brasileira
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(number);
+};
+
+export const parseCurrencyInput = (value: string): number => {
+  // Remove tudo que não é número
+  const numericValue = value.replace(/\D/g, '');
+
+  // Converte para número e divide por 100 para considerar centavos
+  return parseFloat(numericValue) / 100;
+};

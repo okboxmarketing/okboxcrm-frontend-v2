@@ -3,7 +3,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { getKanbanSteps } from "@/service/kanbanStepsService";
 import { moveTicket } from "@/service/ticketsService";
-import { TicketStatusEnum } from "@/lib/types";
 import { useChatStore } from "@/store/chatStore";
 
 interface KanbanStep {
@@ -14,13 +13,12 @@ interface KanbanStep {
 
 interface MoveTicketSelectProps {
   ticketId: number;
-  fetchTickets: (status: TicketStatusEnum, cursor?: string, kanbanStepId?: number, responsibleId?: string, onlyActive?: boolean) => Promise<void>;
 }
 
-const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTickets }) => {
+const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedStep, setSelectedStep] = useState<string>("");
-  const { selectedChat } = useChatStore()
+  const { selectedChat, updateChat, removeTicket, selectChat, currentKanbanStepId, currentOnlyActive } = useChatStore()
   const { toast } = useToast();
 
   const fetchKanbanData = async () => {
@@ -52,11 +50,52 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId, fetchTick
       if (stepId) {
         await moveTicket(ticketId, stepId.toString());
         setSelectedStep(value);
+
+        // Busca as informações da nova etapa
+        const newStep = kanbanSteps.find(step => step.id === stepId);
+
+        if (selectedChat && newStep) {
+          const updatedTicket = {
+            ...selectedChat,
+            kanbanStepId: stepId,
+            KanbanStep: {
+              id: newStep.id,
+              name: newStep.name,
+              color: newStep.color
+            }
+          };
+          updateChat(updatedTicket);
+
+          // Verifica se o ticket ainda pertence ao filtro atual
+          const shouldRemoveTicket = () => {
+            // Se há um filtro específico de etapa ativo
+            if (currentKanbanStepId !== undefined && currentKanbanStepId !== stepId) {
+              return true;
+            }
+
+            // Se o filtro "Apenas Leads Ativos" está ativo e a nova etapa é "Vendido" ou "Perdido"
+            if (currentOnlyActive && (newStep.name === "Vendido" || newStep.name === "Perdido")) {
+              return true;
+            }
+
+            // Se o ticket foi movido para "Sem Contato" (que não é exibido na lista)
+            if (newStep.name === "Sem Contato") {
+              return true;
+            }
+
+            return false;
+          };
+
+          if (shouldRemoveTicket()) {
+            // Remove o ticket da lista e deseleciona o chat
+            removeTicket(ticketId);
+            selectChat(null);
+          }
+        }
       } else {
         console.error("ID da etapa inválido");
         return
       }
-      fetchTickets("OPEN", undefined, stepId, undefined, true);
     } catch (error) {
       console.log(error);
       toast({

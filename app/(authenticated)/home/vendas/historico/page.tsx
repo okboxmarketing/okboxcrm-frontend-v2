@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Sale } from "@/lib/types";
 import { getSales } from "@/service/saleService";
 import { DateRange } from "react-day-picker";
-import { format, isWithinInterval, parseISO } from "date-fns";
+import { format, formatDate, isWithinInterval, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { SalesListSkeleton } from "@/components/skeleton/sales-list-skeleton";
 
 const SalesHistoryPage: React.FC = () => {
@@ -91,23 +91,6 @@ const SalesHistoryPage: React.FC = () => {
         } else {
             setExpandedSale(saleId);
         }
-    };
-
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(value);
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
     };
 
     const clearFilters = () => {
@@ -195,21 +178,20 @@ const SalesHistoryPage: React.FC = () => {
                                 <TableHead>Valor Total</TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody key={filteredSales.length}>
+                        <TableBody>
                             {filteredSales.map((sale) => (
-                                <>
+                                <React.Fragment key={sale.id}>
                                     <TableRow
-                                        key={sale.id}
                                         className="hover:bg-gray-100"
                                         onClick={() => toggleSaleDetails(sale.id)}
                                     >
-                                        <TableCell>{formatDate(sale.createdAt)}</TableCell>
+                                        <TableCell>{formatDate(sale.createdAt, "dd/MM/yyyy")}</TableCell>
                                         <TableCell className="font-medium">{sale.Ticket.Contact.name}</TableCell>
                                         <TableCell>{sale.Ticket.Responsible?.name || "N/A"}</TableCell>
-                                        <TableCell>{formatCurrency(sale.totalAmount)}</TableCell>
+                                        <TableCell>{formatPrice(sale.totalAmount)}</TableCell>
                                     </TableRow>
                                     {expandedSale === sale.id && (
-                                        <TableRow className="bg-gray-50">
+                                        <TableRow key={`${sale.id}-details`} className="bg-gray-50">
                                             <TableCell colSpan={4} className="p-4">
                                                 <div className="text-sm">
                                                     <h3 className="font-medium mb-2">Itens da Venda</h3>
@@ -227,8 +209,8 @@ const SalesHistoryPage: React.FC = () => {
                                                                 <TableRow key={item.id}>
                                                                     <TableCell>{item.Product.name}</TableCell>
                                                                     <TableCell>{item.quantity}</TableCell>
-                                                                    <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
-                                                                    <TableCell>{formatCurrency(item.totalPrice)}</TableCell>
+                                                                    <TableCell>{formatPrice(item.unitPrice)}</TableCell>
+                                                                    <TableCell>{formatPrice(item.totalPrice)}</TableCell>
                                                                 </TableRow>
                                                             ))}
                                                         </TableBody>
@@ -237,7 +219,7 @@ const SalesHistoryPage: React.FC = () => {
                                             </TableCell>
                                         </TableRow>
                                     )}
-                                </>
+                                </React.Fragment>
                             ))}
                         </TableBody>
                     </Table>

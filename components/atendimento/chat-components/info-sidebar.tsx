@@ -208,9 +208,13 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
                             </InfoItem>
 
                             <InfoItem icon={Tag} label="Etapa">
-                                <Badge style={{ backgroundColor: selectedChat.KanbanStep.color }} className="text-white">
-                                    {selectedChat.KanbanStep.name}
-                                </Badge>
+                                {selectedChat.KanbanStep ? (
+                                    <Badge style={{ backgroundColor: selectedChat.KanbanStep.color }} className="text-white">
+                                        {selectedChat.KanbanStep.name}
+                                    </Badge>
+                                ) : (
+                                    <span className="text-sm text-muted-foreground">Etapa não definida</span>
+                                )}
                             </InfoItem>
 
                             {selectedChat.responsibleId && (

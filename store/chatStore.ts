@@ -293,9 +293,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     selectChat: (ticket) => {
+        // Se o ticket não tem KanbanStep, loga um aviso mas permite a seleção
+        if (ticket && !ticket.KanbanStep) {
+            console.warn('Ticket selecionado sem KanbanStep:', ticket);
+        }
+
         set((state) => ({
             selectedChat: ticket,
             messages: [],
+            // Se o ticket for PENDING, define a tab como PENDING
+            tab: ticket?.status === "PENDING" ? "PENDING" : state.tab,
             tickets: state.tickets.map((t) =>
                 t.id === ticket?.id
                     ? {
