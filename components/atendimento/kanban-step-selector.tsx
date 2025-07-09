@@ -18,7 +18,7 @@ interface MoveTicketSelectProps {
 const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
   const [kanbanSteps, setKanbanSteps] = useState<KanbanStep[]>([]);
   const [selectedStep, setSelectedStep] = useState<string>("");
-  const { selectedChat, updateChat } = useChatStore()
+  const { selectedChat, updateChat, removeTicket, selectChat, currentKanbanStepId, currentOnlyActive } = useChatStore()
   const { toast } = useToast();
 
   const fetchKanbanData = async () => {
@@ -65,6 +65,32 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
             }
           };
           updateChat(updatedTicket);
+
+          // Verifica se o ticket ainda pertence ao filtro atual
+          const shouldRemoveTicket = () => {
+            // Se há um filtro específico de etapa ativo
+            if (currentKanbanStepId !== undefined && currentKanbanStepId !== stepId) {
+              return true;
+            }
+
+            // Se o filtro "Apenas Leads Ativos" está ativo e a nova etapa é "Vendido" ou "Perdido"
+            if (currentOnlyActive && (newStep.name === "Vendido" || newStep.name === "Perdido")) {
+              return true;
+            }
+
+            // Se o ticket foi movido para "Sem Contato" (que não é exibido na lista)
+            if (newStep.name === "Sem Contato") {
+              return true;
+            }
+
+            return false;
+          };
+
+          if (shouldRemoveTicket()) {
+            // Remove o ticket da lista e deseleciona o chat
+            removeTicket(ticketId);
+            selectChat(null);
+          }
         }
       } else {
         console.error("ID da etapa inválido");
