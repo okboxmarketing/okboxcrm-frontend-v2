@@ -9,6 +9,8 @@ import { createSale } from "@/service/saleService";
 import { getProducts } from "@/service/productService";
 import { useChatStore } from "@/store/chatStore";
 import { Combobox } from "@/components/ui/combobox";
+import NewProductButton from "@/components/vendas/new-product-button";
+import { formatPrice, formatCurrencyInput, parseCurrencyInput } from "@/lib/utils";
 
 type Products = {
     id: string;
@@ -39,6 +41,7 @@ const SaleButton: React.FC = () => {
         quantity: 1,
         price: 0
     });
+    const [priceInputValue, setPriceInputValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchProducts = async () => {
@@ -63,6 +66,7 @@ const SaleButton: React.FC = () => {
             quantity: 1,
             price: 0
         });
+        setPriceInputValue("");
         setSaleDialogOpen(true);
     };
 
@@ -86,6 +90,7 @@ const SaleButton: React.FC = () => {
             quantity: 1,
             price: 0
         });
+        setPriceInputValue("");
     };
 
     const handleRemoveProduct = (index: number) => {
@@ -138,6 +143,15 @@ const SaleButton: React.FC = () => {
         label: product.name
     }));
 
+    const handleProductCreated = (newProductId?: string) => {
+        // Recarrega a lista de produtos
+        fetchProducts();
+        // Seleciona automaticamente o produto recém-criado se um ID foi fornecido
+        if (newProductId) {
+            setCurrentProduct(prev => ({ ...prev, id: newProductId }));
+        }
+    };
+
     return (
         <>
             <Button onClick={handleOpenSaleDialog} className="bg-green-500 hover:bg-green-500/70">
@@ -165,6 +179,14 @@ const SaleButton: React.FC = () => {
                             />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
+                            <div className="col-span-1"></div>
+                            <span className="col-span-3">
+                                <NewProductButton
+                                    onProductCreated={handleProductCreated}
+                                />
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="quantity" className="text-right">
                                 Quantidade
                             </Label>
@@ -183,13 +205,16 @@ const SaleButton: React.FC = () => {
                             </Label>
                             <Input
                                 id="price"
-                                type="number"
-                                min="0.01"
-                                step="0.01"
-                                value={currentProduct.price}
-                                onChange={(e) => setCurrentProduct({ ...currentProduct, price: parseFloat(e.target.value) || 0 })}
+                                type="text"
+                                value={priceInputValue}
+                                onChange={(e) => {
+                                    const formattedValue = formatCurrencyInput(e.target.value);
+                                    setPriceInputValue(formattedValue);
+                                    const numericValue = parseCurrencyInput(e.target.value);
+                                    setCurrentProduct({ ...currentProduct, price: numericValue });
+                                }}
                                 className="col-span-3"
-                                placeholder="Informe o preço para este produto"
+                                placeholder="R$ 0,00"
                             />
                         </div>
                         <div className="flex justify-end">
@@ -207,18 +232,12 @@ const SaleButton: React.FC = () => {
                                                 <div>
                                                     <span className="font-medium">{product?.name}</span>
                                                     <span className="text-sm text-gray-500 ml-2">
-                                                        {item.quantity} x {new Intl.NumberFormat('pt-BR', {
-                                                            style: 'currency',
-                                                            currency: 'BRL'
-                                                        }).format(item.price)}
+                                                        {item.quantity} x {formatPrice(item.price)}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center">
                                                     <span className="mr-4">
-                                                        {new Intl.NumberFormat('pt-BR', {
-                                                            style: 'currency',
-                                                            currency: 'BRL'
-                                                        }).format(item.price * item.quantity)}
+                                                        {formatPrice(item.price * item.quantity)}
                                                     </span>
                                                     <Button
                                                         variant="ghost"
@@ -234,10 +253,7 @@ const SaleButton: React.FC = () => {
                                     <div className="flex justify-between items-center pt-2 border-t mt-2">
                                         <span className="font-bold">Total:</span>
                                         <span className="font-bold">
-                                            {new Intl.NumberFormat('pt-BR', {
-                                                style: 'currency',
-                                                currency: 'BRL'
-                                            }).format(calculateTotal())}
+                                            {formatPrice(calculateTotal())}
                                         </span>
                                     </div>
                                 </div>

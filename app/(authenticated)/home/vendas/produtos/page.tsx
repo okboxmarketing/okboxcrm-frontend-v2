@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash } from "lucide-react";
-import { getProducts, createProduct, updateProduct, deleteProduct } from "@/service/productService";
+import { getProducts, updateProduct, deleteProduct } from "@/service/productService";
 import { ProductListSkeleton } from "@/components/skeleton/product-list.skeleton";
 import useAuthStore from "@/store/authStore";
+import NewProductButton from "@/components/vendas/new-product-button";
+import { formatDate } from "date-fns";
 
 interface Product {
   id: string;
@@ -25,7 +27,6 @@ const ProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const { user } = useAuthStore()
   const [formData, setFormData] = useState({
     name: "",
@@ -59,7 +60,7 @@ const ProductsPage = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "price" ? parseFloat(value) || 0 : value
+      [name]: value
     }));
   };
 
@@ -67,17 +68,10 @@ const ProductsPage = () => {
     setFormData({
       name: "",
     });
-    setIsEditing(false);
     setSelectedProduct(null);
   };
 
-  const handleOpenCreateDialog = () => {
-    resetForm();
-    setOpenDialog(true);
-  };
-
   const handleOpenEditDialog = (product: Product) => {
-    setIsEditing(true);
     setSelectedProduct(product);
     setFormData({
       name: product.name,
@@ -88,24 +82,6 @@ const ProductsPage = () => {
   const handleOpenDeleteDialog = (product: Product) => {
     setSelectedProduct(product);
     setConfirmDeleteDialog(true);
-  };
-
-  const handleCreateProduct = async () => {
-    try {
-      await createProduct(formData);
-      toast({
-        description: "Produto criado com sucesso!",
-      });
-      setOpenDialog(false);
-      resetForm();
-      fetchProducts();
-    } catch (error) {
-      console.error("Erro ao criar produto:", error);
-      toast({
-        description: "Erro ao criar produto",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleUpdateProduct = async () => {
@@ -148,14 +124,6 @@ const ProductsPage = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit'
-    });
-  };
-
   return (
     <div className="flex-1 p-6">
       <div className="flex items-center justify-between mb-4">
@@ -168,7 +136,7 @@ const ProductsPage = () => {
             {products.length}
           </Badge>
           {user?.userRole === "ADMIN" && (
-            <Button onClick={handleOpenCreateDialog}>Novo Produto</Button>
+            <NewProductButton onProductCreated={() => fetchProducts()} />
           )}
         </div>
       </div>
@@ -191,7 +159,7 @@ const ProductsPage = () => {
               {products.map((product) => (
                 <TableRow key={product.id} className="hover:bg-gray-100">
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{formatDate(product.createdAt)}</TableCell>
+                  <TableCell>{formatDate(product.createdAt, "dd/MM/yyyy")}</TableCell>
                   {user?.userRole === "ADMIN" && (
                     <TableCell>
                       <div className="flex gap-2">
@@ -240,13 +208,10 @@ const ProductsPage = () => {
         </div>
       )}
 
-      {/* Dialog para criar/editar produto */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {isEditing ? "Editar Produto" : "Novo Produto"}
-            </DialogTitle>
+            <DialogTitle>Editar Produto</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -261,20 +226,18 @@ const ProductsPage = () => {
                 className="col-span-3"
               />
             </div>
-            {/* Price field removed */}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenDialog(false)}>
               Cancelar
             </Button>
-            <Button onClick={isEditing ? handleUpdateProduct : handleCreateProduct}>
-              {isEditing ? "Salvar Alterações" : "Criar Produto"}
+            <Button onClick={handleUpdateProduct}>
+              Salvar Alterações
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de confirmação para excluir produto */}
       <Dialog open={confirmDeleteDialog} onOpenChange={setConfirmDeleteDialog}>
         <DialogContent>
           <DialogHeader>
