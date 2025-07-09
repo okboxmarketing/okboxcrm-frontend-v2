@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { MoveDownRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { createLoss } from "@/service/lossService";
@@ -11,6 +11,7 @@ import { getLossReasons } from "@/service/lossService";
 import { LossReason } from "@/lib/types";
 import { useChatStore } from "@/store/chatStore";
 import { CreateLossDto } from "@/types/loss";
+import NewLossReasonButton from "@/components/perdas/new-loss-reason-button";
 
 const LossButton: React.FC = () => {
     const { selectedChat, fetchTickets } = useChatStore();
@@ -77,6 +78,20 @@ const LossButton: React.FC = () => {
         }
     };
 
+    const lossReasonOptions = lossReasons.map(reason => ({
+        value: reason.id,
+        label: reason.description
+    }));
+
+    const handleLossReasonCreated = (newReasonId?: string) => {
+        // Recarrega a lista de motivos de perda
+        fetchLossReasons();
+        // Seleciona automaticamente o motivo recém-criado se um ID foi fornecido
+        if (newReasonId) {
+            setLossData(prev => ({ ...prev, lossReasonId: newReasonId }));
+        }
+    };
+
     return (
         <>
             <Button onClick={handleOpenLossDialog} className="bg-red-500 hover:bg-red-500/70">
@@ -93,21 +108,23 @@ const LossButton: React.FC = () => {
                             <Label htmlFor="reason" className="text-right">
                                 Motivo
                             </Label>
-                            <Select
+                            <Combobox
+                                options={lossReasonOptions}
                                 value={lossData.lossReasonId}
                                 onValueChange={(value) => setLossData({ ...lossData, lossReasonId: value })}
-                            >
-                                <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Selecione um motivo" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {lossReasons.map((reason) => (
-                                        <SelectItem key={reason.id} value={reason.id}>
-                                            {reason.description}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Selecione um motivo"
+                                searchPlaceholder="Pesquisar motivos..."
+                                emptyMessage="Nenhum motivo encontrado."
+                                className="col-span-3"
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <div className="col-span-1"></div>
+                            <span className="col-span-3">
+                                <NewLossReasonButton
+                                    onLossReasonCreated={handleLossReasonCreated}
+                                />
+                            </span>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="description" className="text-right align-self-start pt-2">

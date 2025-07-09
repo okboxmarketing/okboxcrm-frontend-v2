@@ -4,10 +4,12 @@ import React, { useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music } from "lucide-react";
+import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music, Smile } from "lucide-react";
 import { sendAudioMessage, sendMediaMessage, SendMediaParams } from "@/service/messageService";
 import { useToast } from "@/hooks/use-toast";
 import { useChatStore } from "@/store/chatStore";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { EMOJI_CATEGORIES } from "@/lib/constants";
 
 interface FormData {
   text: string;
@@ -22,6 +24,8 @@ const ChatInput: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioRecorder, setAudioRecorder] = useState<MediaRecorder | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [selectedEmojiCategory, setSelectedEmojiCategory] = useState<keyof typeof EMOJI_CATEGORIES>('faces');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,8 +38,26 @@ const ChatInput: React.FC = () => {
 
   const { toast } = useToast();
 
+  const insertEmoji = (emoji: string) => {
+    if (textInputRef.current) {
+      const currentValue = textInputRef.current.value;
+      const cursorPosition = textInputRef.current.selectionStart || 0;
+      const newValue = currentValue.slice(0, cursorPosition) + emoji + currentValue.slice(cursorPosition);
+      textInputRef.current.value = newValue;
+
+      // Atualizar o valor no formulário
+      const event = new Event('input', { bubbles: true });
+      textInputRef.current.dispatchEvent(event);
+
+      // Posicionar o cursor após o emoji inserido
+      const newCursorPosition = cursorPosition + emoji.length;
+      textInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+      textInputRef.current.focus();
+    }
+    setEmojiPickerOpen(false);
+  };
+
   const onSubmit = async (data: FormData) => {
-    console.log("data: ", data)
     if (audioBlob && selectedChat) {
       await handleSendAudio();
     } else if (selectedFile) {
@@ -50,7 +72,6 @@ const ChatInput: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size (limit to 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast({
         description: "Arquivo muito grande. O tamanho máximo é 10MB.",
@@ -313,6 +334,59 @@ const ChatInput: React.FC = () => {
             <Mic className="h-5 w-5 text-gray-500" />
           )}
         </Button>
+        <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              disabled={isUploading || isRecording}
+            >
+              <Smile className="h-5 w-5 text-gray-500" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-0" align="start">
+            <div className="p-3 border-b">
+              <h3 className="text-sm font-medium mb-2">Emojis</h3>
+              <div className="flex gap-1 overflow-x-auto">
+                {Object.keys(EMOJI_CATEGORIES).map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedEmojiCategory(category as keyof typeof EMOJI_CATEGORIES)}
+                    className={`px-2 py-1 text-xs rounded transition-colors whitespace-nowrap ${selectedEmojiCategory === category
+                      ? 'bg-gray-200 text-gray-800'
+                      : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    type="button"
+                  >
+                    {category === 'faces' && '😀'}
+                    {category === 'gestures' && '👋'}
+                    {category === 'people' && '👶'}
+                    {category === 'nature' && '🌸'}
+                    {category === 'food' && '🍎'}
+                    {category === 'activities' && '⚽'}
+                    {category === 'objects' && '⌚'}
+                    {category === 'symbols' && '❤️'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="p-3 max-h-60 overflow-y-auto">
+              <div className="grid grid-cols-10 gap-1">
+                {EMOJI_CATEGORIES[selectedEmojiCategory].map((emoji: string, index: number) => (
+                  <button
+                    key={index}
+                    onClick={() => insertEmoji(emoji)}
+                    className="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100 rounded transition-colors"
+                    type="button"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
         <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex gap-2">
           <Input
             {...register("text")}

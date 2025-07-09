@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { getLosses } from "@/service/lossService";
 import { Loss } from "@/lib/types";
 import { DateRange } from "react-day-picker";
-import { format, isWithinInterval, parseISO } from "date-fns";
+import { format, formatDate, isWithinInterval, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { LossHistorySkeleton } from "@/components/skeleton/loss-list-skeleton";
+import { formatPhone } from "@/lib/utils";
 
 const LossHistoryPage: React.FC = () => {
     const [losses, setLosses] = useState<Loss[]>([]);
@@ -89,16 +90,6 @@ const LossHistoryPage: React.FC = () => {
         } else {
             setExpandedLoss(lossId);
         }
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
     };
 
     const clearFilters = () => {
@@ -194,7 +185,7 @@ const LossHistoryPage: React.FC = () => {
                                         className="hover:bg-gray-100"
                                         onClick={() => toggleLossDetails(loss.id)}
                                     >
-                                        <TableCell>{formatDate(loss.createdAt)}</TableCell>
+                                        <TableCell>{formatDate(loss.createdAt, "dd/MM/yyyy")}</TableCell>
                                         <TableCell className="font-medium">{loss.Ticket.Contact.name}</TableCell>
                                         <TableCell>{loss.Ticket.Responsible?.name || "Nenhum"}</TableCell>
                                         <TableCell>{loss.LossReason?.description || loss.lossReasonId}</TableCell>
@@ -211,7 +202,7 @@ const LossHistoryPage: React.FC = () => {
                                                         </div>
                                                         <div>
                                                             <p className="text-gray-500">Telefone:</p>
-                                                            <p>{loss.Ticket.Contact.phone}</p>
+                                                            <p>{formatPhone(loss.Ticket.Contact.phone)}</p>
                                                         </div>
                                                         <div>
                                                             <p className="text-gray-500">Responsável:</p>
@@ -219,7 +210,7 @@ const LossHistoryPage: React.FC = () => {
                                                         </div>
                                                         <div>
                                                             <p className="text-gray-500">Data:</p>
-                                                            <p>{formatDate(loss.createdAt)}</p>
+                                                            <p>{formatDate(loss.createdAt, "dd/MM/yyyy")}</p>
                                                         </div>
                                                         <div className="col-span-2">
                                                             <p className="text-gray-500">Motivo:</p>

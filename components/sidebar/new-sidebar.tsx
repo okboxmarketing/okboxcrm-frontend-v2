@@ -41,7 +41,6 @@ import {
     SidebarMenuSubButton,
     SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -54,6 +53,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import useAuthStore from "@/store/authStore"
 import { useEffect, useState } from "react"
 import { AdvisorCompaniesDialog } from "../advisor/advisor-companies-dialog"
+import { UserAvatar } from "../ui/user-avatar"
 
 interface NavItem {
     title: string;
@@ -344,15 +344,11 @@ export function AppSidebar() {
                                     size="lg"
                                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                                 >
-                                    <Avatar className="h-8 w-8 rounded-lg items-center bg-black text-white justify-center">
-                                        {user?.companyImage ? (
-                                            <img src={user.companyImage} alt="Company Avatar" className="rounded-lg" />
-                                        ) : user?.userName ? (
-                                            user.userName.substring(0, 2).toUpperCase()
-                                        ) : (
-                                            "U"
-                                        )}
-                                    </Avatar>
+                                    <UserAvatar
+                                        name={user?.userName || "Usuário"}
+                                        pictureUrl={user?.companyImage}
+                                        className="h-8 w-8 rounded-lg items-center bg-black text-white justify-center"
+                                    />
                                     <div className="grid flex-1 text-left text-sm leading-tight">
                                         <span className="truncate font-semibold">{user?.userName || "Usuário"}</span>
                                         <span className="truncate text-xs">{user?.companyName || "Empresa"}</span>
@@ -368,11 +364,11 @@ export function AppSidebar() {
                             >
                                 <DropdownMenuLabel className="p-0 font-normal">
                                     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                        <Avatar className="h-8 w-8 rounded-lg">
-                                            <AvatarFallback className="rounded-lg bg-black text-white">
-                                                {user?.companyImage || user?.userName ? user.userName.substring(0, 2).toUpperCase() : "U"}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <UserAvatar
+                                            name={user?.userName || "Usuário"}
+                                            pictureUrl={user?.companyImage}
+                                            className="h-8 w-8 rounded-lg items-center bg-black text-white justify-center"
+                                        />
                                         <div className="grid flex-1 text-left text-sm leading-tight">
                                             <span className="truncate font-semibold">{user?.userName || "Usuário"}</span>
                                             <span className="truncate text-xs">{user?.userEmail || "email@exemplo.com"}</span>

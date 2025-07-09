@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash } from "lucide-react";
-import { getLossReasons, createLossReason, updateLossReason, deleteLossReason } from "@/service/lossService";
+import { getLossReasons, updateLossReason, deleteLossReason } from "@/service/lossService";
 import { LossReasonListSkeleton } from "@/components/skeleton/loss-reason-skeleton";
 import useAuthStore from "@/store/authStore";
+import NewLossReasonButton from "@/components/perdas/new-loss-reason-button";
 
 interface LossReason {
   id: string;
@@ -29,7 +30,6 @@ const LossReasonsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<LossReasonFormData>({
     description: "",
   });
@@ -68,17 +68,10 @@ const LossReasonsPage: React.FC = () => {
     setFormData({
       description: "",
     });
-    setIsEditing(false);
     setSelectedReason(null);
   };
 
-  const handleOpenCreateDialog = () => {
-    resetForm();
-    setOpenDialog(true);
-  };
-
   const handleOpenEditDialog = (reason: LossReason) => {
-    setIsEditing(true);
     setSelectedReason(reason);
     setFormData({
       description: reason.description || "",
@@ -89,24 +82,6 @@ const LossReasonsPage: React.FC = () => {
   const handleOpenDeleteDialog = (reason: LossReason) => {
     setSelectedReason(reason);
     setConfirmDeleteDialog(true);
-  };
-
-  const handleCreateLossReason = async () => {
-    try {
-      await createLossReason(formData);
-      toast({
-        description: "Motivo de perda criado com sucesso!",
-      });
-      setOpenDialog(false);
-      resetForm();
-      fetchLossReasons();
-    } catch (error) {
-      console.error("Erro ao criar motivo de perda:", error);
-      toast({
-        description: "Erro ao criar motivo de perda",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleUpdateLossReason = async () => {
@@ -169,7 +144,7 @@ const LossReasonsPage: React.FC = () => {
             {lossReasons.length}
           </Badge>
           {user?.userRole === "ADMIN" && (
-            <Button onClick={handleOpenCreateDialog}>Novo Motivo</Button>
+            <NewLossReasonButton onLossReasonCreated={() => fetchLossReasons()} />
           )}
         </div>
       </div>
@@ -242,9 +217,7 @@ const LossReasonsPage: React.FC = () => {
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {isEditing ? "Editar Motivo de Perda" : "Novo Motivo de Perda"}
-            </DialogTitle>
+            <DialogTitle>Editar Motivo de Perda</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -264,8 +237,8 @@ const LossReasonsPage: React.FC = () => {
             <Button variant="outline" onClick={() => setOpenDialog(false)}>
               Cancelar
             </Button>
-            <Button onClick={isEditing ? handleUpdateLossReason : handleCreateLossReason}>
-              {isEditing ? "Salvar Alterações" : "Criar Motivo"}
+            <Button onClick={handleUpdateLossReason}>
+              Salvar Alterações
             </Button>
           </DialogFooter>
         </DialogContent>
