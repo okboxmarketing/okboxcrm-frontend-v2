@@ -21,6 +21,7 @@ import {
     Ticket,
     Webhook,
     FileVideo,
+    MessageSquare,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -68,6 +69,7 @@ const navItems: NavItem[] = [
     { title: "Atendimento", url: "/home/atendimento", icon: MessageCircle },
     { title: "Tickets", url: "/home/tickets", icon: Ticket },
     { title: "Ajuda", url: "/home/ajuda", icon: HelpCircle },
+    { title: "Mensagens Rápidas", url: "/home/mensagens-rapidas", icon: MessageSquare },
 ]
 
 const adminItems: NavItem[] = [

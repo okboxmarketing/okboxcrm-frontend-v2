@@ -42,3 +42,7 @@ export const deleteUserMaster = async (userId: string) => {
 export const getUsers = async () => {
   return apiHelper.get("/users");
 }
+
+export const updateUserRole = async (userId: string, role: "USER" | "ADMIN") => {
+  return apiHelper.patch(`/users/${userId}/role`, { role });
+};

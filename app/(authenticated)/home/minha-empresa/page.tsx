@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { findMyCompany } from "@/service/companyService";
-import { deleteUser, inviteUser } from "@/service/userService";
+import { deleteUser, inviteUser, updateUserRole } from "@/service/userService";
 import {
   Table,
   TableBody,
@@ -182,9 +182,29 @@ const MinhaEmpresaPage: React.FC = () => {
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Badge variant={user.role === "ADMIN" ? "default" : "outline"}>
-                    {user.role === "ADMIN" ? "Administrador" : "Usuário"}
-                  </Badge>
+                  {user.role === "USER" && requestUserRole === "ADMIN" ? (
+                    <Select
+                      value={user.role}
+                      onValueChange={async (value) => {
+                        await updateUserRole(user.id, value as "USER" | "ADMIN");
+                        toast({ description: "Papel do usuário atualizado!" });
+                        const updated = await findMyCompany();
+                        setCompany(updated);
+                      }}
+                    >
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USER">Usuário</SelectItem>
+                        <SelectItem value="ADMIN">Administrador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge variant={user.role === "ADMIN" ? "default" : "outline"}>
+                      {user.role === "ADMIN" ? "Administrador" : "Usuário"}
+                    </Badge>
+                  )}
                 </TableCell>
                 {requestUserRole === "ADMIN" && (
                   <TableCell className="flex gap-2">

@@ -4,12 +4,16 @@ import React, { useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music, Smile } from "lucide-react";
+import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music, Smile, Plus, MessageSquare } from "lucide-react";
 import { sendAudioMessage, sendMediaMessage, SendMediaParams } from "@/service/messageService";
 import { useToast } from "@/hooks/use-toast";
 import { useChatStore } from "@/store/chatStore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EMOJI_CATEGORIES } from "@/lib/constants";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getFastMessages, FastMessage } from "@/service/fastMessageService";
+import Link from "next/link";
 
 interface FormData {
   text: string;
@@ -28,6 +32,8 @@ const ChatInput: React.FC = () => {
   const [selectedEmojiCategory, setSelectedEmojiCategory] = useState<keyof typeof EMOJI_CATEGORIES>('faces');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
+  const [fastMessages, setFastMessages] = useState<FastMessage[]>([]);
+  const [fastMessageDialogOpen, setFastMessageDialogOpen] = useState(false);
 
 
   useEffect(() => {
@@ -274,6 +280,33 @@ const ChatInput: React.FC = () => {
     }
   };
 
+  const loadFastMessages = async () => {
+    try {
+      const messages = await getFastMessages();
+      setFastMessages(messages);
+    } catch (error) {
+      console.error("Erro ao carregar mensagens rápidas:", error);
+      toast({
+        description: "Erro ao carregar mensagens rápidas",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFastMessageSelect = async (fastMessage: FastMessage) => {
+    if (!selectedChat) return;
+    try {
+      await sendMessage(fastMessage.content || fastMessage.title);
+      setFastMessageDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao enviar mensagem rápida:", error);
+      toast({
+        description: "Erro ao enviar mensagem rápida",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="sticky bottom-0 p-4 border-t bg-white">
       {(selectedFile || audioBlob) && (
@@ -312,15 +345,31 @@ const ChatInput: React.FC = () => {
           className="hidden"
           accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-10 w-10"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading || isRecording}
-        >
-          <Paperclip className="h-5 w-5 text-gray-500" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              disabled={isUploading || isRecording}
+            >
+              <Plus className="h-5 w-5 text-gray-500" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" side="top" className="w-48">
+            <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+              <Paperclip className="h-4 w-4 mr-2" />
+              Enviar anexo
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              loadFastMessages();
+              setFastMessageDialogOpen(true);
+            }}>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Mensagem rápida
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button
           variant="ghost"
           size="icon"
@@ -387,6 +436,48 @@ const ChatInput: React.FC = () => {
             </div>
           </PopoverContent>
         </Popover>
+        <Dialog open={fastMessageDialogOpen} onOpenChange={setFastMessageDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Mensagens Rápidas</DialogTitle>
+            </DialogHeader>
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {fastMessages.length === 0 ? (
+                <p className="text-center text-gray-500 py-4">
+                  Nenhuma mensagem rápida encontrada
+                </p>
+              ) : (
+                fastMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className="p-3 border rounded-lg flex items-center justify-between gap-2 bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <div>
+                      <h4 className="font-medium text-sm">{message.title}</h4>
+                      {message.content && (
+                        <p className="text-sm text-gray-600">{message.content}</p>
+                      )}
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="ml-2 hover:bg-black hover:text-white rounded-full"
+                      onClick={() => handleFastMessageSelect(message)}
+                      title="Enviar mensagem rápida"
+                    >
+                      <Send className="h-5 w-5" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="flex justify-center">
+              <Link href="/home/mensagens-rapidas" className="text-sm text-gray-500 hover:text-gray-700">
+                Cadastre uma nova mensagem rápida
+              </Link>
+            </div>
+          </DialogContent>
+        </Dialog>
         <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex gap-2">
           <Input
             {...register("text")}
@@ -398,7 +489,6 @@ const ChatInput: React.FC = () => {
             placeholder={selectedFile || audioBlob ? "Adicionar legenda (opcional)..." : "Escreva aqui..."}
             autoComplete="off"
             disabled={isUploading || isRecording}
-
           />
           <Button
             type="submit"
