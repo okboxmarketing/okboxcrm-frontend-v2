@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { assignAccessorToCompany, deleteCompany, findCompanyById } from "@/service/companyService";
-import { deleteUser, inviteUser } from "@/service/userService";
+import { deleteUser, inviteUser, updateUserRole } from "@/service/userService";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -202,9 +202,28 @@ const EmpresaPage: React.FC = () => {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === "ADMIN" ? "default" : "outline"}>
-                      {user.role === "ADMIN" ? "Administrador" : "Usuário"}
-                    </Badge>
+                    {requiredRole === "ADVISOR" ? (
+                      <Select
+                        value={user.role}
+                        onValueChange={async (value) => {
+                          await updateUserRole(user.id, value as "USER" | "ADMIN");
+                          toast({ description: "Papel do usuário atualizado!" });
+                          await fetchCompany();
+                        }}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USER">Usuário</SelectItem>
+                          <SelectItem value="ADMIN">Administrador</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant={user.role === "ADMIN" ? "default" : "outline"}>
+                        {user.role === "ADMIN" ? "Administrador" : "Usuário"}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="flex gap-2">
                     {requiredRole === "ADVISOR" && (
