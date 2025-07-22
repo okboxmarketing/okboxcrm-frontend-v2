@@ -82,6 +82,10 @@ const CriativosPage: React.FC = () => {
                 });
             } catch (error) {
                 console.error("Erro ao cadastrar criativo:", error);
+                toast({
+                    description: `Erro ao cadastrar criativo: ${error}`,
+                    variant: 'destructive',
+                });
             }
         });
     };

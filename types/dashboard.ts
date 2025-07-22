@@ -49,4 +49,10 @@ export interface DashboardData {
         origem: string;
         quantidade: number;
     }[];
+    conversoesPorCriativo: {
+        nomeCriativo: string;
+        leadsCaptados: number;
+        conversoes: number;
+        taxaConversao: number;
+    }[];
 }
