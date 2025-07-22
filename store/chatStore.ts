@@ -439,6 +439,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }
         });
 
+        socket.on('ticketAccepted', (payload: { ticketId: number; acceptedBy: string; timestamp: string }) => {
+            console.log('Ticket accepted via WebSocket:', payload);
+
+            set((state) => {
+                const updatedTickets = state.tickets.filter(ticket => ticket.id !== payload.ticketId);
+
+                const updatedSelectedChat = state.selectedChat?.id === payload.ticketId ? null : state.selectedChat;
+
+                return {
+                    tickets: updatedTickets,
+                    selectedChat: updatedSelectedChat
+                };
+            });
+
+            get().fetchTicketCounts();
+        });
+
         socket.on('newMessage', (payload: NewMessagePayload) => {
             console.log('WebSocket payload received:', payload);
             let ts = payload.data.messageTimestamp;
