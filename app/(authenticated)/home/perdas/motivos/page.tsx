@@ -143,7 +143,7 @@ const LossReasonsPage: React.FC = () => {
           <Badge className="bg-black text-white px-3 py-1 text-sm">
             {lossReasons.length}
           </Badge>
-          {user?.userRole === "ADMIN" && (
+          {user?.userRole !== "USER" && (
             <NewLossReasonButton onLossReasonCreated={() => fetchLossReasons()} />
           )}
         </div>
@@ -158,7 +158,7 @@ const LossReasonsPage: React.FC = () => {
               <TableRow>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Data de Criação</TableHead>
-                {user?.userRole === "ADMIN" && (
+                {user?.userRole !== "USER" && (
                   <TableHead>Ações</TableHead>
                 )}
               </TableRow>
@@ -168,7 +168,7 @@ const LossReasonsPage: React.FC = () => {
                 <TableRow key={reason.id} className="hover:bg-gray-100">
                   <TableCell className="font-medium">{reason.description || "-"}</TableCell>
                   <TableCell>{formatDate(reason.createdAt)}</TableCell>
-                  {user?.userRole === "ADMIN" && (
+                  {user?.userRole !== "USER" && (
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
@@ -244,7 +244,6 @@ const LossReasonsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de confirmação para excluir motivo de perda */}
       <Dialog open={confirmDeleteDialog} onOpenChange={setConfirmDeleteDialog}>
         <DialogContent>
           <DialogHeader>
