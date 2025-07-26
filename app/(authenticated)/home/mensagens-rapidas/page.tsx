@@ -206,7 +206,7 @@ const FastMessagesPage: React.FC = () => {
                     <Badge className="bg-black text-white px-3 py-1 text-sm">
                         {fastMessages?.length || 0}
                     </Badge>
-                    {user?.userRole === "ADMIN" && (
+                    {user?.userRole !== "USER" && (
                         <Button onClick={handleOpenCreateDialog}>
                             <Plus className="h-4 w-4 mr-2" /> Nova Mensagem
                         </Button>
@@ -231,7 +231,7 @@ const FastMessagesPage: React.FC = () => {
                                 <TableHead>Título</TableHead>
                                 <TableHead>Conteúdo</TableHead>
                                 <TableHead>Data de Criação</TableHead>
-                                {user?.userRole === "ADMIN" && (
+                                {user?.userRole !== "USER" && (
                                     <TableHead>Ações</TableHead>
                                 )}
                             </TableRow>
@@ -253,7 +253,7 @@ const FastMessagesPage: React.FC = () => {
                                     </TableCell>
 
                                     <TableCell>{formatDate(message.createdAt)}</TableCell>
-                                    {user?.userRole === "ADMIN" && (
+                                    {user?.userRole !== "USER" && (
                                         <TableCell>
                                             <div className="flex gap-2">
                                                 <Button

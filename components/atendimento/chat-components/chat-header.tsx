@@ -94,7 +94,7 @@ const ChatHeader: React.FC = () => {
             {acceptIsLoading ? <Loader2 className="animate-spin" /> : "ACEITAR"}
           </Button>
         )}
-        {selectedChat.status !== "PENDING" && user?.userRole !== "ADVISOR" && (
+        {selectedChat.status !== "PENDING" && (
           <>
             <MoveTicketSelect ticketId={selectedChat.id} />
             <SaleButton />
@@ -103,12 +103,10 @@ const ChatHeader: React.FC = () => {
             )}
           </>
         )}
-        {user?.userRole !== "ADVISOR" && (
-          <TicketActionsDropdown
-            ticketId={selectedChat.id}
-            responsibleId={selectedChat.responsibleId}
-          />
-        )}
+        <TicketActionsDropdown
+          ticketId={selectedChat.id}
+          responsibleId={selectedChat.responsibleId}
+        />
       </div>
       <InfoSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </div>

@@ -47,3 +47,12 @@ export const getSalesByTicketId = async (ticketId: number) => {
     throw error;
   }
 };
+
+export const deleteSale = async (id: string) => {
+  try {
+    return await apiHelper.delete(`/sales/${id}`);
+  } catch (error) {
+    console.error("Error deleting sale:", error);
+    throw error;
+  }
+};

@@ -135,7 +135,7 @@ const ProductsPage = () => {
           <Badge className="bg-black text-white px-3 py-1 text-sm">
             {products.length}
           </Badge>
-          {user?.userRole === "ADMIN" && (
+          {user?.userRole !== "USER" && (
             <NewProductButton onProductCreated={() => fetchProducts()} />
           )}
         </div>
@@ -150,7 +150,7 @@ const ProductsPage = () => {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Data de Criação</TableHead>
-                {user?.userRole === "ADMIN" && (
+                {user?.userRole !== "USER" && (
                   <TableHead>Ações</TableHead>
                 )}
               </TableRow>
@@ -160,7 +160,7 @@ const ProductsPage = () => {
                 <TableRow key={product.id} className="hover:bg-gray-100">
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{formatDate(product.createdAt, "dd/MM/yyyy")}</TableCell>
-                  {user?.userRole === "ADMIN" && (
+                  {user?.userRole !== "USER" && (
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
@@ -192,7 +192,7 @@ const ProductsPage = () => {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Data de Criação</TableHead>
-                {user?.userRole === "ADMIN" && (
+                {user?.userRole !== "USER" && (
                   <TableHead>Ações</TableHead>
                 )}
               </TableRow>
