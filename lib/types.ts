@@ -91,6 +91,7 @@ export interface AuthUser {
   AdvisorOf?: (Company & { _count?: { users: number } })[];
   profileImage?: string;
   companyImage?: string;
+  masterAdvisor: boolean;
 }
 
 export interface Response {

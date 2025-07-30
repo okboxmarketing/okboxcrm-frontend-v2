@@ -39,6 +39,7 @@ export function AdvisorCompaniesDialog({
             try {
                 setLoading(true);
                 const data = await getMyCompanies();
+                console.log(data);
                 setCompanies(data);
 
                 if (user?.companyId) {
@@ -141,8 +142,12 @@ export function AdvisorCompaniesDialog({
                                     )}
                                     <div className="text-left">
                                         <p className="font-medium">{company.name}</p>
+                                        {user?.masterAdvisor && company.Advisor && (
+                                            <p className="text-sm text-gray-500">
+                                                {company.Advisor.name}
+                                            </p>)}
                                         <p className="text-sm text-gray-500">
-                                            {company.userCount || 0} usuários
+                                            {company._count.users || 0} usuários
                                         </p>
                                     </div>
                                 </div>
@@ -169,6 +174,6 @@ export function AdvisorCompaniesDialog({
                     </div>
                 )}
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

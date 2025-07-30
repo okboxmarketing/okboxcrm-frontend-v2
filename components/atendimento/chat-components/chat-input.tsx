@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music, Smile, Plus, MessageSquare } from "lucide-react";
 import { sendAudioMessage, sendMediaMessage, SendMediaParams } from "@/service/messageService";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +31,7 @@ const ChatInput: React.FC = () => {
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [selectedEmojiCategory, setSelectedEmojiCategory] = useState<keyof typeof EMOJI_CATEGORIES>('faces');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textInputRef = useRef<HTMLInputElement>(null);
+  const textInputRef = useRef<HTMLTextAreaElement>(null);
   const [fastMessages, setFastMessages] = useState<FastMessage[]>([]);
   const [fastMessageDialogOpen, setFastMessageDialogOpen] = useState(false);
 
@@ -59,8 +59,18 @@ const ChatInput: React.FC = () => {
       const newCursorPosition = cursorPosition + emoji.length;
       textInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
       textInputRef.current.focus();
+
+      // Ajustar altura do textarea
+      adjustTextareaHeight();
     }
     setEmojiPickerOpen(false);
+  };
+
+  const adjustTextareaHeight = () => {
+    if (textInputRef.current) {
+      textInputRef.current.style.height = 'auto';
+      textInputRef.current.style.height = Math.min(textInputRef.current.scrollHeight, 120) + 'px';
+    }
   };
 
   const onSubmit = async (data: FormData) => {
@@ -71,6 +81,9 @@ const ChatInput: React.FC = () => {
     } else if (data.text && data.text.trim()) {
       reset();
       await sendMessage(data.text);
+      if (textInputRef.current) {
+        textInputRef.current.style.height = 'auto';
+      }
     }
   };
 
@@ -479,16 +492,30 @@ const ChatInput: React.FC = () => {
           </DialogContent>
         </Dialog>
         <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex gap-2">
-          <Input
+          <Textarea
             {...register("text")}
             ref={(e) => {
               register("text").ref(e);
               textInputRef.current = e;
             }}
-            className="flex-1 border-0 bg-transparent focus-visible:ring-0"
+            className="flex-1 border-0 bg-transparent focus-visible:ring-0 resize-none min-h-[40px] max-h-[120px]"
             placeholder={selectedFile || audioBlob ? "Adicionar legenda (opcional)..." : "Escreva aqui..."}
             autoComplete="off"
             disabled={isUploading || isRecording}
+            rows={1}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.shiftKey) {
+                // Permitir quebra de linha natural no textarea
+                return;
+              } else if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const formData = { text: textInputRef.current?.value || '' };
+                onSubmit(formData);
+              }
+            }}
+            onChange={() => {
+              adjustTextareaHeight();
+            }}
           />
           <Button
             type="submit"
