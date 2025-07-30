@@ -94,12 +94,12 @@ const adminItems: NavItem[] = [
             { title: "Motivos", url: "/home/perdas/motivos" },
         ],
     },
+    { title: "Conexão", url: "/home/conectar", icon: PlugZap },
 ]
 
 const adminOnlyItems: NavItem[] = [
     { title: "Contatos", url: "/home/contatos", icon: Contact },
     { title: "Empresa", url: "/home/minha-empresa", icon: Building2 },
-    { title: "Conexão", url: "/home/conectar", icon: PlugZap },
     { title: "Configurações", url: "/home/configuracao", icon: Settings },
 ]
 
@@ -253,7 +253,7 @@ export function AppSidebar() {
                 ) : null}
                 {user?.userRole === "ADMIN" ? (
                     <SidebarGroup>
-                        <SidebarGroupLabel>Configurações do Sistema</SidebarGroupLabel>
+                        <SidebarGroupLabel>Área da Empresa</SidebarGroupLabel>
                         <SidebarMenu>
                             {adminOnlyItems.map((item) => {
                                 const isActive = pathname === item.url

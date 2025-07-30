@@ -84,26 +84,34 @@ const ConectarPage: React.FC = () => {
 
     socket.on("qrCode", (qrcode: string) => setBase64(qrcode))
 
+    socket.on("qrCodeError", (error: { message: string; statusCode: number }) => {
+      setBase64(undefined)
+      toast({
+        title: "Erro no QR Code",
+        description: error.message || "Ocorreu um erro ao gerar o QR Code.",
+        variant: "destructive",
+      })
+    })
+
     socket.on("connectionStatus", (status: string) => {
+      console.log(`[WebSocket] Connection Status received: ${status} for companyId: ${user.companyId}`);
+
       if (status === "close") {
         setStatus("Desconectado")
         setInstanceData(null)
-        toast({
-          title: "Desconectado",
-          description: "A conexão com o WhatsApp foi perdida.",
-          variant: "destructive",
-        })
+        setBase64(undefined)
       }
       if (status === "open") {
         setStatus("Conectado")
         setBase64(undefined)
-        fetchInstanceData()
+        setTimeout(() => {
+          fetchInstanceData()
+        }, 1000)
         toast({
           title: "Conectado",
           description: "WhatsApp conectado com sucesso!",
         })
       }
-      if (status === "connecting") setStatus("Conectando")
     })
 
     return () => {
@@ -355,7 +363,7 @@ const ConectarPage: React.FC = () => {
                   </div>
                 )}
 
-                {status === "Conectado" && (
+                {status === "Conectado" && user?.userRole === "ADMIN" && (
                   <Button
                     variant="outline"
                     className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
@@ -430,7 +438,7 @@ const ConectarPage: React.FC = () => {
                           <CircleCheckBig className="text-green-500" size={120} />
                           <p className="text-green-600 font-medium text-center">WhatsApp conectado com sucesso!</p>
                         </motion.div>
-                      ) : !status ? (
+                      ) : !status && user?.userRole === "ADMIN" ? (
                         <Button
                           size="lg"
                           className="relative z-10"
