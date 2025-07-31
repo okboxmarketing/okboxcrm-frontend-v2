@@ -175,7 +175,7 @@ export function AdvisorCompaniesDialog({
                                                 {company.Advisor.name}
                                             </p>)}
                                         <p className="text-sm text-gray-500">
-                                            {company._count.users || 0} usuários
+                                            {company._count?.users || company.userCount || 0} usuários
                                         </p>
                                     </div>
                                 </div>
