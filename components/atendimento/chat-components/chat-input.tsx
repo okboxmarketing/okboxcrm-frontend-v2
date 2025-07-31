@@ -4,7 +4,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music, Smile, Plus, MessageSquare } from "lucide-react";
+import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music, Smile, Plus, MessageSquare, Hash } from "lucide-react";
 import { sendAudioMessage, sendMediaMessage, SendMediaParams } from "@/service/messageService";
 import { useToast } from "@/hooks/use-toast";
 import { useChatStore } from "@/store/chatStore";
@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getFastMessages, FastMessage } from "@/service/fastMessageService";
 import Link from "next/link";
+import useSWR from "swr";
 
 interface FormData {
   text: string;
@@ -32,15 +33,57 @@ const ChatInput: React.FC = () => {
   const [selectedEmojiCategory, setSelectedEmojiCategory] = useState<keyof typeof EMOJI_CATEGORIES>('faces');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
-  const [fastMessages, setFastMessages] = useState<FastMessage[]>([]);
   const [fastMessageDialogOpen, setFastMessageDialogOpen] = useState(false);
+  const [showFastMessageSuggestions, setShowFastMessageSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
 
+  // SWR para carregar mensagens rápidas
+  const { data: fastMessages = [], error: fastMessagesError } = useSWR("fastMessages", getFastMessages);
+
+  // Observar o valor do texto para detectar "/"
+  const [textValue, setTextValue] = useState("");
 
   useEffect(() => {
     if (textInputRef.current) {
       textInputRef.current.focus();
     }
   }, [selectedChat]);
+
+  // Debug: Log das mensagens rápidas
+  useEffect(() => {
+    if (fastMessagesError) {
+      console.log("Erro ao carregar fastMessages:", fastMessagesError);
+    }
+  }, [fastMessages, fastMessagesError]);
+
+  // Detectar quando o usuário digita "/" e mostrar sugestões
+  useEffect(() => {
+    if (!textValue) {
+      setShowFastMessageSuggestions(false);
+      setSelectedSuggestionIndex(0);
+      return;
+    }
+
+    const lines = textValue.split('\n');
+    const currentLine = lines[lines.length - 1];
+
+    if (currentLine.startsWith('/')) {
+      const searchTerm = currentLine.slice(1).toLowerCase();
+      const filteredMessages = fastMessages.filter(message =>
+        message.shortCode?.toLowerCase().includes(searchTerm)
+      );
+
+      if (filteredMessages.length > 0) {
+        setShowFastMessageSuggestions(true);
+        setSelectedSuggestionIndex(0);
+      } else {
+        setShowFastMessageSuggestions(false);
+      }
+    } else {
+      setShowFastMessageSuggestions(false);
+      setSelectedSuggestionIndex(0);
+    }
+  }, [textValue, fastMessages]);
 
   const { toast } = useToast();
 
@@ -174,21 +217,20 @@ const ChatInput: React.FC = () => {
 
   const handleSendAudio = async () => {
     if (!audioBlob || !selectedChat) return;
+
     setIsUploading(true);
 
     try {
       const base64 = await blobToBase64(audioBlob);
-
-      console.log("audio base64: ", base64)
       await sendAudioMessage(selectedChat.Contact.remoteJid, base64);
 
-      reset();
       clearSelectedFile();
+      reset();
 
     } catch (error) {
       console.error("Erro ao enviar áudio:", error);
       toast({
-        description: "Erro ao enviar áudio. Tente novamente.",
+        description: `Erro ao enviar áudio, tente novamente. ${error}`,
         variant: "destructive",
       });
     } finally {
@@ -236,11 +278,13 @@ const ChatInput: React.FC = () => {
     if (!selectedFile) return null;
 
     if (selectedFile.type.startsWith('image/')) {
-      return <Image className="h-5 w-5" />;
+      return <Image className="h-4 w-4 text-green-500" />;
     } else if (selectedFile.type.startsWith('video/')) {
-      return <Video className="h-5 w-5" />;
+      return <Video className="h-4 w-4 text-purple-500" />;
+    } else if (selectedFile.type.startsWith('audio/')) {
+      return <Music className="h-4 w-4 text-blue-500" />;
     } else {
-      return <FileText className="h-5 w-5" />;
+      return <FileText className="h-4 w-4 text-gray-500" />;
     }
   };
 
@@ -278,7 +322,7 @@ const ChatInput: React.FC = () => {
     } catch (error) {
       console.error("Erro ao iniciar gravação:", error);
       toast({
-        description: "Erro ao acessar o microfone. Verifique as permissões.",
+        description: "Erro ao iniciar gravação de áudio, verifique as permissões do navegador.",
         variant: "destructive",
       });
     }
@@ -290,19 +334,6 @@ const ChatInput: React.FC = () => {
       // Parar todos os tracks do MediaStream
       audioRecorder.stream.getTracks().forEach(track => track.stop());
       setIsRecording(false);
-    }
-  };
-
-  const loadFastMessages = async () => {
-    try {
-      const messages = await getFastMessages();
-      setFastMessages(messages);
-    } catch (error) {
-      console.error("Erro ao carregar mensagens rápidas:", error);
-      toast({
-        description: "Erro ao carregar mensagens rápidas",
-        variant: "destructive",
-      });
     }
   };
 
@@ -319,6 +350,92 @@ const ChatInput: React.FC = () => {
       });
     }
   };
+
+  const handleSuggestionSelect = (fastMessage: FastMessage) => {
+    if (!textInputRef.current) return;
+
+    const lines = textValue.split('\n');
+    const currentLineIndex = lines.length - 1;
+
+    lines[currentLineIndex] = fastMessage.content || fastMessage.title;
+
+    const newValue = lines.join('\n');
+    textInputRef.current.value = newValue;
+
+    const event = new Event('input', { bubbles: true });
+    textInputRef.current.dispatchEvent(event);
+
+    setShowFastMessageSuggestions(false);
+    textInputRef.current.focus();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && e.shiftKey) {
+      return; // Permitir quebra de linha
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      if (showFastMessageSuggestions && filteredSuggestions.length > 0) {
+        e.preventDefault();
+        if (filteredSuggestions[selectedSuggestionIndex]) {
+          handleSuggestionSelect(filteredSuggestions[selectedSuggestionIndex]);
+        }
+        return;
+      }
+
+      e.preventDefault();
+      const formData = { text: textInputRef.current?.value || '' };
+      onSubmit(formData);
+    } else if (showFastMessageSuggestions) {
+      const lines = textValue.split('\n');
+      const currentLine = lines[lines.length - 1];
+      const searchTerm = currentLine.slice(1).toLowerCase();
+      const filteredMessages = fastMessages.filter(message =>
+        message.shortCode?.toLowerCase().includes(searchTerm)
+      );
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedSuggestionIndex(prev =>
+          prev < filteredMessages.length - 1 ? prev + 1 : 0
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedSuggestionIndex(prev =>
+          prev > 0 ? prev - 1 : filteredMessages.length - 1
+        );
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        if (filteredMessages[selectedSuggestionIndex]) {
+          handleSuggestionSelect(filteredMessages[selectedSuggestionIndex]);
+        }
+      } else if (e.key === 'Escape') {
+        setShowFastMessageSuggestions(false);
+      }
+    }
+  };
+
+  // Obter mensagens filtradas para sugestões
+  const getFilteredSuggestions = () => {
+    if (!textValue) {
+      return [];
+    }
+
+    const lines = textValue.split('\n');
+    const currentLine = lines[lines.length - 1];
+
+    if (!currentLine.startsWith('/')) {
+      return [];
+    }
+
+    const searchTerm = currentLine.slice(1).toLowerCase();
+
+    const filtered = fastMessages.filter(message =>
+      message.shortCode?.toLowerCase().includes(searchTerm)
+    );
+
+    return filtered;
+  };
+
+  const filteredSuggestions = getFilteredSuggestions();
 
   return (
     <div className="sticky bottom-0 p-4 border-t bg-white">
@@ -350,6 +467,41 @@ const ChatInput: React.FC = () => {
           </Button>
         </div>
       )}
+
+      {showFastMessageSuggestions && filteredSuggestions.length > 0 && (
+        <div
+          className="mb-2 bg-white border rounded-lg shadow-lg p-2"
+        >
+          <div className="text-xs text-gray-500 mb-2 px-2">Mensagens rápidas:</div>
+          <div className="space-y-1">
+            {filteredSuggestions.map((message, index) => (
+              <div
+                key={message.id}
+                className={`px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${index === selectedSuggestionIndex ? 'bg-gray-100' : ''
+                  }`}
+                onClick={() => handleSuggestionSelect(message)}
+              >
+                <div className="flex items-center gap-2">
+                  <Hash className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium text-sm">{message.shortCode}</span>
+                      <span className="text-xs text-gray-500">-</span>
+                      <span className="text-sm text-gray-600">{message.title}</span>
+                    </div>
+                    {message.content && (
+                      <p className="text-xs text-gray-500 mt-1 truncate">
+                        {message.content}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-4 bg-gray-50 rounded-lg p-2">
         <input
           type="file"
@@ -375,7 +527,6 @@ const ChatInput: React.FC = () => {
               Enviar anexo
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => {
-              loadFastMessages();
               setFastMessageDialogOpen(true);
             }}>
               <MessageSquare className="h-4 w-4 mr-2" />
@@ -499,21 +650,13 @@ const ChatInput: React.FC = () => {
               textInputRef.current = e;
             }}
             className="flex-1 border-0 bg-transparent focus-visible:ring-0 resize-none min-h-[40px] max-h-[120px]"
-            placeholder={selectedFile || audioBlob ? "Adicionar legenda (opcional)..." : "Escreva aqui..."}
+            placeholder={selectedFile || audioBlob ? "Adicionar legenda (opcional)..." : "Escreva aqui... (digite / para mensagens rápidas)"}
             autoComplete="off"
             disabled={isUploading || isRecording}
             rows={1}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.shiftKey) {
-                // Permitir quebra de linha natural no textarea
-                return;
-              } else if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                const formData = { text: textInputRef.current?.value || '' };
-                onSubmit(formData);
-              }
-            }}
-            onChange={() => {
+            onKeyDown={handleKeyDown}
+            onChange={(e) => {
+              setTextValue(e.target.value);
               adjustTextareaHeight();
             }}
           />

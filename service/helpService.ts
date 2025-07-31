@@ -44,3 +44,12 @@ export const createHelp = async (data: CreateHelpDto) => {
     throw error;
   }
 };
+
+export const deleteHelp = async (id: number) => {
+  try {
+    return await apiHelper.delete(`/ajudas/${id}`);
+  } catch (error) {
+    console.error("Error deleting help:", error);
+    throw error;
+  }
+};

@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import useAuthStore from "@/store/authStore"
+import useSWR from "swr"
 
 export interface InstanceData {
   profileName: string;
@@ -28,47 +29,26 @@ const ConectarPage: React.FC = () => {
   const [generatingQRCode, setGeneratingQRCode] = useTransition()
   const [creatingInstance, setCreatingInstanceTransition] = useTransition()
   const [disconnecting, setDisconnecting] = useTransition()
-  const [status, setStatus] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [instanceData, setInstanceData] = useState<InstanceData | null>(null)
-  const [loadingInstanceData, setLoadingInstanceData] = useState(false)
   const { user, setCompanyImage } = useAuthStore()
   const { toast } = useToast()
 
-  const checkStatus = async () => {
-    setIsLoading(true)
-    try {
-      const newStatus = await getStatus()
-      if (newStatus === "close") setStatus("Desconectado")
-      if (newStatus === "open") {
-        setStatus("Conectado")
-        fetchInstanceData()
-      }
-      if (newStatus === "connecting") setStatus("Conectando")
-    } catch (error) {
-      console.error("Erro ao buscar status:", error)
-    } finally {
-      setIsLoading(false)
-    }
+  // SWR hooks
+  const { data: status = "close", isLoading: loadingStatus, mutate: mutateStatus } = useSWR("status", getStatus)
+  const { data: instanceData, isLoading: loadingInstanceData, mutate: mutateInstanceData } = useSWR(
+    status === "open" ? "instance" : null,
+    getInstance
+  )
+
+  // Computed status
+  const getStatusText = () => {
+    if (loadingStatus) return "Carregando..."
+    if (status === "close") return "Desconectado"
+    if (status === "open") return "Conectado"
+    if (status === "connecting") return "Conectando"
+    return "Desconectado"
   }
 
-  const fetchInstanceData = async () => {
-    setLoadingInstanceData(true)
-    try {
-      const data = await getInstance()
-      console.log("Dados da instância:", data)
-      setInstanceData(data)
-      setCompanyImage(data.profilePicUrl)
-    } catch (error) {
-      console.error("Erro ao buscar dados da instância:", error)
-    } finally {
-      setLoadingInstanceData(false)
-    }
-  }
-
-  useEffect(() => {
-    checkStatus()
-  }, [])
+  const statusText = getStatusText()
 
   useEffect(() => {
     if (!user?.companyId) {
@@ -97,15 +77,15 @@ const ConectarPage: React.FC = () => {
       console.log(`[WebSocket] Connection Status received: ${status} for companyId: ${user.companyId}`);
 
       if (status === "close") {
-        setStatus("Desconectado")
-        setInstanceData(null)
         setBase64(undefined)
+        mutateStatus("close")
+        mutateInstanceData(undefined)
       }
       if (status === "open") {
-        setStatus("Conectado")
         setBase64(undefined)
+        mutateStatus("open")
         setTimeout(() => {
-          fetchInstanceData()
+          mutateInstanceData()
         }, 1000)
         toast({
           title: "Conectado",
@@ -117,7 +97,14 @@ const ConectarPage: React.FC = () => {
     return () => {
       socket.disconnect()
     }
-  }, [user?.companyId, toast])
+  }, [user?.companyId, toast, mutateStatus, mutateInstanceData])
+
+  // Update company image when instance data changes
+  useEffect(() => {
+    if (instanceData?.profilePicUrl) {
+      setCompanyImage(instanceData.profilePicUrl)
+    }
+  }, [instanceData?.profilePicUrl, setCompanyImage])
 
   const handleConnect = async () => {
     setGeneratingQRCode(async () => {
@@ -127,7 +114,7 @@ const ConectarPage: React.FC = () => {
           title: "QR Code gerado",
           description: "Escaneie o QR Code com seu WhatsApp para conectar.",
         })
-        checkStatus()
+        mutateStatus()
       } catch (error) {
         console.log(error)
         toast({
@@ -147,7 +134,7 @@ const ConectarPage: React.FC = () => {
           title: "Conexão criada",
           description: "A conexão foi criada com sucesso!",
         })
-        checkStatus()
+        mutateStatus()
       } catch (err) {
         console.log(err)
         toast({
@@ -163,13 +150,12 @@ const ConectarPage: React.FC = () => {
     setDisconnecting(async () => {
       try {
         await logoutInstance()
-        setStatus("Desconectado")
-        setInstanceData(null)
+        mutateStatus("close")
+        mutateInstanceData(undefined)
         toast({
           title: "Desconectado",
           description: "WhatsApp desconectado com sucesso.",
         })
-        checkStatus()
       } catch (error) {
         console.log(error)
         toast({
@@ -182,9 +168,9 @@ const ConectarPage: React.FC = () => {
   }
 
   const getStatusIcon = () => {
-    if (isLoading) return <Loader2 className="animate-spin w-6 h-6 text-gray-400" />
+    if (loadingStatus) return <Loader2 className="animate-spin w-6 h-6 text-gray-400" />
 
-    switch (status) {
+    switch (statusText) {
       case "Desconectado":
         return <WifiOff className="w-6 h-6 text-red-500" />
       case "Conectando":
@@ -197,14 +183,14 @@ const ConectarPage: React.FC = () => {
   }
 
   const getStatusBadge = () => {
-    if (isLoading)
+    if (loadingStatus)
       return (
         <Badge variant="outline" className="animate-pulse">
           Carregando...
         </Badge>
       )
 
-    switch (status) {
+    switch (statusText) {
       case "Desconectado":
         return <Badge variant="destructive">Desconectado</Badge>
       case "Conectando":
@@ -225,9 +211,9 @@ const ConectarPage: React.FC = () => {
   }
 
   const getStatusDescription = () => {
-    if (isLoading) return "Verificando o status da conexão..."
+    if (loadingStatus) return "Verificando o status da conexão..."
 
-    switch (status) {
+    switch (statusText) {
       case "Desconectado":
         return "Sua conexão com o WhatsApp está desativada. Gere um QR Code para conectar."
       case "Conectando":
@@ -268,27 +254,27 @@ const ConectarPage: React.FC = () => {
                 <div
                   className={cn(
                     "p-4 rounded-lg border transition-all duration-300",
-                    status === "Desconectado" && "border-red-200 bg-red-50",
-                    status === "Conectando" && "border-orange-200 bg-orange-50",
-                    status === "Conectado" && "border-green-200 bg-green-50",
-                    !status && "border-gray-200 bg-gray-50",
+                    statusText === "Desconectado" && "border-red-200 bg-red-50",
+                    statusText === "Conectando" && "border-orange-200 bg-orange-50",
+                    statusText === "Conectado" && "border-green-200 bg-green-50",
+                    !statusText && "border-gray-200 bg-gray-50",
                   )}
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <Smartphone
                       className={cn(
                         "w-5 h-5",
-                        status === "Desconectado" && "text-red-500",
-                        status === "Conectando" && "text-orange-500",
-                        status === "Conectado" && "text-green-500",
-                        !status && "text-gray-500",
+                        statusText === "Desconectado" && "text-red-500",
+                        statusText === "Conectando" && "text-orange-500",
+                        statusText === "Conectado" && "text-green-500",
+                        !statusText && "text-gray-500",
                       )}
                     />
                     <h3 className="font-medium">Dispositivo WhatsApp</h3>
                   </div>
 
                   <div className="text-sm text-muted-foreground">
-                    {status === "Conectado" ? (
+                    {statusText === "Conectado" ? (
                       loadingInstanceData ? (
                         <div className="flex items-center gap-2">
                           <Loader2 className="animate-spin w-4 h-4" />
@@ -339,9 +325,9 @@ const ConectarPage: React.FC = () => {
                       ) : (
                         <p>Seu WhatsApp está conectado e pronto para uso.</p>
                       )
-                    ) : status === "Conectando" ? (
+                    ) : statusText === "Conectando" ? (
                       <p>Aguardando confirmação do dispositivo...</p>
-                    ) : status === "Desconectado" ? (
+                    ) : statusText === "Desconectado" ? (
                       <p>Nenhum dispositivo conectado no momento.</p>
                     ) : (
                       <p>Crie uma conexão para vincular seu WhatsApp.</p>
@@ -349,7 +335,7 @@ const ConectarPage: React.FC = () => {
                   </div>
                 </div>
 
-                {status !== "Conectado" && (
+                {statusText !== "Conectado" && (
                   <div className="flex flex-col gap-3">
                     <h3 className="text-sm font-medium">Instruções:</h3>
                     <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-2 pl-2">
@@ -363,7 +349,7 @@ const ConectarPage: React.FC = () => {
                   </div>
                 )}
 
-                {status === "Conectado" && user?.userRole === "ADMIN" && (
+                {statusText === "Conectado" && user?.userRole === "ADMIN" && (
                   <Button
                     variant="outline"
                     className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
@@ -382,7 +368,7 @@ const ConectarPage: React.FC = () => {
 
               <div className="relative w-full md:w-[350px] h-[350px] flex items-center justify-center">
                 <AnimatePresence mode="wait">
-                  {isLoading ? (
+                  {loadingStatus ? (
                     <motion.div
                       key="loading"
                       initial={{ opacity: 0 }}
@@ -429,7 +415,7 @@ const ConectarPage: React.FC = () => {
                         height={350}
                         className="absolute top-0 left-0 w-full h-full opacity-10"
                       />
-                      {status === "Conectado" ? (
+                      {statusText === "Conectado" ? (
                         <motion.div
                           initial={{ scale: 0.8, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
@@ -438,7 +424,7 @@ const ConectarPage: React.FC = () => {
                           <CircleCheckBig className="text-green-500" size={120} />
                           <p className="text-green-600 font-medium text-center">WhatsApp conectado com sucesso!</p>
                         </motion.div>
-                      ) : !status && user?.userRole === "ADMIN" ? (
+                      ) : !statusText && user?.userRole === "ADMIN" ? (
                         <Button
                           size="lg"
                           className="relative z-10"
