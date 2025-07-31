@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Search, Play, Calendar, Clock, Plus } from "lucide-react"
+import { Search, Play, Calendar, Clock, Plus, Trash2 } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import useAuthStore from "@/store/authStore"
 import useSWR from "swr"
-import { getHelps, createHelp, CreateHelpDto } from "@/service/helpService"
+import { getHelps, createHelp, deleteHelp, CreateHelpDto } from "@/service/helpService"
 import { HELP_CATEGORIES } from "@/lib/constants"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -35,6 +35,12 @@ const AjudaPage: React.FC = () => {
     const [openDialog, setOpenDialog] = useState(false)
     const [form, setForm] = useState({ title: "", description: "", videoUrl: "", category: "" })
     const [creating, setCreating] = useState(false)
+    const [deleting, setDeleting] = useState<number | null>(null)
+    const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; helpId: number | null; helpTitle: string }>({
+        open: false,
+        helpId: null,
+        helpTitle: ""
+    })
     const { toast } = useToast()
     const { user } = useAuthStore()
     const { data: videosHelpData = [], isLoading: loadingData, mutate } = useSWR("ajudas", getHelps)
@@ -78,6 +84,30 @@ const AjudaPage: React.FC = () => {
             toast({ title: "Erro ao criar ajuda", variant: "destructive" })
         } finally {
             setCreating(false)
+        }
+    }
+
+    const handleDeleteClick = (id: number, title: string) => {
+        setDeleteDialog({
+            open: true,
+            helpId: id,
+            helpTitle: title
+        })
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteDialog.helpId) return;
+
+        setDeleting(deleteDialog.helpId)
+        try {
+            await deleteHelp(deleteDialog.helpId)
+            mutate()
+            toast({ title: "Ajuda deletada com sucesso!" })
+        } catch {
+            toast({ title: "Erro ao deletar ajuda", variant: "destructive" })
+        } finally {
+            setDeleting(null)
+            setDeleteDialog({ open: false, helpId: null, helpTitle: "" })
         }
     }
 
@@ -135,9 +165,22 @@ const AjudaPage: React.FC = () => {
                             <CardHeader className="pb-3">
                                 <div className="flex items-start justify-between gap-2">
                                     <CardTitle className="text-lg line-clamp-2">{video.title}</CardTitle>
-                                    <Badge className={getCategoryColor(video.category)}>
-                                        {HELP_CATEGORIES.find(c => c.value === video.category)?.label || video.category}
-                                    </Badge>
+                                    <div className="flex items-center gap-2">
+                                        <Badge className={getCategoryColor(video.category)}>
+                                            {HELP_CATEGORIES.find(c => c.value === video.category)?.label || video.category}
+                                        </Badge>
+                                        {user?.userRole === "MASTER" && (
+                                            <Button
+                                                size="sm"
+                                                variant="destructive"
+                                                onClick={() => handleDeleteClick(video.id, video.title)}
+                                                disabled={deleting === video.id}
+                                                className="h-6 w-6 p-0"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                                 <CardDescription className="line-clamp-3">{video.description}</CardDescription>
                             </CardHeader>
@@ -250,6 +293,34 @@ const AjudaPage: React.FC = () => {
                     <DialogFooter>
                         <Button onClick={handleCreateHelp} isLoading={creating} disabled={creating}>
                             Salvar
+                        </Button>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancelar</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirmar Exclusão</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-gray-600">
+                            Tem certeza que deseja deletar a ajuda <strong>&ldquo;{deleteDialog.helpTitle}&rdquo;</strong>?
+                        </p>
+                        <p className="text-sm text-gray-500 mt-2">
+                            Esta ação não pode ser desfeita.
+                        </p>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteConfirm}
+                            disabled={deleting !== null}
+                        >
+                            {deleting !== null ? "Deletando..." : "Deletar"}
                         </Button>
                         <DialogClose asChild>
                             <Button variant="outline">Cancelar</Button>

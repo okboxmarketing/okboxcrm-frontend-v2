@@ -7,6 +7,7 @@ export interface FastMessage {
     companyId: string;
     title: string;
     content?: string;
+    shortCode?: string;
     mediaType: MediaType;
     fileUrl?: string;
     createdAt: string;
@@ -15,11 +16,13 @@ export interface FastMessage {
 export interface CreateFastMessageData {
     title: string;
     content?: string;
+    shortCode?: string;
 }
 
 export interface UpdateFastMessageData {
     title: string;
     content?: string;
+    shortCode?: string;
 }
 
 export const getFastMessages = async (): Promise<FastMessage[]> => {

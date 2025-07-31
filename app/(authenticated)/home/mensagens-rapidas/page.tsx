@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -8,59 +8,110 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash, Plus, MessageSquare, Image, Video, Music, FileText } from "lucide-react";
+import { Pencil, Trash, Plus, MessageSquare, Image, Video, Music, FileText, Hash } from "lucide-react";
 import { getFastMessages, createFastMessage, updateFastMessage, deleteFastMessage, FastMessage, CreateFastMessageData, UpdateFastMessageData } from "@/service/fastMessageService";
 import useAuthStore from "@/store/authStore";
+import useSWR from "swr";
 
 interface FastMessageFormData {
     title: string;
     content: string;
+    shortCode: string;
+}
+
+interface FormErrors {
+    title?: string;
+    content?: string;
+    shortCode?: string;
 }
 
 const FastMessagesPage: React.FC = () => {
-    const [fastMessages, setFastMessages] = useState<FastMessage[]>([]);
-    const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
     const [formData, setFormData] = useState<FastMessageFormData>({
         title: "",
         content: "",
+        shortCode: "",
     });
+    const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [selectedMessage, setSelectedMessage] = useState<FastMessage | null>(null);
     const [isCreating, setIsCreating] = useState(false);
     const { toast } = useToast();
     const { user } = useAuthStore();
+    const { data: fastMessages = [], isLoading: loadingData, mutate } = useSWR("fastMessages", getFastMessages);
 
-    const fetchFastMessages = async () => {
-        setLoading(true);
-        try {
-            const data = await getFastMessages();
-            if (data) setFastMessages(data);
-        } catch (error) {
-            console.error("Erro ao carregar mensagens rápidas:", error);
-            toast({
-                description: "Erro ao carregar mensagens rápidas",
-                variant: "destructive",
-            });
-        } finally {
-            setLoading(false);
+    const validateShortCode = (shortCode: string): string | undefined => {
+        if (!shortCode) return undefined; // Campo é opcional
+
+        // Remove espaços extras e converte para minúsculo
+        const cleanShortCode = shortCode.trim().toLowerCase();
+
+        // Verifica se contém espaços
+        if (cleanShortCode.includes(' ')) {
+            return "A palavra-chave deve ser uma única palavra sem espaços";
         }
-    };
 
-    useEffect(() => {
-        fetchFastMessages();
-    }, []);
+        // Verifica se contém caracteres especiais (exceto hífen e underscore)
+        if (!/^[a-z0-9_-]+$/.test(cleanShortCode)) {
+            return "A palavra-chave deve conter apenas letras, números, hífen (-) e underscore (_)";
+        }
+
+        // Verifica se tem pelo menos 2 caracteres
+        if (cleanShortCode.length < 2) {
+            return "A palavra-chave deve ter pelo menos 2 caracteres";
+        }
+
+        // Verifica se não é muito longa
+        if (cleanShortCode.length > 20) {
+            return "A palavra-chave deve ter no máximo 20 caracteres";
+        }
+
+        return undefined;
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+
+        // Limpa erro do campo quando o usuário digita
+        if (formErrors[name as keyof FormErrors]) {
+            setFormErrors(prev => ({ ...prev, [name]: undefined }));
+        }
+
+        // Validação específica para shortCode
+        if (name === 'shortCode') {
+            const error = validateShortCode(value);
+            setFormErrors(prev => ({ ...prev, shortCode: error }));
+        }
+    };
+
+    const validateForm = (): boolean => {
+        const errors: FormErrors = {};
+
+        if (!formData.title.trim()) {
+            errors.title = "O título é obrigatório";
+        }
+
+        if (!formData.content.trim()) {
+            errors.content = "O conteúdo é obrigatório";
+        }
+
+        const shortCodeError = validateShortCode(formData.shortCode);
+        if (shortCodeError) {
+            errors.shortCode = shortCodeError;
+        }
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     const resetForm = () => {
         setFormData({
             title: "",
             content: "",
+            shortCode: "",
         });
+        setFormErrors({});
         setSelectedMessage(null);
         setIsCreating(false);
     };
@@ -75,7 +126,9 @@ const FastMessagesPage: React.FC = () => {
         setFormData({
             title: message.title,
             content: message.content || "",
+            shortCode: message.shortCode || "",
         });
+        setFormErrors({});
         setIsCreating(false);
         setOpenDialog(true);
     };
@@ -86,10 +139,13 @@ const FastMessagesPage: React.FC = () => {
     };
 
     const handleCreateFastMessage = async () => {
+        if (!validateForm()) return;
+
         try {
             const data: CreateFastMessageData = {
-                title: formData.title,
-                content: formData.content || undefined,
+                title: formData.title.trim(),
+                content: formData.content.trim() || undefined,
+                shortCode: formData.shortCode.trim() || undefined,
             };
 
             await createFastMessage(data);
@@ -98,7 +154,7 @@ const FastMessagesPage: React.FC = () => {
             });
             setOpenDialog(false);
             resetForm();
-            fetchFastMessages();
+            mutate();
         } catch (error) {
             console.error("Erro ao criar mensagem rápida:", error);
             toast({
@@ -109,12 +165,13 @@ const FastMessagesPage: React.FC = () => {
     };
 
     const handleUpdateFastMessage = async () => {
-        if (!selectedMessage) return;
+        if (!selectedMessage || !validateForm()) return;
 
         try {
             const data: UpdateFastMessageData = {
-                title: formData.title,
-                content: formData.content || undefined,
+                title: formData.title.trim(),
+                content: formData.content.trim() || undefined,
+                shortCode: formData.shortCode.trim() || undefined,
             };
 
             await updateFastMessage(selectedMessage.id, data);
@@ -123,7 +180,7 @@ const FastMessagesPage: React.FC = () => {
             });
             setOpenDialog(false);
             resetForm();
-            fetchFastMessages();
+            mutate();
         } catch (error) {
             console.error("Erro ao atualizar mensagem rápida:", error);
             toast({
@@ -143,7 +200,7 @@ const FastMessagesPage: React.FC = () => {
             });
             setConfirmDeleteDialog(false);
             setSelectedMessage(null);
-            fetchFastMessages();
+            mutate();
         } catch (error) {
             console.error("Erro ao remover mensagem rápida:", error);
             toast({
@@ -195,6 +252,8 @@ const FastMessagesPage: React.FC = () => {
         });
     };
 
+    if (loadingData) return <div className="flex-1 p-6">Carregando...</div>;
+
     return (
         <div className="flex-1 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -214,21 +273,14 @@ const FastMessagesPage: React.FC = () => {
                 </div>
             </div>
 
-            {loading ? (
-                <div className="border rounded-md p-4">
-                    <div className="animate-pulse space-y-4">
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    </div>
-                </div>
-            ) : fastMessages?.length > 0 ? (
+            {fastMessages?.length > 0 ? (
                 <div className="border rounded-md">
                     <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Tipo</TableHead>
                                 <TableHead>Título</TableHead>
+                                <TableHead>Palavra-chave</TableHead>
                                 <TableHead>Conteúdo</TableHead>
                                 <TableHead>Data de Criação</TableHead>
                                 {user?.userRole !== "USER" && (
@@ -248,10 +300,21 @@ const FastMessagesPage: React.FC = () => {
                                     <TableCell className="max-w-xs truncate">
                                         {message.title}
                                     </TableCell>
+                                    <TableCell>
+                                        {message.shortCode ? (
+                                            <div className="flex items-center gap-1">
+                                                <Hash className="h-3 w-3 text-gray-500" />
+                                                <Badge variant="outline" className="text-xs">
+                                                    {message.shortCode}
+                                                </Badge>
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-400 text-sm">-</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="max-w-xs truncate">
                                         {message.content || "-"}
                                     </TableCell>
-
                                     <TableCell>{formatDate(message.createdAt)}</TableCell>
                                     {user?.userRole !== "USER" && (
                                         <TableCell>
@@ -285,6 +348,7 @@ const FastMessagesPage: React.FC = () => {
                             <TableRow>
                                 <TableHead>Tipo</TableHead>
                                 <TableHead>Título</TableHead>
+                                <TableHead>Palavra-chave</TableHead>
                                 <TableHead>Conteúdo</TableHead>
                                 <TableHead>Data de Criação</TableHead>
                                 <TableHead>Ações</TableHead>
@@ -292,7 +356,7 @@ const FastMessagesPage: React.FC = () => {
                         </TableHeader>
                         <TableBody>
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                                     Nenhuma mensagem rápida cadastrada
                                 </TableCell>
                             </TableRow>
@@ -313,27 +377,58 @@ const FastMessagesPage: React.FC = () => {
                             <Label htmlFor="title" className="text-right">
                                 Título
                             </Label>
-                            <Input
-                                id="title"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleInputChange}
-                                className="col-span-3"
-                                placeholder="Digite o título da mensagem..."
-                            />
+                            <div className="col-span-3">
+                                <Input
+                                    id="title"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleInputChange}
+                                    placeholder="Digite o título da mensagem..."
+                                    className={formErrors.title ? "border-red-500" : ""}
+                                />
+                                {formErrors.title && (
+                                    <p className="text-red-500 text-sm mt-1">{formErrors.title}</p>
+                                )}
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="shortCode" className="text-right">
+                                Palavra-chave
+                            </Label>
+                            <div className="col-span-3">
+                                <Input
+                                    id="shortCode"
+                                    name="shortCode"
+                                    value={formData.shortCode}
+                                    onChange={handleInputChange}
+                                    placeholder="Ex: oi, ajuda, preco..."
+                                    className={formErrors.shortCode ? "border-red-500" : ""}
+                                />
+                                {formErrors.shortCode && (
+                                    <p className="text-red-500 text-sm mt-1">{formErrors.shortCode}</p>
+                                )}
+                                <p className="text-gray-500 text-xs mt-1">
+                                    Apenas uma palavra, sem espaços. Ex: oi, ajuda, preco
+                                </p>
+                            </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="content" className="text-right">
                                 Conteúdo
                             </Label>
-                            <Input
-                                id="content"
-                                name="content"
-                                value={formData.content}
-                                onChange={handleInputChange}
-                                className="col-span-3"
-                                placeholder="Digite o conteúdo da mensagem..."
-                            />
+                            <div className="col-span-3">
+                                <Input
+                                    id="content"
+                                    name="content"
+                                    value={formData.content}
+                                    onChange={handleInputChange}
+                                    placeholder="Digite o conteúdo da mensagem..."
+                                    className={formErrors.content ? "border-red-500" : ""}
+                                />
+                                {formErrors.content && (
+                                    <p className="text-red-500 text-sm mt-1">{formErrors.content}</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>

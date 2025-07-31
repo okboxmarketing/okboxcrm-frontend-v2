@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Ticket } from "@/lib/types";
+import useSWR from "swr";
 
 export interface Creative {
     id: string;
@@ -35,31 +36,10 @@ type CreativeType = {
 };
 
 const CriativosPage: React.FC = () => {
-    const [creatives, setCreatives] = useState<Creative[]>([]);
-    const [loading, setLoading] = useState(true);
     const [loadingCreate, startTransition] = useTransition();
     const [dialogOpen, setDialogOpen] = useState(false);
     const { toast } = useToast();
-
-    const fetchCreatives = async () => {
-        try {
-            const data = await getCreatives() as Creative[];
-            setCreatives(data);
-        } catch (err) {
-            console.log(err);
-            toast({
-                title: 'Você não tem uma empresa ativa',
-                description: 'Por favor, selecione uma empresa para continuar',
-                variant: 'destructive',
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchCreatives();
-    }, []);
+    const { data: creatives = [], isLoading: loadingData, mutate } = useSWR("criativos", getCreatives);
 
     const {
         register,
@@ -75,7 +55,7 @@ const CriativosPage: React.FC = () => {
             try {
                 await createCreative(data);
                 reset();
-                fetchCreatives();
+                mutate();
                 setDialogOpen(false);
                 toast({
                     description: 'Criativo cadastrado com sucesso!',
@@ -90,7 +70,7 @@ const CriativosPage: React.FC = () => {
         });
     };
 
-    if (loading) return <p className="text-center"></p>;
+    if (loadingData) return <p className="text-center">Carregando...</p>;
 
     return (
         <div className="flex-1 p-6">
