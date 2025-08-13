@@ -57,12 +57,10 @@ export default function Chat() {
         </div>
       </div>
     }>
+      <WhatsAppConnectionAlert className="m-4" />
       <div className="flex h-screen overflow-hidden">
         <ChatSidebarWithContext />
-        <div className="flex-1 flex flex-col">
-          <WhatsAppConnectionAlert className="m-4" />
-          <ChatMainWithContext />
-        </div>
+        <ChatMainWithContext />
       </div>
     </Suspense>
   );
