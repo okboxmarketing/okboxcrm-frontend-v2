@@ -38,7 +38,7 @@ export function LoginForm({
       try {
         const response = await loginUser(data.email.toLowerCase(), data.password);
         if (response?.access_token) {
-          await login(response.access_token)
+          await login(response.access_token, response.whatsappConnection);
         }
         switch (useAuthStore.getState().user?.userRole) {
           case "MASTER":

@@ -11,6 +11,7 @@ import { useChatStore } from "@/store/chatStore";
 import { Combobox } from "@/components/ui/combobox";
 import NewProductButton from "@/components/vendas/new-product-button";
 import { formatPrice, formatCurrencyInput, parseCurrencyInput } from "@/lib/utils";
+import confetti from 'canvas-confetti';
 
 type Products = {
     id: string;
@@ -99,6 +100,25 @@ const SaleButton: React.FC = () => {
         setSelectedProducts(newProducts);
     };
 
+    const fireSaleConfetti = async () => {
+        try {
+            await confetti({
+                particleCount: 150,
+                spread: 90,
+                origin: { x: 0.5, y: 0.5 },
+                colors: ['#22c55e', '#16a34a', '#15803d', '#166534', '#14532d', '#84cc16', '#65a30d'],
+                shapes: ['star', 'circle', 'square'],
+                startVelocity: 60,
+                gravity: 0.8,
+                decay: 0.85,
+                ticks: 300,
+                scalar: 1.5
+            });
+        } catch (error) {
+            console.error('Erro ao disparar confetti:', error);
+        }
+    };
+
     const handleCreateSale = async () => {
         setIsLoading(true);
         if (!selectedChat || selectedProducts.length === 0) return;
@@ -115,8 +135,11 @@ const SaleButton: React.FC = () => {
 
             await createSale(saleData);
 
+            // Dispara confetti para celebrar a venda
+            await fireSaleConfetti();
+
             toast({
-                description: "Venda registrada com sucesso!",
+                description: "🎉 Venda registrada com sucesso!",
             });
 
             setSaleDialogOpen(false);

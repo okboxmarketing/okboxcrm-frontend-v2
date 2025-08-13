@@ -96,7 +96,8 @@ export interface AuthUser {
 
 export interface Response {
   access_token: string;
-  message: string;
+  whatsappConnection?: string;
+  message?: string;
 }
 
 export type TicketStatusEnum = "PENDING" | "OPEN" | "SOLD" | "LOSS";

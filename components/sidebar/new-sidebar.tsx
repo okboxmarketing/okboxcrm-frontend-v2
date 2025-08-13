@@ -55,6 +55,8 @@ import useAuthStore from "@/store/authStore"
 import { useEffect, useState } from "react"
 import { AdvisorCompaniesDialog } from "../advisor/advisor-companies-dialog"
 import { UserAvatar } from "../ui/user-avatar"
+import { useWhatsAppConnection } from "@/hooks/use-whatsapp-connection";
+import { useChatStore } from "@/store/chatStore";
 
 interface NavItem {
     title: string;
@@ -62,6 +64,7 @@ interface NavItem {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     icon: any;
     items?: { title: string; url: string; }[];
+    requiresWhatsApp?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -94,7 +97,7 @@ const adminItems: NavItem[] = [
             { title: "Motivos", url: "/home/perdas/motivos" },
         ],
     },
-    { title: "Conexão", url: "/home/conectar", icon: PlugZap },
+    { title: "Conexão", url: "/home/conectar", icon: PlugZap, requiresWhatsApp: true },
 ]
 
 const adminOnlyItems: NavItem[] = [
@@ -117,6 +120,8 @@ export function AppSidebar() {
     const pathname = usePathname()
     const [companiesDialogOpen, setCompaniesDialogOpen] = useState(false)
     const { user, initializeAuth, logout } = useAuthStore()
+    const { isConnected: isWhatsAppConnected } = useWhatsAppConnection()
+    const { hasUnreadMessages, hasNewTicket, clearUnreadMessages, clearNewTicket } = useChatStore()
 
     const handleChangeCompany = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -163,12 +168,18 @@ export function AppSidebar() {
                         <SidebarMenu>
                             {navItems.map((item) => {
                                 const isActive = pathname === item.url || item.items?.some((subItem) => pathname === subItem.url)
+                                const isAtendimento = item.title === "Atendimento"
+                                const showNotification = isAtendimento && hasUnreadMessages && user?.userRole !== "ADVISOR"
+                                const showNewTicketGradient = isAtendimento && hasNewTicket && user?.userRole !== "ADVISOR"
 
                                 return item.items && item.items.length > 0 ? (
                                     <Collapsible key={item.title} asChild defaultOpen={isActive} className="group/collapsible">
                                         <SidebarMenuItem>
                                             <CollapsibleTrigger asChild>
-                                                <SidebarMenuButton tooltip={item.title} className={isActive ? "bg-sidebar-accent" : ""}>
+                                                <SidebarMenuButton
+                                                    tooltip={item.title}
+                                                    className={isActive ? "bg-sidebar-accent" : ""}
+                                                >
                                                     {item.icon && <item.icon />}
                                                     <span>{item.title}</span>
                                                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -192,10 +203,22 @@ export function AppSidebar() {
                                     </Collapsible>
                                 ) : (
                                     <SidebarMenuItem key={item.title}>
-                                        <SidebarMenuButton asChild isActive={isActive}>
-                                            <Link href={item.url}>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={isActive}
+                                            className={showNewTicketGradient ? "bg-gradient-to-r from-green-300 to-green-500 animate-pulse" : ""}
+                                        >
+                                            <Link href={item.url} onClick={() => {
+                                                if (isAtendimento) {
+                                                    clearUnreadMessages();
+                                                    clearNewTicket();
+                                                }
+                                            }}>
                                                 {item.icon && <item.icon />}
                                                 <span>{item.title}</span>
+                                                {showNotification && (
+                                                    <div className="ml-auto w-3 h-3 rounded-full bg-red-500" />
+                                                )}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -210,12 +233,17 @@ export function AppSidebar() {
                         <SidebarMenu>
                             {adminItems.map((item) => {
                                 const isActive = pathname === item.url || item.items?.some((subItem) => pathname === subItem.url)
+                                const isWhatsAppRequired = item.requiresWhatsApp;
+                                const isWhatsAppDisconnected = item.requiresWhatsApp && !isWhatsAppConnected && user?.userRole !== "ADVISOR"
 
                                 return item.items && item.items.length > 0 ? (
                                     <Collapsible key={item.title} asChild defaultOpen={isActive} className="group/collapsible">
                                         <SidebarMenuItem>
                                             <CollapsibleTrigger asChild>
-                                                <SidebarMenuButton tooltip={item.title} className={isActive ? "bg-sidebar-accent" : ""}>
+                                                <SidebarMenuButton
+                                                    tooltip={item.title}
+                                                    className={isActive ? "bg-sidebar-accent" : ""}
+                                                >
                                                     {item.icon && <item.icon />}
                                                     <span>{item.title}</span>
                                                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -239,10 +267,23 @@ export function AppSidebar() {
                                     </Collapsible>
                                 ) : (
                                     <SidebarMenuItem key={item.title}>
-                                        <SidebarMenuButton asChild isActive={isActive}>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={isActive}
+                                            className={isWhatsAppDisconnected ?
+                                                "bg-gradient-to-r from-red-50 to-red-100 text-red-600 hover:from-red-100 hover:to-red-200" :
+                                                ""
+                                            }
+                                        >
                                             <Link href={item.url}>
-                                                <item.icon />
+                                                {item.icon && <item.icon />}
                                                 <span>{item.title}</span>
+                                                {isWhatsAppDisconnected && (
+                                                    <div className="w-2 h-2 bg-red-500 rounded-full absolute right-3" />
+                                                )}
+                                                {isWhatsAppRequired && isWhatsAppConnected && (
+                                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse absolute right-3" />
+                                                )}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>

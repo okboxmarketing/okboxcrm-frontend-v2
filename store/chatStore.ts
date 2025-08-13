@@ -12,54 +12,17 @@ import {
 import useAuthStore from '@/store/authStore';
 import { toast } from '@/hooks/use-toast';
 
-// Variáveis globais para controle de debounce
-let fetchTicketCountsTimeout: NodeJS.Timeout | null = null;
-let isFetchingCounts = false;
-let lastFetchTime = 0;
-const CACHE_DURATION = 5000; // 5 segundos
 
-// Controle global para evitar múltiplas inicializações
 let globalSocket: Socket | null = null;
 let isInitializing = false;
 
-// Função debounced para fetchTicketCounts
-const debouncedFetchTicketCounts = async () => {
-    const now = Date.now();
-
-    // Se já está buscando, não faz nada
-    if (isFetchingCounts) {
-        console.log('Fetch de contagens já em andamento, ignorando...');
-        return;
+const fetchTicketCounts = async () => {
+    try {
+        const counts = await getTicketCounts();
+        useChatStore.setState({ ticketCounts: counts });
+    } catch (err) {
+        console.error('Erro ao buscar contagens de tickets:', err);
     }
-
-    // Se o cache ainda é válido, não busca novamente
-    if (now - lastFetchTime < CACHE_DURATION) {
-        console.log('Cache ainda válido, pulando fetchTicketCounts');
-        return;
-    }
-
-    // Limpa timeout anterior
-    if (fetchTicketCountsTimeout) {
-        clearTimeout(fetchTicketCountsTimeout);
-    }
-
-    // Cria novo timeout
-    fetchTicketCountsTimeout = setTimeout(async () => {
-        try {
-            console.log('Executando fetchTicketCounts...');
-            isFetchingCounts = true;
-            lastFetchTime = Date.now();
-
-            const counts = await getTicketCounts();
-            useChatStore.setState({ ticketCounts: counts });
-
-            console.log('FetchTicketCounts concluído:', counts);
-        } catch (err) {
-            console.error('Erro ao buscar contagens de tickets:', err);
-        } finally {
-            isFetchingCounts = false;
-        }
-    }, 1000);
 };
 
 interface ChatState {
@@ -107,6 +70,11 @@ interface ChatState {
     fetchMessages: (page?: number) => Promise<void>;
     fetchMoreMessages: () => Promise<void>;
     isLoadingMessages: boolean;
+
+    hasUnreadMessages: boolean;
+    hasNewTicket: boolean;
+    clearUnreadMessages: () => void;
+    clearNewTicket: () => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -132,7 +100,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
     isInitialized: false,
     isFetchingTickets: false,
 
-    fetchTicketCounts: debouncedFetchTicketCounts,
+    // Estados para notificações
+    hasUnreadMessages: false,
+    hasNewTicket: false,
+
+    fetchTicketCounts: fetchTicketCounts,
+
+    clearUnreadMessages: () => set({ hasUnreadMessages: false }),
+    clearNewTicket: () => set({ hasNewTicket: false }),
 
     fetchTickets: async (
         status: TicketStatusEnum,
@@ -165,9 +140,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 currentOnlyActive: onlyActive,
                 isFetchingTickets: false
             });
-            // Só atualiza contagens se não for paginação
             if (!cursor) {
-                debouncedFetchTicketCounts();
+                fetchTicketCounts();
             }
         } catch (err) {
             console.error('Erro ao buscar tickets:', err);
@@ -433,14 +407,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
 
         socket.on('newTicket', async () => {
-            // Usa debounce para evitar múltiplas chamadas
+            set({ hasNewTicket: true });
+            toast({
+                title: "🎉 Novo Lead!",
+                description: "Você recebeu um novo lead, vá até o atendimento",
+                duration: 5000,
+            });
+
             if (!get().isFetchingTickets) {
                 await get().fetchTickets(get().tab);
             }
         });
 
         socket.on('ticketAccepted', (payload: { ticketId: number; acceptedBy: string; timestamp: string }) => {
-            console.log('Ticket accepted via WebSocket:', payload);
 
             set((state) => {
                 const updatedTickets = state.tickets.filter(ticket => ticket.id !== payload.ticketId);
@@ -457,7 +436,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
 
         socket.on('newMessage', (payload: NewMessagePayload) => {
-            console.log('WebSocket payload received:', payload);
             let ts = payload.data.messageTimestamp;
             if (ts < 1e12) ts *= 1000;        // normaliza
             payload.data.messageTimestamp = ts;
@@ -466,8 +444,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
             let contentUrl = payload.contentUrl;
             let caption = payload.caption;
             let audioDuration = payload.audioDuration;
-
-            console.log('Processing message - mediaType:', payload.mediaType, 'audioDuration:', payload.audioDuration);
 
             // Se for imagem, pega o imageUrl do payload
             if (payload.mediaType === MediaEnum.IMAGE && payload.imageUrl) {
@@ -480,7 +456,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
             // Se for áudio, pega o audioDuration do payload
             if (payload.mediaType === MediaEnum.AUDIO && payload.audioDuration) {
                 audioDuration = payload.audioDuration;
-                console.log('Audio duration from WebSocket:', payload.audioDuration);
             }
 
             const processedPayload: NewMessagePayload = {
@@ -497,8 +472,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 contentUrl: contentUrl,
                 audioDuration: audioDuration,
             };
-
-            console.log('Processed payload audioDuration:', processedPayload.audioDuration);
 
             set((state) => {
                 // evita duplicar
@@ -538,24 +511,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
                         }
                         : state.selectedChat;
 
-                return { messages, tickets, selectedChat };
+                const hasUnread = state.selectedChat?.Contact.remoteJid !== processedPayload.contactId &&
+                    !processedPayload.data.key.fromMe;
+
+                return {
+                    messages,
+                    tickets,
+                    selectedChat,
+                    hasUnreadMessages: hasUnread || state.hasUnreadMessages
+                };
             });
 
-            // Recalcula contagens apenas se a mensagem não for do chat atual e não for uma mensagem enviada pelo usuário
-            const currentState = get();
-            if (currentState.selectedChat?.Contact.remoteJid !== processedPayload.contactId && !processedPayload.data.key.fromMe) {
-                debouncedFetchTicketCounts();
-            }
         });
 
-        // Novo listener para atualizações de contadores em tempo real
         socket.on('ticketCountsUpdate', (counts: { pending: number; unread: number }) => {
             set({ ticketCounts: counts });
         });
 
-        // Listener para mudanças de status de ticket
         socket.on('ticketStatusChanged', (data: { ticketId: number; oldStatus: string; newStatus: string }) => {
-            // Atualiza o ticket localmente se necessário
             set((state) => ({
                 tickets: state.tickets.map((t) =>
                     t.id === data.ticketId
@@ -568,6 +541,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }));
         });
 
+        socket.on('whatsappStatusUpdate', (data: { status: string }) => {
+
+            const authStore = useAuthStore.getState();
+            if (data.status === 'close') {
+                authStore.setWhatsappConnection('close');
+            } else if (data.status === 'open') {
+                authStore.setWhatsappConnection('open');
+            } else if (data.status === 'connecting') {
+                authStore.setWhatsappConnection('connecting');
+            }
+        });
+
         // Limpa o socket global quando desconectar
         socket.on('disconnect', () => {
             globalSocket = null;
@@ -577,7 +562,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         globalSocket = socket;
         set({ socket });
         get().fetchTickets(get().tab);
-        // fetchTicketCounts será chamado automaticamente pelo fetchTickets
         set({ isInitialized: true });
         isInitializing = false;
     },
