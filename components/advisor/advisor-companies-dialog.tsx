@@ -33,7 +33,7 @@ export function AdvisorCompaniesDialog({
     const [loading, setLoading] = useState(true);
     const [activating, setActivating] = useState<string | null>(null);
     const { toast } = useToast();
-    const { user, login } = useAuthStore();
+    const { user, updateToken } = useAuthStore();
     const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null);
     const router = useRouter();
 
@@ -64,7 +64,12 @@ export function AdvisorCompaniesDialog({
         }
     }, [open, toast, user]);
 
-    // Filtrar empresas baseado no termo de busca
+    useEffect(() => {
+        if (user?.companyId) {
+            setActiveCompanyId(user.companyId);
+        }
+    }, [user?.companyId]);
+
     useEffect(() => {
         if (!searchTerm.trim()) {
             setFilteredCompanies(companies);
@@ -82,25 +87,7 @@ export function AdvisorCompaniesDialog({
             setActivating(companyId);
             const response = await setActiveCompany(companyId);
 
-            login(response.access_token);
-
-            const checkAuth = () => {
-                return new Promise<void>((resolve) => {
-                    const unsubscribe = useAuthStore.subscribe((state) => {
-                        if (state.isAuthenticated) {
-                            unsubscribe();
-                            resolve();
-                        }
-                    });
-
-                    setTimeout(() => {
-                        unsubscribe();
-                        resolve();
-                    }, 2000);
-                });
-            };
-
-            await checkAuth();
+            updateToken(response.access_token);
 
             setActiveCompanyId(companyId);
 
@@ -108,8 +95,12 @@ export function AdvisorCompaniesDialog({
                 description: "Empresa ativada com sucesso!",
             });
 
-            router.push('/home/atendimento');
             onOpenChange(false);
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            window.location.reload();
+
         } catch (error) {
             console.error("Erro ao ativar empresa:", error);
             toast({

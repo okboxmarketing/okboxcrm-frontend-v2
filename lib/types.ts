@@ -96,6 +96,7 @@ export interface AuthUser {
 
 export interface Response {
   access_token: string;
+  session_token: string;
   whatsappConnection?: string;
   message?: string;
 }

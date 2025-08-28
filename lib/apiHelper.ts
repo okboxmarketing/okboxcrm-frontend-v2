@@ -1,4 +1,5 @@
 import useAuthStore from '@/store/authStore';
+import { getCookie } from './cookieUtils';
 
 interface ErrorResponse {
   statusCode: number;
@@ -13,38 +14,83 @@ interface ErrorObject {
   [key: string]: unknown;
 }
 
-function handleLogout() {
-  useAuthStore.getState().logout();
-  window.location.href = '/';
+async function handleLogout() {
+  try {
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Erro ao fazer logout no backend:', error);
+  } finally {
+    useAuthStore.getState().clearAuth();
+    window.location.href = '/';
+  }
+}
+
+async function refreshToken(): Promise<string | null> {
+  try {
+    const sessionToken = getCookie('session_token');
+
+    if (!sessionToken) {
+      return null;
+    }
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const newToken = data.access_token;
+
+      if (newToken) {
+        // Atualiza o token no store
+        useAuthStore.getState().setToken(newToken);
+        localStorage.setItem('authToken', newToken);
+        return newToken;
+      }
+    } else {
+      console.error('Erro ao renovar token:', response.status);
+    }
+  } catch (error) {
+    console.error('Erro ao fazer refresh do token:', error);
+  }
+
+  return null;
 }
 
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
-function handleResponse(response: Response, responseData: any) {
+async function handleResponse(response: Response, responseData: any, originalRequest?: () => Promise<Response>) {
   if (response.status === 401) {
-    // Verificar se é erro de token expirado/inválido
-    const errorData = (responseData as ErrorResponse)?.error;
-    let errorMessage = "";
-
-    if (typeof errorData === 'string') {
-      errorMessage = errorData;
-    } else if (errorData && typeof errorData === 'object') {
-      const errorObj = errorData as ErrorObject;
-      errorMessage = errorObj.message || errorObj.error || "";
+    try {
+      if (originalRequest) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          const newResponse = await originalRequest();
+          const newText = await newResponse.text();
+          let newResponseData: any;
+          try {
+            newResponseData = JSON.parse(newText);
+          } catch {
+            newResponseData = newText;
+          }
+          return newResponseData;
+        }
+      }
+    } catch (refreshError) {
+      console.error('Erro ao fazer refresh do token:', refreshError);
     }
 
-    // Só faz logout se for especificamente token expirado/inválido
-    if (errorMessage === 'TOKEN_EXPIRED_OR_INVALID') {
-      console.log('Token expirado ou inválido. Fazendo logout automático...');
-      handleLogout();
-      return;
-    }
-
-    // Para outros erros 401 (não autorizado para recurso), apenas lança o erro
-    console.log('Usuário não autorizado para este recurso:', errorMessage);
+    handleLogout();
+    return;
   }
 
   if (response.status === 403) {
-    // Verificar se é erro de permissões insuficientes
     const errorData = (responseData as ErrorResponse)?.error;
     let errorMessage = "";
 
@@ -56,7 +102,7 @@ function handleResponse(response: Response, responseData: any) {
     }
 
     if (errorMessage === 'INSUFFICIENT_PERMISSIONS') {
-      console.log('Usuário não tem permissões suficientes para este recurso');
+      // Usuário não tem permissões suficientes para este recurso
     }
   }
 
@@ -71,6 +117,11 @@ function handleResponse(response: Response, responseData: any) {
       errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
     }
 
+    // Garantir que errorMessage nunca seja null ou undefined
+    if (!errorMessage || errorMessage === 'null' || errorMessage === 'undefined') {
+      errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+    }
+
     throw new Error(errorMessage);
   }
 }
@@ -81,14 +132,18 @@ export const apiHelper = {
       const token = localStorage.getItem("authToken");
       const queryString = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}${queryString}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
+      const makeRequest = async () => {
+        const currentToken = useAuthStore.getState().token || localStorage.getItem("authToken");
+        return await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}${queryString}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: currentToken ? `Bearer ${currentToken}` : "",
+          },
+        });
+      };
 
+      const response = await makeRequest();
       const text = await response.text();
 
       let responseData: T;
@@ -98,7 +153,8 @@ export const apiHelper = {
         responseData = text as T;
       }
 
-      handleResponse(response, responseData);
+      const result = await handleResponse(response, responseData, makeRequest);
+      if (result) return result;
 
       return responseData;
     } catch (error) {
@@ -111,19 +167,24 @@ export const apiHelper = {
     try {
       const token = localStorage.getItem("authToken");
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-        body: data ? JSON.stringify(data) : null,
-      });
+      const makeRequest = async () => {
+        const currentToken = useAuthStore.getState().token || localStorage.getItem("authToken");
+        return await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: currentToken ? `Bearer ${currentToken}` : "",
+          },
+          body: data ? JSON.stringify(data) : null,
+        });
+      };
 
+      const response = await makeRequest();
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
-      handleResponse(response, responseData);
+      const result = await handleResponse(response, responseData, makeRequest);
+      if (result) return result;
 
       return responseData;
     } catch (error) {
@@ -139,21 +200,26 @@ export const apiHelper = {
       const token = localStorage.getItem("authToken");
       const queryString = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${url}${queryString}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      );
+      const makeRequest = async () => {
+        const currentToken = useAuthStore.getState().token || localStorage.getItem("authToken");
+        return await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}${url}${queryString}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: currentToken ? `Bearer ${currentToken}` : "",
+            },
+          }
+        );
+      };
 
+      const response = await makeRequest();
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
-      handleResponse(response, responseData);
+      const result = await handleResponse(response, responseData, makeRequest);
+      if (result) return result;
 
       return responseData;
     } catch (error) {
@@ -165,19 +231,24 @@ export const apiHelper = {
     try {
       const token = localStorage.getItem("authToken");
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-        body: data ? JSON.stringify(data) : null,
-      });
+      const makeRequest = async () => {
+        const currentToken = useAuthStore.getState().token || localStorage.getItem("authToken");
+        return await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: currentToken ? `Bearer ${currentToken}` : "",
+          },
+          body: data ? JSON.stringify(data) : null,
+        });
+      };
 
+      const response = await makeRequest();
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
-      handleResponse(response, responseData);
+      const result = await handleResponse(response, responseData, makeRequest);
+      if (result) return result;
 
       return responseData;
     } catch (error) {

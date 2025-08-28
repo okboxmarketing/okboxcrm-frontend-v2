@@ -135,9 +135,7 @@ export function AppSidebar() {
 
     const handleLogout = async () => {
         try {
-            logout()
-
-            await new Promise(resolve => setTimeout(resolve, 50))
+            await logout()
 
             window.location.href = "/"
         } catch (error) {
