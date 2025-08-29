@@ -21,6 +21,7 @@ import { DateRange } from "react-day-picker";
 interface SimpleExportDropdownProps {
     onExport?: () => void;
     reportType: 'contacts' | 'tickets' | 'products' | 'vendas' | 'perdas' | 'dashboard';
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     generateReport: (params: { startDate: string; endDate: string; extension: ReportExtension }) => Promise<any>;
 }
 

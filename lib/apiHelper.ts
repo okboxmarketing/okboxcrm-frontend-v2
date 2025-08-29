@@ -49,7 +49,6 @@ async function refreshToken(): Promise<string | null> {
       const newToken = data.access_token;
 
       if (newToken) {
-        // Atualiza o token no store
         useAuthStore.getState().setToken(newToken);
         localStorage.setItem('authToken', newToken);
         return newToken;
@@ -73,6 +72,7 @@ async function handleResponse(response: Response, responseData: any, originalReq
         if (newToken) {
           const newResponse = await originalRequest();
           const newText = await newResponse.text();
+          //eslint-disable-next-line @typescript-eslint/no-explicit-any
           let newResponseData: any;
           try {
             newResponseData = JSON.parse(newText);
@@ -129,7 +129,6 @@ async function handleResponse(response: Response, responseData: any, originalReq
 export const apiHelper = {
   get: async <T>(url: string, params?: Record<string, unknown>): Promise<T> => {
     try {
-      const token = localStorage.getItem("authToken");
       const queryString = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
 
       const makeRequest = async () => {
@@ -165,8 +164,6 @@ export const apiHelper = {
 
   post: async <T>(url: string, data?: unknown): Promise<T> => {
     try {
-      const token = localStorage.getItem("authToken");
-
       const makeRequest = async () => {
         const currentToken = useAuthStore.getState().token || localStorage.getItem("authToken");
         return await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
@@ -197,7 +194,6 @@ export const apiHelper = {
     params?: Record<string, unknown>
   ): Promise<T> => {
     try {
-      const token = localStorage.getItem("authToken");
       const queryString = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
 
       const makeRequest = async () => {
@@ -229,8 +225,6 @@ export const apiHelper = {
   },
   patch: async <T>(url: string, data?: unknown): Promise<T> => {
     try {
-      const token = localStorage.getItem("authToken");
-
       const makeRequest = async () => {
         const currentToken = useAuthStore.getState().token || localStorage.getItem("authToken");
         return await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {

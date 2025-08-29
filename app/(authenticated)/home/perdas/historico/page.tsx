@@ -8,7 +8,7 @@ import { Loss } from "@/lib/types";
 import { DateRange } from "react-day-picker";
 import { format, formatDate, isWithinInterval, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Search, Download } from "lucide-react";
+import { CalendarIcon, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";

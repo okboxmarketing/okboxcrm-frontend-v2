@@ -16,7 +16,6 @@ import { setActiveCompany } from "@/service/companyService";
 import { Company } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import useAuthStore from "@/store/authStore";
-import { useRouter } from "next/navigation";
 
 interface AdvisorCompaniesDialogProps {
     open: boolean;
@@ -35,7 +34,6 @@ export function AdvisorCompaniesDialog({
     const { toast } = useToast();
     const { user, updateToken } = useAuthStore();
     const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null);
-    const router = useRouter();
 
     useEffect(() => {
         const fetchCompanies = async () => {

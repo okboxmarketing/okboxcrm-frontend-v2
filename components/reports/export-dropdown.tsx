@@ -54,12 +54,12 @@ export function ExportDropdown({ onExport }: ExportDropdownProps) {
 
             setIsDialogOpen(false);
             onExport?.();
-        } catch (error: any) {
+        } catch (error) {
             console.error("Erro ao gerar relatório:", error);
 
             let errorMessage = "Erro ao gerar relatório";
 
-            if (error.message) {
+            if (error instanceof Error) {
                 errorMessage = error.message;
             }
 

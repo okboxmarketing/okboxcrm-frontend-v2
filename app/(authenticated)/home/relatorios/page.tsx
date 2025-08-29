@@ -77,7 +77,14 @@ const getFileExtension = (link: string) => {
 
 export default function RelatoriosPage() {
     const [reports, setReports] = useState<Report[]>([]);
-    const [pagination, setPagination] = useState<any>(null);
+    const [pagination, setPagination] = useState<{
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+    } | null>(null);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         page: 1,
@@ -110,10 +117,12 @@ export default function RelatoriosPage() {
             const response = await apiHelper.get<ReportsResponse>(`/reports?${queryParams.toString()}`);
             setReports(response.reports);
             setPagination(response.pagination);
-        } catch (error: any) {
+            //@eslint-disable-next-line
+        } catch (error) {
+            console.log(error);
             toast({
                 title: "Erro",
-                description: "Erro ao carregar relatórios",
+                description: `${error instanceof Error ? error.message : 'Erro ao carregar relatórios'}`,
                 variant: "destructive"
             });
         } finally {
