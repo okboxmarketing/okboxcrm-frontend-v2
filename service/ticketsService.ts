@@ -127,3 +127,11 @@ export const addObservation = async (ticketId: number, observation: string) => {
   console.log("Adding observation", ticketId, observation)
   return apiHelper.post(`/tickets/observation/${ticketId}`, { observation });
 }
+
+export const searchTicketsByName = async (name: string, limit: number = 10) => {
+  const params = new URLSearchParams();
+  params.append('name', name);
+  params.append('limit', limit.toString());
+
+  return apiHelper.get<Ticket[]>(`/tickets/search?${params.toString()}`);
+};

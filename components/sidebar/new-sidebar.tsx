@@ -22,6 +22,7 @@ import {
     Webhook,
     FileVideo,
     MessageSquare,
+    Calendar,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -73,6 +74,7 @@ const navItems: NavItem[] = [
     { title: "Tickets", url: "/home/tickets", icon: Ticket },
     { title: "Ajuda", url: "/home/ajuda", icon: HelpCircle },
     { title: "Mensagens Rápidas", url: "/home/mensagens-rapidas", icon: MessageSquare },
+    { title: "Tarefas", url: "/home/tarefas", icon: Calendar },
 ]
 
 const adminItems: NavItem[] = [
@@ -121,7 +123,7 @@ export function AppSidebar() {
     const [companiesDialogOpen, setCompaniesDialogOpen] = useState(false)
     const { user, initializeAuth, logout } = useAuthStore()
     const { isConnected: isWhatsAppConnected } = useWhatsAppConnection()
-    const { hasUnreadMessages, hasNewTicket, clearUnreadMessages, clearNewTicket } = useChatStore()
+    const { hasUnreadMessages, hasNewTicket, hasNewTask, clearUnreadMessages, clearNewTicket, clearNewTask } = useChatStore()
 
     const handleChangeCompany = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -169,8 +171,10 @@ export function AppSidebar() {
                             {navItems.map((item) => {
                                 const isActive = pathname === item.url || item.items?.some((subItem) => pathname === subItem.url)
                                 const isAtendimento = item.title === "Atendimento"
+                                const isTarefas = item.title === "Tarefas"
                                 const showNotification = isAtendimento && hasUnreadMessages && user?.userRole !== "ADVISOR"
                                 const showNewTicketGradient = isAtendimento && hasNewTicket && user?.userRole !== "ADVISOR"
+                                const showTaskNotification = isTarefas && hasNewTask && user?.userRole !== "ADVISOR"
 
                                 return item.items && item.items.length > 0 ? (
                                     <Collapsible key={item.title} asChild defaultOpen={isActive} className="group/collapsible">
@@ -213,10 +217,16 @@ export function AppSidebar() {
                                                     clearUnreadMessages();
                                                     clearNewTicket();
                                                 }
+                                                if (isTarefas) {
+                                                    clearNewTask();
+                                                }
                                             }}>
                                                 {item.icon && <item.icon />}
                                                 <span>{item.title}</span>
                                                 {showNotification && (
+                                                    <div className="ml-auto w-3 h-3 rounded-full bg-red-500" />
+                                                )}
+                                                {showTaskNotification && (
                                                     <div className="ml-auto w-3 h-3 rounded-full bg-red-500" />
                                                 )}
                                             </Link>

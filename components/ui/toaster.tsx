@@ -8,15 +8,17 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
+  ToastAction,
 } from "@/components/ui/toast"
 import { CircleCheckBig, CircleX } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export function Toaster() {
   const { toasts } = useToast()
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, variant, ...props }) {
+      {toasts.map(function ({ id, title, description, action, actions, variant, ...props }) {
         return (
           <Toast key={id} variant={variant} {...props}>
             <div className="flex items-center gap-3">
@@ -34,6 +36,21 @@ export function Toaster() {
               </div>
             </div>
             {action}
+            {actions && actions.length > 0 && (
+              <div className="flex gap-2 mt-3">
+                {actions.map((actionItem, index) => (
+                  <Button
+                    key={index}
+                    variant={actionItem.variant || "default"}
+                    size="sm"
+                    onClick={actionItem.onClick}
+                    className="text-xs"
+                  >
+                    {actionItem.label}
+                  </Button>
+                ))}
+              </div>
+            )}
             <ToastClose />
           </Toast>
         )

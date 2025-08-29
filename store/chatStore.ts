@@ -73,8 +73,10 @@ interface ChatState {
 
     hasUnreadMessages: boolean;
     hasNewTicket: boolean;
+    hasNewTask: boolean;
     clearUnreadMessages: () => void;
     clearNewTicket: () => void;
+    clearNewTask: () => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -103,11 +105,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     // Estados para notificações
     hasUnreadMessages: false,
     hasNewTicket: false,
+    hasNewTask: false,
 
     fetchTicketCounts: fetchTicketCounts,
 
     clearUnreadMessages: () => set({ hasUnreadMessages: false }),
     clearNewTicket: () => set({ hasNewTicket: false }),
+    clearNewTask: () => set({ hasNewTask: false }),
 
     fetchTickets: async (
         status: TicketStatusEnum,
@@ -551,6 +555,32 @@ export const useChatStore = create<ChatState>((set, get) => ({
             } else if (data.status === 'connecting') {
                 authStore.setWhatsappConnection('connecting');
             }
+        });
+
+        socket.on('task', (payload: { task: any }) => {
+            set({ hasNewTask: true });
+
+            toast({
+                title: "Lembrete de tarefa!",
+                description: `${payload.task.title}`,
+                duration: 8000,
+                actions: [
+                    {
+                        label: "Ver Chat",
+                        onClick: () => {
+                            if (payload.task.ticketId) {
+                                const store = get();
+                                const ticket = store.tickets.find(t => t.id === payload.task.ticketId);
+                                if (ticket) {
+                                    store.selectChat(ticket);
+                                }
+                            }
+                            window.location.href = '/home/atendimento';
+                        },
+                        variant: "default"
+                    }
+                ]
+            });
         });
 
         // Limpa o socket global quando desconectar
