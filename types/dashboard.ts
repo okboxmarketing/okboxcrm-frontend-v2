@@ -55,4 +55,9 @@ export interface DashboardData {
         conversoes: number;
         taxaConversao: number;
     }[];
+
+    rankingTicketsAceitosPorUsuario: {
+        nomeUsuario: string;
+        quantidade: number;
+    }[];
 }

@@ -16,6 +16,9 @@ import { LossReasonsBarChart } from "@/components/dashboard/loss-reason-chart"
 import { SalesFunnelChart } from "@/components/dashboard/funnel-chart"
 import { LossStepsBarChart } from "@/components/dashboard/loss-steps-chart"
 import { DashboardCardSkeleton, DashboardChartSkeleton, DashboardRankingSkeleton } from "@/components/skeleton/dashboard-card-skeleton"
+import { TicketsAceitosChart } from "@/components/dashboard/tickets-aceitos-chart"
+import { SimpleExportDropdown } from "@/components/reports/simple-export-dropdown"
+import { generateDashboardReport } from "@/service/reportService"
 
 export default function DashboardPage() {
   const today = new Date()
@@ -89,6 +92,12 @@ export default function DashboardPage() {
           >
             Limpar Filtros
           </Button>
+
+          <SimpleExportDropdown
+            reportType="dashboard"
+            generateReport={generateDashboardReport}
+            onExport={() => { }}
+          />
         </div>
       </div>
 
@@ -427,6 +436,35 @@ export default function DashboardPage() {
                   <div className="flex flex-col items-center justify-center h-[200px] text-center">
                     <p className="text-muted-foreground mb-2">Nenhum dado disponível</p>
                     <p className="text-sm text-muted-foreground/70">Os dados serão exibidos assim que houver conversões no sistema</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Novo card para ranking de tickets aceitos por usuário */}
+        <div className="md:col-span-2 lg:col-span-2">
+          {loading ? (
+            <DashboardRankingSkeleton height="h-full" />
+          ) : (
+            <Card className="bg-white border-zinc-200 hover:bg-zinc-50 transition-colors shadow-sm h-full flex flex-col">
+              <CardHeader className="pb-2 flex-shrink-0">
+                <CardTitle className="flex items-center gap-2 text-zinc-900">
+                  <Users className="h-5 w-5 text-orange-500" />
+                  Tickets Aceitos por Usuário
+                </CardTitle>
+                <p className="text-zinc-500 text-sm">Ranking de usuários que mais aceitaram tickets</p>
+              </CardHeader>
+              <CardContent className="flex-1">
+                {data?.rankingTicketsAceitosPorUsuario && data.rankingTicketsAceitosPorUsuario.length > 0 ? (
+                  <TicketsAceitosChart data={data.rankingTicketsAceitosPorUsuario} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-[200px] text-center">
+                    <p className="text-muted-foreground mb-2">Nenhum dado disponível</p>
+                    <p className="text-sm text-muted-foreground/70">
+                      Os dados serão exibidos assim que houver tickets aceitos no sistema
+                    </p>
                   </div>
                 )}
               </CardContent>

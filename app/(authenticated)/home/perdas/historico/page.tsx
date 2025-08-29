@@ -8,7 +8,7 @@ import { Loss } from "@/lib/types";
 import { DateRange } from "react-day-picker";
 import { format, formatDate, isWithinInterval, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Search } from "lucide-react";
+import { CalendarIcon, Search, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -20,6 +20,8 @@ import {
 import { cn } from "@/lib/utils";
 import { LossHistorySkeleton } from "@/components/skeleton/loss-list-skeleton";
 import { formatPhone } from "@/lib/utils";
+import { SimpleExportDropdown } from "@/components/reports/simple-export-dropdown";
+import { generateLossReport } from "@/service/reportService";
 
 const LossHistoryPage: React.FC = () => {
     const [losses, setLosses] = useState<Loss[]>([]);
@@ -97,6 +99,11 @@ const LossHistoryPage: React.FC = () => {
         setSearchTerm("");
     };
 
+    const handleExport = () => {
+        // Recarregar dados após export
+        fetchLosses();
+    };
+
     return (
         <div className="flex-1 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -162,6 +169,11 @@ const LossHistoryPage: React.FC = () => {
                 <Button variant="outline" onClick={clearFilters}>
                     Limpar Filtros
                 </Button>
+                <SimpleExportDropdown
+                    reportType="perdas"
+                    generateReport={generateLossReport}
+                    onExport={handleExport}
+                />
             </div>
 
             {loading ? (

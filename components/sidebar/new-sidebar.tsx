@@ -22,6 +22,7 @@ import {
     Webhook,
     FileVideo,
     MessageSquare,
+    FileText,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -98,6 +99,7 @@ const adminItems: NavItem[] = [
         ],
     },
     { title: "Conexão", url: "/home/conectar", icon: PlugZap, requiresWhatsApp: true },
+    { title: "Relatórios", url: "/home/relatorios", icon: FileText },
 ]
 
 const adminOnlyItems: NavItem[] = [

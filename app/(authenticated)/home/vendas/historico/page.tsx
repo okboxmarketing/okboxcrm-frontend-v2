@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { cn, formatPrice } from "@/lib/utils";
 import { SalesListSkeleton } from "@/components/skeleton/sales-list-skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { ExportDropdown } from "@/components/reports/export-dropdown";
 
 const SalesHistoryPage: React.FC = () => {
     const [sales, setSales] = useState<Sale[]>([]);
@@ -208,6 +209,8 @@ const SalesHistoryPage: React.FC = () => {
                 <Button variant="outline" onClick={clearFilters}>
                     Limpar Filtros
                 </Button>
+
+                <ExportDropdown />
             </div>
 
             {loading ? (
