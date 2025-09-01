@@ -7,19 +7,19 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatMessageTime(timestamp: string) {
   const messageDate = new Date(timestamp);
-  const today = new Date();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+  const messageDateOnly = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate());
 
-  const isSameDay =
-    messageDate.getDate() === today.getDate() &&
-    messageDate.getMonth() === today.getMonth() &&
-    messageDate.getFullYear() === today.getFullYear();
-
-  if (isSameDay) {
+  if (messageDateOnly.getTime() === today.getTime()) {
     return messageDate.toLocaleTimeString("pt-BR", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
     });
+  } else if (messageDateOnly.getTime() === yesterday.getTime()) {
+    return "Ontem";
   } else {
     return messageDate.toLocaleDateString("pt-BR", {
       day: "2-digit",

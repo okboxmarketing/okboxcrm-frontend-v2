@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { FileText, Download, Pause, Play } from "lucide-react";
-import { MediaEnum, NewMessagePayload } from "@/lib/types";
+import { FileText, Download, Pause, Play, User, Phone, UserPlus, MessageSquare } from "lucide-react";
+import { MediaEnum, NewMessagePayload, Ticket } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { isLink } from "@/lib/utils";
+import { formatPhone, isLink } from "@/lib/utils";
+import { createContact } from "@/service/contactService";
+import { createTicketFromContact } from "@/service/ticketsService";
+import { toast } from "@/hooks/use-toast";
 import { useChatStore } from "@/store/chatStore";
 import { PuffLoader, PulseLoader } from "react-spinners";
 import MessageTimestamp from "./message/message-timestamp";
@@ -21,6 +24,7 @@ const ChatBody: React.FC = () => {
     hasNextPage,
     isLoadingMore,
     isLoadingMessages,
+    selectChat,
   } = useChatStore();
   const { user } = useAuthStore();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -36,7 +40,6 @@ const ChatBody: React.FC = () => {
         block: 'center'
       });
 
-      // Adiciona um destaque temporário na mensagem
       messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
       setTimeout(() => {
         messageElement.style.backgroundColor = '';
@@ -44,20 +47,39 @@ const ChatBody: React.FC = () => {
     }
   };
 
+  const renderReactions = (messageId: string) => {
+    const messageReactions = reactions[messageId];
+    if (!messageReactions || messageReactions.length === 0) return null;
+
+    return (
+      <div className="absolute -bottom-1 -right-1 flex z-10">
+        {messageReactions.map((reaction, index) => (
+          <div
+            key={`${reaction.data.key.id}-${index}`}
+            className="bg-white border border-gray-200 rounded-full px-1 py-1 shadow-sm text-sm"
+            style={{ transform: 'translateY(50%)' }}
+          >
+            {reaction.data.message.conversation || reaction.content || "👍"}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderMessageContent = (
     msg: NewMessagePayload,
     fromMe: boolean,
     showTimestamp: boolean
   ) => {
-    const quotedMessage = msg.quotedMessageEvolutionId
-      ? messages.find(m => m.data.key.id === msg.quotedMessageEvolutionId)
+    const quotedMessage = (msg.mediaType !== MediaEnum.REACTION && msg.quotedMessageEvolutionId)
+      ? regularMessages.find(m => m.data.key.id === msg.quotedMessageEvolutionId)
       : null;
     switch (msg.mediaType) {
       case MediaEnum.IMAGE:
         return (
           <div className="relative max-w-full">
             <div className={`p-2 shadow-sm flex flex-col gap-2 ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
-              } w-64`}>
+              } w-64 relative`}>
               {quotedMessage && (
                 <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
               )}
@@ -72,6 +94,7 @@ const ChatBody: React.FC = () => {
                 }}
               />
               {msg.caption && <p className={`${fromMe ? "text-white" : "text-black"}`}> {msg.caption}</p>}
+              {renderReactions(msg.data.key.id)}
             </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div >
@@ -80,7 +103,7 @@ const ChatBody: React.FC = () => {
         return (
           <div className="relative max-w-full">
             <div
-              className={`p-4 shadow-sm ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
+              className={`p-4 shadow-sm relative ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
                 } w-64`}
             >
               {quotedMessage && (
@@ -158,6 +181,7 @@ const ChatBody: React.FC = () => {
                 }}
                 className="hidden"
               />
+              {renderReactions(msg.data.key.id)}
             </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
@@ -165,7 +189,7 @@ const ChatBody: React.FC = () => {
       case MediaEnum.VIDEO:
         return (
           <div className="relative max-w-full">
-            <div className={`p-2 shadow-sm flex flex-col gap-2 ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
+            <div className={`p-2 shadow-sm flex flex-col gap-2 relative ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
               } w-64`}>
               {quotedMessage && (
                 <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
@@ -175,16 +199,16 @@ const ChatBody: React.FC = () => {
                 Seu navegador não suporta vídeos.
               </video>
               {msg.caption && <p className={`${fromMe ? "text-white" : "text-black"}`}> {msg.caption}</p>}
+              {renderReactions(msg.data.key.id)}
             </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
         );
       case MediaEnum.DOCUMENT:
         const fileName = msg.contentUrl?.split('/').pop() || "documento";
-
         return (
           <div className="relative max-w-full">
-            <div className={`p-4 rounded-lg ${fromMe ? "bg-black text-white" : "bg-white"} w-full`}>
+            <div className={`p-4 rounded-lg relative ${fromMe ? "bg-black text-white" : "bg-white"} w-full`}>
               {quotedMessage && (
                 <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
               )}
@@ -206,17 +230,127 @@ const ChatBody: React.FC = () => {
                 <span>Baixar</span>
               </Button>
               {msg.caption && <p className={`${fromMe ? "text-white" : "text-black"} mt-2`}> {msg.caption}</p>}
-              {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
+              {renderReactions(msg.data.key.id)}
             </div>
+            {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
         );
+
+      case MediaEnum.CONTACT:
+        let contactData;
+        try {
+          contactData = JSON.parse(msg.content || '{}');
+        } catch {
+          contactData = { displayName: 'Contato', phone: '' };
+        }
+        return (
+          <div className="relative max-w-full">
+            <div className={`p-4 rounded-lg relative ${fromMe ? "bg-black text-white" : "bg-white border border-gray-100"} w-full max-w-sm`}>
+              {quotedMessage && (
+                <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
+              )}
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${fromMe ? "bg-gray-700" : "bg-gray-100"}`}>
+                  <User className={`w-6 h-6 ${fromMe ? "text-white" : "text-gray-600"}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className={`font-medium truncate ${fromMe ? "text-white" : "text-gray-900"}`}>
+                    {contactData.displayName || 'Contato'}
+                  </h3>
+                  {contactData.phone && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Phone className={`w-3 h-3 ${fromMe ? "text-gray-300" : "text-gray-500"}`} />
+                      <span className={`text-sm ${fromMe ? "text-gray-300" : "text-gray-500"}`}>
+                        {formatPhone(contactData.phone)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`w-full flex items-center gap-2 ${fromMe ? "bg-gray-800 text-white border-gray-600" : "bg-gray-50 hover:bg-gray-100"}`}
+                  onClick={async () => {
+                    if (contactData.phone && contactData.displayName) {
+                      try {
+                        const cleanPhone = contactData.phone.replace(/\D/g, '');
+                        await createContact(cleanPhone, contactData.displayName);
+                        toast({ description: "Contato salvo com sucesso!" });
+                      } catch (error) {
+                        console.error("Erro ao salvar contato:", error);
+                        toast({
+                          description: "Erro ao salvar contato",
+                          variant: "destructive"
+                        });
+                      }
+                    } else {
+                      toast({
+                        description: "Informações do contato incompletas",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                >
+                  <UserPlus className="h-4 w-4 flex-shrink-0" />
+                  <span>Salvar Contato</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`w-full flex items-center gap-2 ${fromMe ? "bg-gray-800 text-white border-gray-600" : "bg-gray-50 hover:bg-gray-100"}`}
+                  onClick={async () => {
+                    if (contactData.phone && contactData.displayName) {
+                      try {
+                        const cleanPhone = contactData.phone.replace(/\D/g, '');
+
+                        const newTicket = await createTicketFromContact(cleanPhone, contactData.displayName);
+
+                        if (newTicket) {
+                          selectChat(newTicket as Ticket);
+                        } else {
+                          toast({
+                            description: "Erro ao criar conversa",
+                            variant: "destructive"
+                          });
+                        }
+
+                      } catch (error) {
+                        console.error("Erro ao iniciar conversa:", error);
+                        toast({
+                          description: "Erro ao iniciar conversa",
+                          variant: "destructive"
+                        });
+                      }
+                    } else {
+                      toast({
+                        description: "Informações do contato incompletas",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                >
+                  <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                  <span>Iniciar Conversa</span>
+                </Button>
+              </div>
+
+              {renderReactions(msg.data.key.id)}
+            </div>
+            {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
+          </div>
+        );
+
+      case MediaEnum.REACTION:
+        return null;
 
       default:
         const messageText = msg.data.message.conversation;
         const isLinkMessage = isLink(messageText);
         return (
           <div className="relative max-w-full">
-            <div className={`px-4 py-2 whitespace-pre-wrap break-all ${fromMe
+            <div className={`px-4 py-2 whitespace-pre-wrap break-all relative ${fromMe
               ? "bg-black text-white rounded-l-xl rounded-t-xl"
               : "bg-white rounded-r-xl rounded-t-xl"
               }`}>
@@ -237,6 +371,7 @@ const ChatBody: React.FC = () => {
                   messageText
                 )}
               </p>
+              {renderReactions(msg.data.key.id)}
             </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
@@ -264,11 +399,34 @@ const ChatBody: React.FC = () => {
     );
   }, [messages, selectedChat]);
 
+  const { regularMessages, reactions } = React.useMemo(() => {
+    const regular: NewMessagePayload[] = [];
+    const reactionMap: { [messageId: string]: NewMessagePayload[] } = {};
+
+    filteredMessages.forEach(msg => {
+      if (msg.mediaType === MediaEnum.REACTION) {
+        if (msg.quotedMessageEvolutionId) {
+          if (!reactionMap[msg.quotedMessageEvolutionId]) {
+            reactionMap[msg.quotedMessageEvolutionId] = [];
+          }
+          reactionMap[msg.quotedMessageEvolutionId].push(msg);
+        }
+      } else {
+        regular.push(msg);
+      }
+    });
+
+    return {
+      regularMessages: regular,
+      reactions: reactionMap
+    };
+  }, [filteredMessages]);
+
   const orderedMessages = React.useMemo(() => {
-    return [...filteredMessages].sort(
+    return [...regularMessages].sort(
       (a, b) => a.data.messageTimestamp - b.data.messageTimestamp
     );
-  }, [filteredMessages]);
+  }, [regularMessages]);
 
   useEffect(() => {
     if (!isLoadingMore && page === 1) {

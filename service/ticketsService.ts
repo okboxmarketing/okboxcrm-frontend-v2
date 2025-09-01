@@ -88,6 +88,10 @@ export const createTicketFromCRM = async (contactId: string) => {
   return apiHelper.post(`/tickets/crm`, { contactId });
 }
 
+export const createTicketFromContact = async (phone: string, name: string) => {
+  return apiHelper.post(`/tickets/create-from-phone-number`, { phone, name });
+}
+
 export const getTicketByContactId = async (contactId: string) => {
   return apiHelper.get<Ticket>(`/tickets/contact/${contactId}`);
 }

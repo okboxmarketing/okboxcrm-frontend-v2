@@ -137,8 +137,6 @@ const ContatosPage: React.FC = () => {
     }
   };
 
-
-
   return (
     <div className="flex-1 p-6">
       <div className="flex items-center justify-between mb-4">

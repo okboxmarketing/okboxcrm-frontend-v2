@@ -212,6 +212,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
                         contentUrl = msg.content;
                         conversation = '';
                         break;
+                    case MediaEnum.REACTION:
+                        mediaType = MediaEnum.REACTION;
+                        conversation = msg.content;
+                        break;
+                    case MediaEnum.CONTACT:
+                        mediaType = MediaEnum.CONTACT;
+                        conversation = '';
+                        break;
                     default:
                         mediaType = MediaEnum.TEXT;
                         break;
@@ -439,6 +447,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
             let ts = payload.data.messageTimestamp;
             if (ts < 1e12) ts *= 1000;        // normaliza
             payload.data.messageTimestamp = ts;
+
+            // Log para debug de reações
+            if (payload.mediaType === MediaEnum.REACTION) {
+                console.log("🎭 REAÇÃO RECEBIDA VIA WEBSOCKET:", {
+                    mediaType: payload.mediaType,
+                    quotedMessageEvolutionId: payload.quotedMessageEvolutionId,
+                    content: payload.content,
+                    contentUrl: payload.contentUrl,
+                    dataMessage: payload.data.message,
+                    fullPayload: payload
+                });
+            }
 
             // Processa o payload para garantir que todos os campos estejam corretos
             let contentUrl = payload.contentUrl;

@@ -1,6 +1,6 @@
 import React from "react";
 import { MediaEnum, NewMessagePayload } from "@/lib/types";
-import { FileText } from "lucide-react";
+import { FileText, User } from "lucide-react";
 
 interface QuotedMessageProps {
     quotedMessage: NewMessagePayload;
@@ -49,6 +49,21 @@ const QuotedMessage: React.FC<QuotedMessageProps> = ({ quotedMessage, fromMe, on
                             <FileText className="w-4 h-4" />
                         </div>
                         <span className="text-xs truncate min-w-0">Documento</span>
+                    </div>
+                );
+            case MediaEnum.CONTACT:
+                let contactData;
+                try {
+                    contactData = JSON.parse(quotedMessage.content || '{}');
+                } catch {
+                    contactData = { displayName: 'Contato' };
+                }
+                return (
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center">
+                            <User className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs truncate min-w-0">{contactData.displayName || 'Contato'}</span>
                     </div>
                 );
             default:

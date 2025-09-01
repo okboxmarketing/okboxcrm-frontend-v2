@@ -165,6 +165,8 @@ export enum MediaEnum {
   DOCUMENT = "DOCUMENT",
   AUDIO = "AUDIO",
   TEXT = "TEXT",
+  REACTION = "REACTION",
+  CONTACT = "CONTACT",
 }
 
 export interface Loss {
@@ -223,8 +225,8 @@ export interface NewMessagePayload {
   audioMessage?: {
     seconds: number;
   };
-  imageUrl?: string; // Campo específico para imagens vindas do WebSocket
-  videoUrl?: string; // Campo específico para vídeos vindas do WebSocket
+  imageUrl?: string;
+  videoUrl?: string;
 }
 
 export interface Message {
