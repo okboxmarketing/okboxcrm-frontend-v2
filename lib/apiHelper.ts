@@ -1,5 +1,4 @@
 import useAuthStore from '@/store/authStore';
-import { getCookie } from './cookieUtils';
 
 interface ErrorResponse {
   statusCode: number;
@@ -28,66 +27,48 @@ async function handleLogout() {
   }
 }
 
+let refreshPromise: Promise<string | null> | null = null;
+
 async function refreshToken(): Promise<string | null> {
-  try {
-    const sessionToken = getCookie('session_token');
-
-    if (!sessionToken) {
-      return null;
-    }
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      const newToken = data.access_token;
-
-      if (newToken) {
-        useAuthStore.getState().setToken(newToken);
-        localStorage.setItem('authToken', newToken);
-        return newToken;
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (!res.ok) return null;
+        const { access_token } = await res.json();
+        if (access_token) {
+          useAuthStore.getState().setToken(access_token);
+          localStorage.setItem('authToken', access_token);
+          return access_token;
+        }
+      } catch (e) {
+        console.error('Erro ao fazer refresh do token:', e);
       }
-    } else {
-      console.error('Erro ao renovar token:', response.status);
-    }
-  } catch (error) {
-    console.error('Erro ao fazer refresh do token:', error);
+      return null;
+    })();
+    refreshPromise.finally(() => { refreshPromise = null; });
   }
-
-  return null;
+  return refreshPromise;
 }
+
 
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleResponse(response: Response, responseData: any, originalRequest?: () => Promise<Response>) {
   if (response.status === 401) {
-    try {
-      if (originalRequest) {
-        const newToken = await refreshToken();
-        if (newToken) {
-          const newResponse = await originalRequest();
-          const newText = await newResponse.text();
-          //eslint-disable-next-line @typescript-eslint/no-explicit-any
-          let newResponseData: any;
-          try {
-            newResponseData = JSON.parse(newText);
-          } catch {
-            newResponseData = newText;
-          }
-          return newResponseData;
-        }
-      }
-    } catch (refreshError) {
-      console.error('Erro ao fazer refresh do token:', refreshError);
+    const newToken = await refreshToken();
+    if (newToken && originalRequest) {
+      const newResponse = await originalRequest();
+      const newText = await newResponse.text();
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let newResponseData: any;
+      try { newResponseData = JSON.parse(newText); } catch { newResponseData = newText; }
+      return newResponseData;
     }
-
-    handleLogout();
-    return;
+    await handleLogout();
+    return undefined;
   }
 
   if (response.status === 403) {
@@ -139,6 +120,7 @@ export const apiHelper = {
             "Content-Type": "application/json",
             Authorization: currentToken ? `Bearer ${currentToken}` : "",
           },
+          credentials: 'include',
         });
       };
 
@@ -173,6 +155,7 @@ export const apiHelper = {
             Authorization: currentToken ? `Bearer ${currentToken}` : "",
           },
           body: data ? JSON.stringify(data) : null,
+          credentials: 'include',
         });
       };
 
@@ -206,6 +189,7 @@ export const apiHelper = {
               "Content-Type": "application/json",
               Authorization: currentToken ? `Bearer ${currentToken}` : "",
             },
+            credentials: 'include',
           }
         );
       };
@@ -234,6 +218,7 @@ export const apiHelper = {
             Authorization: currentToken ? `Bearer ${currentToken}` : "",
           },
           body: data ? JSON.stringify(data) : null,
+          credentials: 'include',
         });
       };
 
