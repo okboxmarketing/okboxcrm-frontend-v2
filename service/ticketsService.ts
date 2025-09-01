@@ -62,12 +62,15 @@ interface PaginationMeta {
 
 export const getMessagesByContactId = async (
   contactId: string,
-  page: number = 1
+  page: number = 1,
+  mediaFilter?: string
 ): Promise<{ data: Message[]; meta: PaginationMeta }> => {
+  const filterParam = mediaFilter ? `&mediaFilter=${mediaFilter}` : '';
   return apiHelper.get<{ data: Message[]; meta: PaginationMeta }>(
-    `/tickets/messages/${contactId}?page=${page}`,
+    `/tickets/messages/${contactId}?page=${page}${filterParam}`,
   );
 };
+
 
 export const acceptTicket = async (ticketId: number) => {
   return apiHelper.post(`/tickets/accept/${ticketId}`);

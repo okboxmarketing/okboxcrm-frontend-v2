@@ -39,6 +39,8 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
   useEffect(() => {
     if (selectedChat?.kanbanStepId) {
       setSelectedStep(selectedChat.kanbanStepId.toString());
+    } else {
+      setSelectedStep("");
     }
   }, [selectedChat?.kanbanStepId]);
 
@@ -51,7 +53,6 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
         await moveTicket(ticketId, stepId.toString());
         setSelectedStep(value);
 
-        // Busca as informações da nova etapa
         const newStep = kanbanSteps.find(step => step.id === stepId);
 
         if (selectedChat && newStep) {
@@ -66,19 +67,15 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
           };
           updateChat(updatedTicket);
 
-          // Verifica se o ticket ainda pertence ao filtro atual
           const shouldRemoveTicket = () => {
-            // Se há um filtro específico de etapa ativo
             if (currentKanbanStepId !== undefined && currentKanbanStepId !== stepId) {
               return true;
             }
 
-            // Se o filtro "Apenas Leads Ativos" está ativo e a nova etapa é "Vendido" ou "Perdido"
             if (currentOnlyActive && (newStep.name === "Vendido" || newStep.name === "Perdido")) {
               return true;
             }
 
-            // Se o ticket foi movido para "Sem Contato" (que não é exibido na lista)
             if (newStep.name === "Sem Contato") {
               return true;
             }
@@ -87,7 +84,6 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
           };
 
           if (shouldRemoveTicket()) {
-            // Remove o ticket da lista e deseleciona o chat
             removeTicket(ticketId);
             selectChat(null);
           }
@@ -110,8 +106,8 @@ const MoveTicketSelect: React.FC<MoveTicketSelectProps> = ({ ticketId }) => {
       onValueChange={handleMoveTicket}
       value={selectedStep}
     >
-      <SelectTrigger className="bg-white">
-        <SelectValue placeholder="Selecione a Etapa" className="w-1/2" />
+      <SelectTrigger className="bg-white h-10 w-full min-w-[140px]">
+        <SelectValue placeholder="Selecione a Etapa" />
       </SelectTrigger>
       <SelectContent>
         {kanbanSteps.map((step) => (

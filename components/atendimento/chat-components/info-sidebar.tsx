@@ -13,6 +13,8 @@ import {
     AlertTriangle,
     NotepadTextDashed,
     Pencil,
+    Image as ImageIcon,
+    User,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +31,7 @@ import { getSalesByTicketId } from "@/service/saleService"
 import { getLossesByTicketId } from "@/service/lossService"
 import type { Sale, Loss } from "@/lib/types"
 import { Textarea } from "@/components/ui/textarea"
-import { addObservation } from "@/service/ticketsService"
+import { addObservation, getMessagesByContactId } from "@/service/ticketsService"
 import { useToast } from "@/hooks/use-toast"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Creative } from "@/app/(authenticated)/home/criativos/page"
@@ -47,6 +49,17 @@ const formatCurrency = (value: number) => {
     }).format(value)
 }
 
+type TabType = 'INFO' | 'MIDIAS'
+
+interface MediaMessage {
+    id: string
+    content: string
+    mediaType: string
+    caption?: string
+    createdAt: string
+    fromMe: boolean
+}
+
 const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
     const { selectedChat, updateChat } = useChatStore()
     const [sales, setSales] = useState<Sale[]>([])
@@ -57,7 +70,49 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
     const [creativeFlowDialog, setCreativeFlowDialog] = useState<boolean>(false)
     const [creatives, setCreatives] = useState<Creative[]>([])
     const [selectedCreative, setSelectedCreative] = useState<Creative | null>(null)
+    const [activeTab, setActiveTab] = useState<TabType>('INFO')
+    const [mediaMessages, setMediaMessages] = useState<MediaMessage[]>([])
+    const [loadingMedia, setLoadingMedia] = useState<boolean>(false)
     const { toast } = useToast()
+
+    const fetchMediaMessages = async () => {
+        if (selectedChat?.Contact?.id) {
+            try {
+                setLoadingMedia(true)
+                let allMediaMessages: MediaMessage[] = []
+                let page = 1
+                let hasMore = true
+
+                while (hasMore) {
+                    const messagesData = await getMessagesByContactId(selectedChat.Contact.remoteJid, page, 'media')
+
+                    const mediaMessages = messagesData.data.map(message => ({
+                        id: message.id,
+                        content: message.content,
+                        mediaType: message.mediaType,
+                        caption: message.caption,
+                        createdAt: message.createdAt,
+                        fromMe: message.fromMe
+                    }))
+
+                    allMediaMessages = [...allMediaMessages, ...mediaMessages]
+                    hasMore = messagesData.meta.hasNext
+                    page++
+                }
+
+                setMediaMessages(allMediaMessages)
+            } catch (error) {
+                console.error("Erro ao buscar mídias:", error)
+                toast({
+                    title: "Erro ao carregar mídias",
+                    description: "Não foi possível carregar as mídias do chat",
+                    variant: "destructive"
+                })
+            } finally {
+                setLoadingMedia(false)
+            }
+        }
+    }
 
     useEffect(() => {
         const fetchSalesAndLosses = async () => {
@@ -80,6 +135,13 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
             setObservation("")
         }
     }, [selectedChat?.id, selectedChat?.observation])
+
+    // Buscar mídias quando trocar para a aba de mídias
+    useEffect(() => {
+        if (activeTab === 'MIDIAS' && selectedChat?.Contact?.id) {
+            fetchMediaMessages()
+        }
+    }, [activeTab, selectedChat?.Contact?.id])
 
     const handleAddObservation = async () => {
         if (selectedChat?.id) {
@@ -176,248 +238,376 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ isOpen, onClose }) => {
                 className={`fixed right-0 top-0 h-full w-full sm:w-96 lg:w-80 xl:w-96 bg-background border-l shadow-xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"}`}
             >
                 {/* Header */}
-                <div className="flex-shrink-0 p-4 border-b bg-muted/30">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-semibold">Informações do Lead</h2>
+                <div className="flex-shrink-0 border-b bg-muted/30">
+                    <div className="flex justify-between items-center p-4 pb-2">
+                        <h2 className="text-lg font-semibold">
+                            {activeTab === 'INFO' ? 'Informações do Lead' : 'Mídias do Chat'}
+                        </h2>
                         <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
                             <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    {/* Tab Bar */}
+                    <div className="flex border-b">
+                        <Button
+                            variant={activeTab === 'INFO' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setActiveTab('INFO')}
+                            className={`flex-1 rounded-none border-b-2 ${activeTab === 'INFO'
+                                ? 'border-black bg-black text-white'
+                                : 'border-transparent hover:bg-muted/50'
+                                }`}
+                        >
+                            <User className="mr-2 h-4 w-4" />
+                            INFORMAÇÕES
+                        </Button>
+                        <Button
+                            variant={activeTab === 'MIDIAS' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setActiveTab('MIDIAS')}
+                            className={`flex-1 rounded-none border-b-2 ${activeTab === 'MIDIAS'
+                                ? 'border-black bg-black text-white'
+                                : 'border-transparent hover:bg-muted/50'
+                                }`}
+                        >
+                            <ImageIcon className="mr-2 h-4 w-4" />
+                            MÍDIAS
                         </Button>
                     </div>
                 </div>
 
                 {/* Content */}
                 <ScrollArea className="flex-1">
-                    <div className="p-4 space-y-6">
-                        {/* Contact Info */}
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                            <UserAvatar
-                                name={selectedChat.Contact.name}
-                                pictureUrl={selectedChat.Contact.pictureUrl}
-                                className="w-12 h-12 flex-shrink-0"
-                            />
-                            <div className="min-w-0 flex-1">
-                                <h3 className="font-semibold truncate">{selectedChat.Contact.name}</h3>
-                                <p className="text-sm text-muted-foreground">Lead Ativo</p>
-                            </div>
-                        </div>
-
-                        {/* Basic Info */}
-                        <div className="space-y-1">
-                            <InfoItem icon={Phone} label="Telefone">
-                                <span className="font-medium">{formatPhone(selectedChat.Contact.phone)}</span>
-                            </InfoItem>
-
-                            <InfoItem icon={Tag} label="Etapa">
-                                {selectedChat.KanbanStep ? (
-                                    <Badge style={{ backgroundColor: selectedChat.KanbanStep.color }} className="text-white">
-                                        {selectedChat.KanbanStep.name}
-                                    </Badge>
-                                ) : (
-                                    <span className="text-sm text-muted-foreground">Etapa não definida</span>
-                                )}
-                            </InfoItem>
-
-                            {selectedChat.responsibleId && (
-                                <InfoItem icon={UserCheck} label="Responsável">
-                                    <span className="font-medium">{selectedChat.Responsible?.name}</span>
-                                </InfoItem>
-                            )}
-
-                            <InfoItem icon={MapPin} label="Origem">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium">
-                                        {selectedChat.Creative ? (
-                                            <span className="text-blue-500">Criativo</span>
-                                        ) : selectedChat.Contact.origin === "Whatsapp" ? (
-                                            <span className="text-green-500">Whatsapp</span>
-                                        ) : (
-                                            selectedChat.Contact.origin || "Não informado"
-                                        )}
-                                    </span>
-                                    <Button variant="ghost" size="icon" onClick={handleCreativeFlow}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
+                    {activeTab === 'INFO' ? (
+                        <div className="p-4 space-y-6">
+                            {/* Contact Info */}
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                                <UserAvatar
+                                    name={selectedChat.Contact.name}
+                                    pictureUrl={selectedChat.Contact.pictureUrl}
+                                    className="w-12 h-12 flex-shrink-0"
+                                />
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="font-semibold truncate">{selectedChat.Contact.name}</h3>
+                                    <p className="text-sm text-muted-foreground">Lead Ativo</p>
                                 </div>
-                            </InfoItem>
-                            <Dialog open={creativeFlowDialog} onOpenChange={setCreativeFlowDialog}>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Atribuir Lead a um Criativo</DialogTitle>
-                                    </DialogHeader>
-                                    <p>Selecione o criativo que deseja atribuir ao lead.</p>
-                                    <div className="mt-4">
+                            </div>
+
+                            {/* Basic Info */}
+                            <div className="space-y-1">
+                                <InfoItem icon={Phone} label="Telefone">
+                                    <span className="font-medium">{formatPhone(selectedChat.Contact.phone)}</span>
+                                </InfoItem>
+
+                                <InfoItem icon={Tag} label="Etapa">
+                                    {selectedChat.KanbanStep ? (
+                                        <Badge style={{ backgroundColor: selectedChat.KanbanStep.color }} className="text-white">
+                                            {selectedChat.KanbanStep.name}
+                                        </Badge>
+                                    ) : (
+                                        <span className="text-sm text-muted-foreground">Etapa não definida</span>
+                                    )}
+                                </InfoItem>
+
+                                {selectedChat.responsibleId && (
+                                    <InfoItem icon={UserCheck} label="Responsável">
+                                        <span className="font-medium">{selectedChat.Responsible?.name}</span>
+                                    </InfoItem>
+                                )}
+
+                                <InfoItem icon={MapPin} label="Origem">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium">
+                                            {selectedChat.Creative ? (
+                                                <span className="text-blue-500">Criativo</span>
+                                            ) : selectedChat.Contact.origin === "Whatsapp" ? (
+                                                <span className="text-green-500">Whatsapp</span>
+                                            ) : (
+                                                selectedChat.Contact.origin || "Não informado"
+                                            )}
+                                        </span>
+                                        <Button variant="ghost" size="icon" onClick={handleCreativeFlow}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </InfoItem>
+                                <Dialog open={creativeFlowDialog} onOpenChange={setCreativeFlowDialog}>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Atribuir Lead a um Criativo</DialogTitle>
+                                        </DialogHeader>
+                                        <p>Selecione o criativo que deseja atribuir ao lead.</p>
+                                        <div className="mt-4">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead className="text-xs h-8">Criativo</TableHead>
+                                                        <TableHead className="text-xs h-8">Chave</TableHead>
+                                                        <TableHead className="text-xs h-8">Quantidade de Leads</TableHead>
+                                                        <TableHead className="text-xs h-8 text-right">Ação</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {creatives.map((creative) => (
+                                                        <TableRow key={creative.id}>
+                                                            <TableCell className="text-xs py-2 font-medium">
+                                                                {creative.title}
+                                                            </TableCell>
+                                                            <TableCell className="text-xs py-2 font-medium text-ellipsis overflow-hidden">
+                                                                {creative.keyphrase}
+                                                            </TableCell>
+                                                            <TableCell className="text-xs py-2 font-medium">
+                                                                {creative._count?.Ticket || 0}
+                                                            </TableCell>
+                                                            <TableCell className="text-xs py-2 text-right">
+                                                                <Button
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        setSelectedCreative(creative)
+                                                                        handleAssignCreative(Number(creative.id))
+                                                                    }}
+                                                                >
+                                                                    Atribuir
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button variant="outline" onClick={() => setCreativeFlowDialog(false)}>
+                                                Voltar
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+
+                                {selectedChat.Creative && (
+                                    <InfoItem icon={Tag} label="Criativo">
+                                        <span className="font-medium">{selectedChat.Creative.title}</span>
+                                        <p className="text-xs text-muted-foreground">
+                                            {selectedChat.Creative?._count.Ticket} Leads captados neste criativo
+                                        </p>
+                                    </InfoItem>
+                                )}
+
+                                <InfoItem icon={CalendarArrowUp} label="Data de Criação">
+                                    <span className="font-medium">{formatDate(new Date(selectedChat.createdAt), "dd/MM/yyyy HH:mm")}</span>
+                                </InfoItem>
+
+                                <InfoItem icon={CalendarCheck} label="Aceito em">
+                                    <span className={`font-medium ${selectedChat.acceptedAt ? "" : "text-muted-foreground text-xs"}`}>
+                                        {selectedChat.acceptedAt ? formatDate(new Date(selectedChat.acceptedAt), "dd/MM/yyyy HH:mm") : "Aceite para obter mais informações"}
+                                    </span>
+                                </InfoItem>
+
+                                <InfoItem icon={NotepadTextDashed} label="Observação">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium">{selectedChat.observation || "Não informado"}</span>
+                                        <Button variant="ghost" size="icon" onClick={() => setEditMode(!editMode)}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </InfoItem>
+                                {editMode && (
+                                    <div className="flex flex-col gap-2">
+                                        <Textarea
+                                            placeholder="Observação"
+                                            value={observation}
+                                            onChange={(e) => setObservation(e.target.value)}
+                                        />
+                                        <Button onClick={handleAddObservation} isLoading={isLoading}>Adicionar Observação</Button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <Separator />
+
+                            {/* Sales Section */}
+                            <Card>
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-base flex items-center gap-2">
+                                        <ShoppingCart className="h-4 w-4" />
+                                        Vendas
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                    {sales.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {sales.map((sale) => (
+                                                <div key={sale.id} className="border rounded-lg p-3 bg-muted/20">
+                                                    <div className="text-xs text-muted-foreground mb-2 flex flex-row justify-between">
+                                                        <p>Venda</p>
+                                                        <p>{formatCurrency(sale.totalAmount)}</p>
+                                                    </div>
+                                                    {sale.SaleItems && sale.SaleItems.length > 0 ? (
+                                                        <Table>
+                                                            <TableHeader>
+                                                                <TableRow>
+                                                                    <TableHead className="text-xs h-8">Produto</TableHead>
+                                                                    <TableHead className="text-xs h-8 text-center">Qtd</TableHead>
+                                                                    <TableHead className="text-xs h-8 text-right">Valor</TableHead>
+                                                                </TableRow>
+                                                            </TableHeader>
+                                                            <TableBody>
+                                                                {sale.SaleItems.map((item) => (
+                                                                    <TableRow key={item.id}>
+                                                                        <TableCell className="text-xs py-2 font-medium">{item.Product.name}</TableCell>
+                                                                        <TableCell className="text-xs py-2 text-center">{item.quantity}x</TableCell>
+                                                                        <TableCell className="text-xs py-2 text-right">
+                                                                            {formatCurrency(item.unitPrice)}
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                ))}
+                                                            </TableBody>
+                                                        </Table>
+                                                    ) : (
+                                                        <p className="text-sm text-muted-foreground">Sem itens</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground text-center py-4">Nenhuma venda registrada</p>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Losses Section */}
+                            <Card>
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-base flex items-center gap-2">
+                                        <AlertTriangle className="h-4 w-4" />
+                                        Perdas
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                    {losses.length > 0 ? (
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
-                                                    <TableHead className="text-xs h-8">Criativo</TableHead>
-                                                    <TableHead className="text-xs h-8">Chave</TableHead>
-                                                    <TableHead className="text-xs h-8">Quantidade de Leads</TableHead>
-                                                    <TableHead className="text-xs h-8 text-right">Ação</TableHead>
+                                                    <TableHead className="text-xs h-8">Motivo</TableHead>
+                                                    <TableHead className="text-xs h-8 text-right">Data</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {creatives.map((creative) => (
-                                                    <TableRow key={creative.id}>
+                                                {losses.map((loss) => (
+                                                    <TableRow key={loss.id}>
                                                         <TableCell className="text-xs py-2 font-medium">
-                                                            {creative.title}
+                                                            {loss.LossReason?.description || "Não informado"}
                                                         </TableCell>
-                                                        <TableCell className="text-xs py-2 font-medium text-ellipsis overflow-hidden">
-                                                            {creative.keyphrase}
-                                                        </TableCell>
-                                                        <TableCell className="text-xs py-2 font-medium">
-                                                            {creative._count?.Ticket || 0}
-                                                        </TableCell>
-                                                        <TableCell className="text-xs py-2 text-right">
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() => {
-                                                                    setSelectedCreative(creative)
-                                                                    handleAssignCreative(Number(creative.id))
-                                                                }}
-                                                            >
-                                                                Atribuir
-                                                            </Button>
+                                                        <TableCell className="text-xs py-2 text-right text-muted-foreground">
+                                                            {formatDate(new Date(loss.createdAt), "dd/MM/yyyy")}
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
                                         </Table>
-                                    </div>
-                                    <DialogFooter>
-                                        <Button variant="outline" onClick={() => setCreativeFlowDialog(false)}>
-                                            Voltar
-                                        </Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-
-                            {selectedChat.Creative && (
-                                <InfoItem icon={Tag} label="Criativo">
-                                    <span className="font-medium">{selectedChat.Creative.title}</span>
-                                    <p className="text-xs text-muted-foreground">
-                                        {selectedChat.Creative?._count.Ticket} Leads captados neste criativo
-                                    </p>
-                                </InfoItem>
-                            )}
-
-                            <InfoItem icon={CalendarArrowUp} label="Data de Criação">
-                                <span className="font-medium">{formatDate(new Date(selectedChat.createdAt), "dd/MM/yyyy HH:mm")}</span>
-                            </InfoItem>
-
-                            <InfoItem icon={CalendarCheck} label="Aceito em">
-                                <span className={`font-medium ${selectedChat.acceptedAt ? "" : "text-muted-foreground text-xs"}`}>
-                                    {selectedChat.acceptedAt ? formatDate(new Date(selectedChat.acceptedAt), "dd/MM/yyyy HH:mm") : "Aceite para obter mais informações"}
-                                </span>
-                            </InfoItem>
-
-                            <InfoItem icon={NotepadTextDashed} label="Observação">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium">{selectedChat.observation || "Não informado"}</span>
-                                    <Button variant="ghost" size="icon" onClick={() => setEditMode(!editMode)}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground text-center py-4">Nenhuma perda registrada</p>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    ) : (
+                        <div className="p-4">
+                            {loadingMedia ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
                                 </div>
-                            </InfoItem>
-                            {editMode && (
-                                <div className="flex flex-col gap-2">
-                                    <Textarea
-                                        placeholder="Observação"
-                                        value={observation}
-                                        onChange={(e) => setObservation(e.target.value)}
-                                    />
-                                    <Button onClick={handleAddObservation} isLoading={isLoading}>Adicionar Observação</Button>
+                            ) : mediaMessages.length > 0 ? (
+                                <div className="grid grid-cols-2 gap-3">
+                                    {mediaMessages.map((media) => (
+                                        <div key={media.id} className="relative group">
+                                            <div className="aspect-square rounded-lg overflow-hidden bg-muted">
+                                                {media.mediaType === 'IMAGE' ? (
+                                                    <img
+                                                        src={media.content}
+                                                        alt={media.caption || 'Imagem do chat'}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.src = '/placeholder-image.svg';
+                                                        }}
+                                                    />
+                                                ) : media.mediaType === 'VIDEO' ? (
+                                                    <div className="w-full h-full bg-black/20 flex items-center justify-center">
+                                                        <video
+                                                            src={media.content}
+                                                            className="w-full h-full object-cover"
+                                                            controls={false}
+                                                            preload="metadata"
+                                                        />
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <div className="w-12 h-12 bg-black/70 rounded-full flex items-center justify-center">
+                                                                <div className="w-0 h-0 border-l-[8px] border-l-white border-y-[6px] border-y-transparent ml-1" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : media.mediaType === 'AUDIO' ? (
+                                                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                                        <div className="text-center">
+                                                            <div className="w-8 h-8 mx-auto mb-2 text-gray-600">
+                                                                🎵
+                                                            </div>
+                                                            <p className="text-xs text-gray-600">Áudio</p>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                                                        <div className="text-center">
+                                                            <div className="w-8 h-8 mx-auto mb-2 text-blue-600">
+                                                                📄
+                                                            </div>
+                                                            <p className="text-xs text-blue-600">Documento</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-1 text-xs">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="truncate">
+                                                        {formatDate(new Date(media.createdAt), "dd/MM")}
+                                                    </span>
+                                                    <span className="text-xs">
+                                                        {media.fromMe ? "Você" : selectedChat.Contact.name}
+                                                    </span>
+                                                </div>
+                                                {media.caption && (
+                                                    <p className="text-xs mt-1 line-clamp-2">{media.caption}</p>
+                                                )}
+                                            </div>
+
+                                            {/* Click to expand */}
+                                            <div
+                                                className="absolute inset-0 cursor-pointer opacity-0 hover:opacity-100 bg-black/20 flex items-center justify-center transition-opacity"
+                                                onClick={() => {
+                                                    if (media.mediaType === 'IMAGE' || media.mediaType === 'VIDEO') {
+                                                        window.open(media.content, '_blank');
+                                                    }
+                                                }}
+                                            >
+                                                <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
+                                                    <ImageIcon className="w-4 h-4 text-black" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <ImageIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                    <p className="text-sm text-muted-foreground">Nenhuma mídia encontrada</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Imagens, vídeos e documentos compartilhados aparecerão aqui
+                                    </p>
                                 </div>
                             )}
                         </div>
-
-                        <Separator />
-
-                        {/* Sales Section */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-base flex items-center gap-2">
-                                    <ShoppingCart className="h-4 w-4" />
-                                    Vendas
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                                {sales.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {sales.map((sale) => (
-                                            <div key={sale.id} className="border rounded-lg p-3 bg-muted/20">
-                                                <div className="text-xs text-muted-foreground mb-2 flex flex-row justify-between">
-                                                    <p>Venda</p>
-                                                    <p>{formatCurrency(sale.totalAmount)}</p>
-                                                </div>
-                                                {sale.SaleItems && sale.SaleItems.length > 0 ? (
-                                                    <Table>
-                                                        <TableHeader>
-                                                            <TableRow>
-                                                                <TableHead className="text-xs h-8">Produto</TableHead>
-                                                                <TableHead className="text-xs h-8 text-center">Qtd</TableHead>
-                                                                <TableHead className="text-xs h-8 text-right">Valor</TableHead>
-                                                            </TableRow>
-                                                        </TableHeader>
-                                                        <TableBody>
-                                                            {sale.SaleItems.map((item) => (
-                                                                <TableRow key={item.id}>
-                                                                    <TableCell className="text-xs py-2 font-medium">{item.Product.name}</TableCell>
-                                                                    <TableCell className="text-xs py-2 text-center">{item.quantity}x</TableCell>
-                                                                    <TableCell className="text-xs py-2 text-right">
-                                                                        {formatCurrency(item.unitPrice)}
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                            ))}
-                                                        </TableBody>
-                                                    </Table>
-                                                ) : (
-                                                    <p className="text-sm text-muted-foreground">Sem itens</p>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground text-center py-4">Nenhuma venda registrada</p>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Losses Section */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-base flex items-center gap-2">
-                                    <AlertTriangle className="h-4 w-4" />
-                                    Perdas
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                                {losses.length > 0 ? (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="text-xs h-8">Motivo</TableHead>
-                                                <TableHead className="text-xs h-8 text-right">Data</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {losses.map((loss) => (
-                                                <TableRow key={loss.id}>
-                                                    <TableCell className="text-xs py-2 font-medium">
-                                                        {loss.LossReason?.description || "Não informado"}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs py-2 text-right text-muted-foreground">
-                                                        {formatDate(new Date(loss.createdAt), "dd/MM/yyyy")}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground text-center py-4">Nenhuma perda registrada</p>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
+                    )}
                 </ScrollArea>
             </div>
         </>
