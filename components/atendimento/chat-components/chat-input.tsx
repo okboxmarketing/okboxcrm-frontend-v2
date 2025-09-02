@@ -20,7 +20,13 @@ interface FormData {
   text: string;
 }
 
-const ChatInput: React.FC = () => {
+interface ChatInputProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  replyingTo?: any;
+  onSendReply?: (text: string) => Promise<void>;
+}
+
+const ChatInput: React.FC<ChatInputProps> = ({ replyingTo, onSendReply }) => {
   const { sendMessage, selectedChat } = useChatStore();
   const { register, handleSubmit, reset } = useForm<FormData>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -40,7 +46,6 @@ const ChatInput: React.FC = () => {
   // SWR para carregar mensagens rápidas
   const { data: fastMessages = [], error: fastMessagesError } = useSWR("fastMessages", getFastMessages);
 
-  // Observar o valor do texto para detectar "/"
   const [textValue, setTextValue] = useState("");
 
   useEffect(() => {
@@ -49,14 +54,12 @@ const ChatInput: React.FC = () => {
     }
   }, [selectedChat]);
 
-  // Debug: Log das mensagens rápidas
   useEffect(() => {
     if (fastMessagesError) {
       console.log("Erro ao carregar fastMessages:", fastMessagesError);
     }
   }, [fastMessages, fastMessagesError]);
 
-  // Detectar quando o usuário digita "/" e mostrar sugestões
   useEffect(() => {
     if (!textValue) {
       setShowFastMessageSuggestions(false);
@@ -94,10 +97,8 @@ const ChatInput: React.FC = () => {
       const newValue = currentValue.slice(0, cursorPosition) + emoji + currentValue.slice(cursorPosition);
       textInputRef.current.value = newValue;
 
-      // Atualizar o valor no formulário
       const event = new Event('input', { bubbles: true });
       textInputRef.current.dispatchEvent(event);
-
       // Posicionar o cursor após o emoji inserido
       const newCursorPosition = cursorPosition + emoji.length;
       textInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
@@ -123,7 +124,13 @@ const ChatInput: React.FC = () => {
       await handleSendMedia(data.text);
     } else if (data.text && data.text.trim()) {
       reset();
-      await sendMessage(data.text);
+
+      if (replyingTo && onSendReply) {
+        await onSendReply(data.text);
+      } else {
+        await sendMessage(data.text);
+      }
+
       if (textInputRef.current) {
         textInputRef.current.style.height = 'auto';
       }
@@ -439,6 +446,34 @@ const ChatInput: React.FC = () => {
 
   return (
     <div className="sticky bottom-0 p-4 border-t bg-white">
+      {replyingTo && (
+        <div className="mb-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm text-gray-500 mb-1">Respondendo a</div>
+              <div className="text-sm text-gray-900 truncate">
+                {replyingTo.mediaType === "TEXT"
+                  ? replyingTo.data.message.conversation
+                  : replyingTo.caption || `Mensagem de ${replyingTo.mediaType.toLowerCase()}`
+                }
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 rounded-full hover:bg-gray-200"
+              onClick={() => {
+                if (onSendReply) {
+                  onSendReply("");
+                }
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {(selectedFile || audioBlob) && (
         <div className="mb-2 p-2 bg-gray-50 rounded-lg flex items-center justify-between">
           <div className="flex items-center gap-2">

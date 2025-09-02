@@ -42,9 +42,10 @@ interface ChatState {
     ) => Promise<void>;
     setTab: (tab: TicketStatusEnum) => void;
     selectChat: (ticket: Ticket | null) => void;
-    sendMessage: (text: string) => Promise<void>;
+    sendMessage: (text: string, quotedMessageEvolutionId?: string) => Promise<void>;
     initialize: () => void;
     removeTicket: (id: number) => void;
+    removeMessage: (messageId: string) => void;
     updateChat: (ticket: Ticket) => void;
 
     // Contagens de tickets
@@ -314,7 +315,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 state.selectedChat?.id === id ? null : state.selectedChat,
         })),
 
-    sendMessage: async (text) => {
+    removeMessage: (messageId: string) =>
+        set((state) => ({
+            messages: state.messages.filter((m) => m.data.key.id !== messageId),
+        })),
+
+    sendMessage: async (text, quotedMessageEvolutionId) => {
         const chat = get().selectedChat;
         if (!chat) return;
         const now = Date.now();
@@ -332,6 +338,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             mediaType: MediaEnum.TEXT,
             contentUrl: undefined,
             content: text,
+            quotedMessageEvolutionId,
         };
 
         set((state) => {
@@ -372,7 +379,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
 
         try {
-            await sendTextMessage(chat.Contact.remoteJid, text);
+            await sendTextMessage(chat.Contact.remoteJid, text, quotedMessageEvolutionId);
         } catch (err) {
             console.error('Erro ao enviar mensagem:', err);
             toast({ description: 'Erro ao enviar mensagem', variant: 'destructive' });
@@ -383,19 +390,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const user = useAuthStore.getState().user;
         const isAuthenticated = useAuthStore.getState().isAuthenticated;
 
-        // Controle global para evitar múltiplas inicializações
         if (isInitializing) {
             console.log('Inicialização já em andamento, ignorando...');
             return;
         }
 
-        // Se já está inicializado ou não tem socket, não inicializa novamente
         if (get().isInitialized || get().socket || globalSocket) {
             console.log('Socket já inicializado, ignorando...');
             return;
         }
 
-        // Se não estiver autenticado, não inicializa
         if (!isAuthenticated || !user) {
             console.log('Usuário não autenticado, aguardando para inicializar chat');
             return;

@@ -14,8 +14,16 @@ import MessageTimestamp from "./message/message-timestamp";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import useAuthStore from "@/store/authStore";
 import QuotedMessage from "./message/quoted-message";
+import MessageOptions from "./message/message-options";
 
-const ChatBody: React.FC = () => {
+interface ChatBodyProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  replyingTo?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setReplyingTo?: (message: any) => void;
+}
+
+const ChatBody: React.FC<ChatBodyProps> = ({ setReplyingTo }) => {
   const {
     messages,
     selectedChat,
@@ -44,6 +52,12 @@ const ChatBody: React.FC = () => {
       setTimeout(() => {
         messageElement.style.backgroundColor = '';
       }, 2000);
+    }
+  };
+
+  const handleReply = (message: NewMessagePayload) => {
+    if (setReplyingTo) {
+      setReplyingTo(message);
     }
   };
 
@@ -77,7 +91,7 @@ const ChatBody: React.FC = () => {
     switch (msg.mediaType) {
       case MediaEnum.IMAGE:
         return (
-          <div className="relative max-w-full">
+          <div className="relative max-w-full group">
             <div className={`p-2 shadow-sm flex flex-col gap-2 ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
               } w-64 relative`}>
               {quotedMessage && (
@@ -96,12 +110,15 @@ const ChatBody: React.FC = () => {
               {msg.caption && <p className={`${fromMe ? "text-white" : "text-black"}`}> {msg.caption}</p>}
               {renderReactions(msg.data.key.id)}
             </div>
+            <div className="absolute top-2 right-2 z-20">
+              <MessageOptions message={msg} onReply={handleReply} fromMe={fromMe} />
+            </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div >
         );
       case MediaEnum.AUDIO:
         return (
-          <div className="relative max-w-full">
+          <div className="relative max-w-full group">
             <div
               className={`p-4 shadow-sm relative ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
                 } w-64`}
@@ -113,7 +130,7 @@ const ChatBody: React.FC = () => {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className={`rounded-full  w-10 h-10 p-0 flex-shrink-0 ${fromMe ? "hover:bg-gray-800 text-white" : "hover:bg-gray-100 text-gray-700"
+                  className={`rounded-full  w-10 h-10 p-0 flex-shrink-0 ${fromMe ? " text-white" : "hover:bg-gray-100 text-gray-700"
                     }`}
                   onClick={() => {
                     const audio = document.getElementById(`audio-${msg.data.key.id}`) as HTMLAudioElement
@@ -183,12 +200,15 @@ const ChatBody: React.FC = () => {
               />
               {renderReactions(msg.data.key.id)}
             </div>
+            <div className="absolute top-2 right-2 z-20">
+              <MessageOptions message={msg} onReply={handleReply} fromMe={fromMe} />
+            </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
         )
       case MediaEnum.VIDEO:
         return (
-          <div className="relative max-w-full">
+          <div className="relative max-w-full group">
             <div className={`p-2 shadow-sm flex flex-col gap-2 relative ${fromMe ? "bg-black text-white rounded-l-xl rounded-t-xl" : "bg-white border border-gray-100 rounded-r-xl rounded-t-xl"
               } w-64`}>
               {quotedMessage && (
@@ -201,13 +221,16 @@ const ChatBody: React.FC = () => {
               {msg.caption && <p className={`${fromMe ? "text-white" : "text-black"}`}> {msg.caption}</p>}
               {renderReactions(msg.data.key.id)}
             </div>
+            <div className="absolute top-2 right-2 z-20">
+              <MessageOptions message={msg} onReply={handleReply} fromMe={fromMe} />
+            </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
         );
       case MediaEnum.DOCUMENT:
         const fileName = msg.contentUrl?.split('/').pop() || "documento";
         return (
-          <div className="relative max-w-full">
+          <div className="relative max-w-full group">
             <div className={`p-4 rounded-lg relative ${fromMe ? "bg-black text-white" : "bg-white"} w-full`}>
               {quotedMessage && (
                 <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
@@ -219,7 +242,7 @@ const ChatBody: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className={`w-full flex items-center gap-2 ${fromMe ? "bg-gray-800 hover:bg-gray-700 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+                className={`w-full flex items-center gap-2 ${fromMe ? "bg-gray-800  text-white" : "bg-gray-100 hover:bg-gray-200"}`}
                 onClick={() => {
                   if (msg.contentUrl) {
                     window.open(msg.contentUrl, '_blank');
@@ -231,6 +254,9 @@ const ChatBody: React.FC = () => {
               </Button>
               {msg.caption && <p className={`${fromMe ? "text-white" : "text-black"} mt-2`}> {msg.caption}</p>}
               {renderReactions(msg.data.key.id)}
+            </div>
+            <div className="absolute top-2 right-2 z-20">
+              <MessageOptions message={msg} onReply={handleReply} fromMe={fromMe} />
             </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
@@ -244,7 +270,7 @@ const ChatBody: React.FC = () => {
           contactData = { displayName: 'Contato', phone: '' };
         }
         return (
-          <div className="relative max-w-full">
+          <div className="relative max-w-full group">
             <div className={`p-4 rounded-lg relative ${fromMe ? "bg-black text-white" : "bg-white border border-gray-100"} w-full max-w-sm`}>
               {quotedMessage && (
                 <QuotedMessage quotedMessage={quotedMessage} fromMe={fromMe} onQuoteClick={handleQuoteClick} />
@@ -338,6 +364,9 @@ const ChatBody: React.FC = () => {
 
               {renderReactions(msg.data.key.id)}
             </div>
+            <div className="absolute top-2 right-2 z-20">
+              <MessageOptions message={msg} onReply={handleReply} fromMe={fromMe} />
+            </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
         );
@@ -349,7 +378,7 @@ const ChatBody: React.FC = () => {
         const messageText = msg.data.message.conversation;
         const isLinkMessage = isLink(messageText);
         return (
-          <div className="relative max-w-full">
+          <div className="relative max-w-full group">
             <div className={`px-4 py-2 whitespace-pre-wrap break-all relative ${fromMe
               ? "bg-black text-white rounded-l-xl rounded-t-xl"
               : "bg-white rounded-r-xl rounded-t-xl"
@@ -372,6 +401,9 @@ const ChatBody: React.FC = () => {
                 )}
               </p>
               {renderReactions(msg.data.key.id)}
+            </div>
+            <div className="absolute top-2 right-2 z-20">
+              <MessageOptions message={msg} onReply={handleReply} fromMe={fromMe} />
             </div>
             {showTimestamp && <MessageTimestamp timestamp={msg.data.messageTimestamp} fromMe={fromMe} />}
           </div>
@@ -555,6 +587,7 @@ const ChatBody: React.FC = () => {
           />
         </div>
       )}
+
       <div id="messages-end" />
     </div>
   );

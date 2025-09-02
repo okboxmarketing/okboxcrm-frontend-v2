@@ -1,7 +1,7 @@
 import { apiHelper } from "@/lib/apiHelper";
 
-export const sendTextMessage = async (remoteJId: string, text: string) => {
-  await apiHelper.post('/message/text', { remoteJId, text });
+export const sendTextMessage = async (remoteJId: string, text: string, quotedMessageEvolutionId?: string) => {
+  await apiHelper.post('/message/text', { remoteJId, text, quotedMessageEvolutionId });
 }
 
 export interface SendMediaParams {
@@ -14,10 +14,13 @@ export interface SendMediaParams {
 }
 
 export const sendMediaMessage = async (params: SendMediaParams) => {
-  console.log("Sending Media: ", params)
   await apiHelper.post('/message/media', params);
 }
 
 export const sendAudioMessage = async (remoteJId: string, media: string) => {
   await apiHelper.post('/message/audio', { remoteJId, media });
+}
+
+export const deleteMessage = async (id: string) => {
+  await apiHelper.delete('/message', { id });
 }
