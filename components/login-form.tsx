@@ -42,6 +42,7 @@ export function LoginForm({
           await login(response.access_token, response.whatsappConnection);
 
           const { jwtDecode } = await import('jwt-decode');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const decodedToken = jwtDecode<any>(response.access_token);
           const userRole = decodedToken.userRole;
 
