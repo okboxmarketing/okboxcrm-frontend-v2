@@ -37,24 +37,33 @@ export function LoginForm({
       setError(null);
       try {
         const response = await loginUser(data.email.toLowerCase(), data.password);
-        if (response?.access_token && response?.whatsappConnection) {
+
+        if (response?.access_token) {
           await login(response.access_token, response.whatsappConnection);
-        }
-        switch (useAuthStore.getState().user?.userRole) {
-          case "MASTER":
-            router.push("/home/empresas");
-            break;
-          case "ADMIN":
-            router.push("/home/atendimento");
-            break;
-          case "ADVISOR":
-            router.push("/home/empresas");
-            break;
-          default:
-            router.push("/home/atendimento");
-            break;
+
+          const { jwtDecode } = await import('jwt-decode');
+          const decodedToken = jwtDecode<any>(response.access_token);
+          const userRole = decodedToken.userRole;
+
+          switch (userRole) {
+            case "MASTER":
+              router.push("/home/empresas");
+              break;
+            case "ADMIN":
+              router.push("/home/atendimento");
+              break;
+            case "ADVISOR":
+              router.push("/home/empresas");
+              break;
+            default:
+              router.push("/home/atendimento");
+              break;
+          }
+        } else {
+          setError('Erro no login: token não encontrado');
         }
       } catch (error) {
+        console.error('Erro no login:', error);
         if (error instanceof Error) {
           setError(error.message);
         }

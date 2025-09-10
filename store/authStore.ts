@@ -11,7 +11,7 @@ interface AuthState {
     setUser: (userData: AuthUser | null) => void;
     setToken: (newToken: string | null) => void;
     clearAuth: () => void;
-    login: (token: string, sessionToken: string, whatsappConnection?: string) => void;
+    login: (token: string, whatsappConnection?: string | null) => void;
     logout: () => Promise<void>;
     initializeAuth: () => void;
     setCompanyImage: (companyImage: string) => void;
