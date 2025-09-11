@@ -16,7 +16,7 @@ interface WhatsAppConnectionAlertProps {
 export function WhatsAppConnectionAlert({
     className = "",
 }: WhatsAppConnectionAlertProps) {
-    const { isConnected, isConnecting, whatsappConnection } = useWhatsAppConnection();
+    const { isConnected, isConnecting, whatsappConnection, isNotStarted } = useWhatsAppConnection();
     const [isVisible, setIsVisible] = useState(true);
     const [previousStatus, setPreviousStatus] = useState<string | null>(null);
     const { toast } = useToast();
@@ -44,7 +44,7 @@ export function WhatsAppConnectionAlert({
         setPreviousStatus(whatsappConnection);
     }, [whatsappConnection, previousStatus, toast]);
 
-    if (!isVisible || isConnected || user?.userRole === "ADVISOR" || user?.userRole === "MASTER") return null;
+    if (!isVisible || (isConnected && !isNotStarted) || user?.userRole === "ADVISOR" || user?.userRole === "MASTER") return null;
 
     return (
         <div className={`fixed top-4 right-4 z-50 max-w-sm ${className}`}>
@@ -52,13 +52,17 @@ export function WhatsAppConnectionAlert({
                 rounded-lg shadow-lg border p-4 
                 ${isConnecting
                     ? 'bg-orange-50 border-orange-200 text-orange-800'
-                    : 'bg-red-50 border-red-200 text-red-800'
+                    : isNotStarted
+                        ? 'bg-blue-50 border-blue-200 text-blue-800'
+                        : 'bg-red-50 border-red-200 text-red-800'
                 }
             `}>
                 <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
                         {isConnecting ? (
                             <RefreshCw className="h-5 w-5 text-orange-600 animate-spin" />
+                        ) : isNotStarted ? (
+                            <WifiOff className="h-5 w-5 text-blue-600" />
                         ) : (
                             <WifiOff className="h-5 w-5 text-red-600" />
                         )}
@@ -66,12 +70,19 @@ export function WhatsAppConnectionAlert({
 
                     <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-medium mb-1">
-                            {isConnecting ? 'Conectando WhatsApp' : 'WhatsApp Desconectado'}
+                            {isConnecting
+                                ? 'Conectando WhatsApp'
+                                : isNotStarted
+                                    ? 'WhatsApp Não Conectado'
+                                    : 'WhatsApp Desconectado'
+                            }
                         </h4>
                         <p className="text-sm text-opacity-80 mb-3">
                             {isConnecting
                                 ? 'Aguardando conexão com o WhatsApp...'
-                                : 'Sua conexão com o WhatsApp foi perdida. Conecte novamente para continuar usando o atendimento.'
+                                : isNotStarted
+                                    ? 'Você ainda não conectou seu WhatsApp. Inicie para liberar o atendimento e todas as funcionalidades do CRM.'
+                                    : 'Sua conexão com o WhatsApp foi perdida. Conecte novamente para continuar usando o atendimento.'
                             }
                         </p>
 
@@ -80,14 +91,17 @@ export function WhatsAppConnectionAlert({
                                 {user?.userRole === 'ADMIN' && (
                                     <Button asChild size="sm" variant="outline" className="text-xs">
                                         <Link href="/home/conectar">
-                                            Reconectar WhatsApp
+                                            {isNotStarted ? 'Conectar WhatsApp' : 'Reconectar WhatsApp'}
                                         </Link>
                                     </Button>
                                 )}
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="text-xs text-red-600 hover:text-red-700"
+                                    className={`text-xs ${isNotStarted
+                                        ? 'text-blue-600 hover:text-blue-700'
+                                        : 'text-red-600 hover:text-red-700'
+                                        }`}
                                     onClick={() => setIsVisible(false)}
                                 >
                                     Ignorar

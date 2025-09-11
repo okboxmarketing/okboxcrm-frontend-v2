@@ -1,28 +1,28 @@
-import { InstanceData } from "@/app/(authenticated)/home/conectar/page";
 import { apiHelper } from "@/lib/apiHelper";
+
+export interface InstanceData {
+  profileName: string;
+  profilePicUrl: string;
+  phoneNumber: string;
+  messagesCount: number;
+  chatsCount: number;
+  contactsCount: number;
+  createdAt: string;
+  updatedAt: string;
+  groupIgnore: boolean;
+}
 
 export const getInstance = async () => {
   return apiHelper.get<InstanceData>("/wha-instance");
 };
 
 export const connect = async () => {
-  const response: { base64: string } = await apiHelper.get("/wha-instance/connect");
-  return response.base64;
+  return await apiHelper.post<string>("/wha-instance/connect");
 };
 
 export const getStatus = async () => {
-  try {
-    const status = await apiHelper.get("/wha-instance/status");
-    console.log(status)
-    return status
-  } catch {
-    return false;
-  }
+  return await apiHelper.get("/wha-instance/status");
 };
-
-export const createInstance = async () => {
-  return apiHelper.post("/wha-instance");
-}
 
 export const logoutInstance = async () => {
   return apiHelper.post("/wha-instance/logout");

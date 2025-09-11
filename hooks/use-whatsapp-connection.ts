@@ -9,5 +9,6 @@ export function useWhatsAppConnection() {
         isConnected: whatsappConnection === 'open',
         isConnecting: whatsappConnection === 'connecting',
         isDisconnected: whatsappConnection === 'close' || whatsappConnection === null,
+        isNotStarted: whatsappConnection === 'not_started',
     };
 } 

@@ -1,32 +1,20 @@
 "use client"
-
 import { Button } from "@/components/ui/button"
-import { connect, createInstance, getInstance, getStatus, logoutInstance } from "@/service/whaInstanceService"
-import type React from "react"
+import { connect, getInstance, getStatus, logoutInstance, InstanceData } from "@/service/whaInstanceService"
 import { useEffect, useState, useTransition } from "react"
-import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
 import { io } from "socket.io-client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
-import { AlertCircle, CheckCircle2, CircleCheckBig, Loader2, LogOut, MessageSquare, RefreshCw, Smartphone, Users, WifiOff } from 'lucide-react'
+import { cn, formatDate, formatPhone } from "@/lib/utils"
+import { AlertCircle, CheckCircle2, CircleCheckBig, Loader2, LogOut, MessageSquare, RefreshCw, Smartphone, Users, WifiOff, Calendar, Settings, Clock } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import useAuthStore from "@/store/authStore"
 
-export interface InstanceData {
-  profileName: string;
-  profilePicUrl: string;
-  messagesCount: number;
-  chatsCount: number;
-  contactsCount: number;
-}
-
-const ConectarPage: React.FC = () => {
+function ConectarPage() {
   const [base64, setBase64] = useState<string>()
   const [generatingQRCode, setGeneratingQRCode] = useTransition()
-  const [creatingInstance, setCreatingInstanceTransition] = useTransition()
   const [disconnecting, setDisconnecting] = useTransition()
   const [status, setStatus] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -63,7 +51,6 @@ const ConectarPage: React.FC = () => {
     setLoadingInstanceData(true)
     try {
       const data = await getInstance()
-      console.log("Dados da instância:", data)
       setInstanceData(data)
       setCompanyImage(data.profilePicUrl)
     } catch (error) {
@@ -83,7 +70,7 @@ const ConectarPage: React.FC = () => {
       return
     }
 
-    const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, { transports: ["websocket"] })
+    const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001', { transports: ["websocket"] })
 
     socket.on("connect", () => {
       socket.emit("join", user.companyId)
@@ -100,10 +87,6 @@ const ConectarPage: React.FC = () => {
         setStatus("Conectado")
         setBase64(undefined)
         fetchInstanceData()
-        toast({
-          title: "Conectado",
-          description: "WhatsApp conectado com sucesso!",
-        })
       }
       if (status === "connecting") setStatus("Conectando")
     })
@@ -116,37 +99,18 @@ const ConectarPage: React.FC = () => {
   const handleConnect = async () => {
     setGeneratingQRCode(async () => {
       try {
-        await connect()
-        toast({
-          title: "QR Code gerado",
-          description: "Escaneie o QR Code com seu WhatsApp para conectar.",
-        })
+        const response = await connect()
+
+        if (response) {
+          setBase64(response)
+          setStatus("Conectando")
+        }
+
         checkStatus()
       } catch (error) {
-        console.log(error)
         toast({
           title: "Erro",
-          description: "Não foi possível gerar o QR Code.",
-          variant: "destructive",
-        })
-      }
-    })
-  }
-
-  const handleCreateInstance = async () => {
-    setCreatingInstanceTransition(async () => {
-      try {
-        await createInstance()
-        toast({
-          title: "Conexão criada",
-          description: "A conexão foi criada com sucesso! Agora você pode gerar o QR Code.",
-        })
-        setStatus("Conectando")
-      } catch (err) {
-        console.log(err)
-        toast({
-          title: "Erro",
-          description: "Não foi possível criar a conexão.",
+          description: `Não foi possível gerar o QR Code. ${error}`,
           variant: "destructive",
         })
       }
@@ -159,11 +123,6 @@ const ConectarPage: React.FC = () => {
         await logoutInstance()
         setStatus("Desconectado")
         setInstanceData(null)
-        toast({
-          title: "Desconectado",
-          description: "WhatsApp desconectado com sucesso.",
-        })
-        checkStatus()
       } catch (error) {
         console.log(error)
         toast({
@@ -229,7 +188,7 @@ const ConectarPage: React.FC = () => {
       case "Conectado":
         return "Sua conexão com o WhatsApp está ativa. Você pode enviar e receber mensagens."
       default:
-        return "Inicialize uma conexão para começar a usar o WhatsApp."
+        return "Gere um QR Code para Conectar o WhatsApp."
     }
   }
 
@@ -302,6 +261,7 @@ const ConectarPage: React.FC = () => {
                             </Avatar>
                             <div>
                               <h4 className="font-medium text-base text-gray-900">{instanceData.profileName}</h4>
+                              <h2 className="text-xs text-muted-foreground">{formatPhone(instanceData.phoneNumber)}</h2>
                               <p className="text-xs text-muted-foreground">Conectado e pronto para uso</p>
                             </div>
                           </div>
@@ -329,6 +289,31 @@ const ConectarPage: React.FC = () => {
                               <span className="font-medium text-sm">{formatNumber(instanceData.contactsCount)}</span>
                             </div>
                           </div>
+
+                          <div className="pt-3 border-t border-gray-100">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Calendar className="w-3 h-3" />
+                                <span>Conectado em:</span>
+                                <span className="font-medium text-gray-700">{formatDate(instanceData.createdAt)}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Clock className="w-3 h-3" />
+                                <span>Última atualização:</span>
+                                <span className="font-medium text-gray-700">{formatDate(instanceData.updatedAt)}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                              <Settings className="w-3 h-3" />
+                              <span>Configuração padrão:</span>
+                              <p className={cn(
+                                "text-xs",
+                                instanceData.groupIgnore ? "text-red-500" : "text-green-500"
+                              )}>
+                                {instanceData.groupIgnore ? "Ignorar grupos" : "Aceitar grupos"}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       ) : (
                         <p>Seu WhatsApp está conectado e pronto para uso.</p>
@@ -338,7 +323,7 @@ const ConectarPage: React.FC = () => {
                     ) : status === "Desconectado" ? (
                       <p>Nenhum dispositivo conectado no momento.</p>
                     ) : (
-                      <p>Crie uma conexão para vincular seu WhatsApp.</p>
+                      <p>Gere um QR Code para vincular seu WhatsApp.</p>
                     )}
                   </div>
                 </div>
@@ -347,7 +332,6 @@ const ConectarPage: React.FC = () => {
                   <div className="flex flex-col gap-3">
                     <h3 className="text-sm font-medium">Instruções:</h3>
                     <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-2 pl-2">
-                      <li>Clique em &quot;Criar Conexão&quot; se for sua primeira vez</li>
                       <li>Clique em &quot;Gerar QR Code&quot; para exibir o código</li>
                       <li>Abra o WhatsApp no seu celular</li>
                       <li>Acesse Configurações &gt; Dispositivos Conectados</li>
@@ -396,7 +380,7 @@ const ConectarPage: React.FC = () => {
                     >
                       <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg -m-4 z-0"></div>
                       <div className="relative z-10 p-4 bg-white rounded-lg shadow-lg">
-                        <Image
+                        <img
                           src={base64 || "/placeholder.svg"}
                           width={300}
                           height={300}
@@ -416,7 +400,7 @@ const ConectarPage: React.FC = () => {
                       exit={{ opacity: 0 }}
                       className="relative w-full h-full flex items-center justify-center"
                     >
-                      <Image
+                      <img
                         src="/qrcode-zap.svg"
                         alt="QR Code Placeholder"
                         width={350}
@@ -432,26 +416,6 @@ const ConectarPage: React.FC = () => {
                           <CircleCheckBig className="text-green-500" size={120} />
                           <p className="text-green-600 font-medium text-center">WhatsApp conectado com sucesso!</p>
                         </motion.div>
-                      ) : !status && user?.userRole === "ADMIN" ? (
-                        <Button
-                          size="lg"
-                          className="relative z-10"
-                          onClick={handleCreateInstance}
-                          disabled={creatingInstance}
-                        >
-                          {creatingInstance && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          Inicializar
-                        </Button>
-                      ) : status === "Desconectado" && user?.userRole === "ADMIN" ? (
-                        <Button
-                          size="lg"
-                          className="relative z-10"
-                          onClick={handleCreateInstance}
-                          disabled={creatingInstance}
-                        >
-                          {creatingInstance && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          Criar Conexão
-                        </Button>
                       ) : (
                         <Button size="lg" className="relative z-10" onClick={handleConnect} disabled={generatingQRCode}>
                           {generatingQRCode && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -470,4 +434,4 @@ const ConectarPage: React.FC = () => {
   )
 }
 
-export default ConectarPage
+export default ConectarPage;
