@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music, Smile, Plus, MessageSquare, Hash } from "lucide-react";
-import { sendAudioMessage, sendMediaMessage, SendMediaParams, MediaItem } from "@/service/messageService";
+import { sendAudioMessage,  MediaItem } from "@/service/messageService";
 import { useToast } from "@/hooks/use-toast";
 import { useChatStore } from "@/store/chatStore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
