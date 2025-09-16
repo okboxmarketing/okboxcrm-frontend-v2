@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
 import { getTickets, getMessagesByContactId, getTicketCounts } from '@/service/ticketsService';
-import { sendTextMessage } from '@/service/messageService';
+import { sendTextMessage, sendMultipleMediaMessages, MediaItem } from '@/service/messageService';
 import {
     NewMessagePayload,
     Ticket,
@@ -43,6 +43,7 @@ interface ChatState {
     setTab: (tab: TicketStatusEnum) => void;
     selectChat: (ticket: Ticket | null) => void;
     sendMessage: (text: string, quotedMessageEvolutionId?: string) => Promise<void>;
+    sendMultipleMedia: (mediaItems: MediaItem[]) => Promise<void>;
     initialize: () => void;
     removeTicket: (id: number) => void;
     removeMessage: (messageId: string) => void;
@@ -383,6 +384,81 @@ export const useChatStore = create<ChatState>((set, get) => ({
         } catch (err) {
             console.error('Erro ao enviar mensagem:', err);
             toast({ description: 'Erro ao enviar mensagem', variant: 'destructive' });
+        }
+    },
+
+    sendMultipleMedia: async (mediaItems: MediaItem[]) => {
+        const chat = get().selectedChat;
+        if (!chat) return;
+
+        if (mediaItems.length === 0) {
+            toast({ description: 'Nenhuma mídia selecionada', variant: 'destructive' });
+            return;
+        }
+
+        if (mediaItems.length > 10) {
+            toast({ description: 'Máximo de 10 mídias por vez', variant: 'destructive' });
+            return;
+        }
+
+        try {
+            const result = await sendMultipleMediaMessages({
+                remoteJId: chat.Contact.remoteJid,
+                mediaItems
+            }) as { totalSent: number; totalFailed: number; results: any[] };
+
+            // Atualiza a última mensagem do ticket com informações sobre o envio
+            const mediaTypeText = mediaItems.length === 1 
+                ? `${mediaItems[0].mediaType}` 
+                : `${mediaItems.length} mídias`;
+
+            set((state) => ({
+                tickets: state.tickets.map((t) =>
+                    t.id === chat.id
+                        ? {
+                            ...t,
+                            lastMessage: {
+                                content: `${mediaItems.length} ${mediaTypeText} enviada(s)`,
+                                fromMe: true,
+                                createdAt: new Date().toISOString(),
+                                mediaType: MediaEnum.IMAGE, // Usando IMAGE como padrão para múltiplas mídias
+                                read: true,
+                            },
+                        }
+                        : t
+                ),
+                selectedChat:
+                    state.selectedChat?.id === chat.id
+                        ? {
+                            ...state.selectedChat,
+                            lastMessage: {
+                                content: `${mediaItems.length} ${mediaTypeText} enviada(s)`,
+                                fromMe: true,
+                                createdAt: new Date().toISOString(),
+                                mediaType: MediaEnum.IMAGE,
+                                read: true,
+                            },
+                        }
+                        : state.selectedChat,
+            }));
+
+            // Mostra resultado do envio
+            if (result.totalFailed > 0) {
+                toast({
+                    title: "Envio parcial",
+                    description: `${result.totalSent} enviadas, ${result.totalFailed} falharam`,
+                    variant: "destructive"
+                });
+            } else {
+                toast({
+                    title: "Sucesso",
+                    description: `${result.totalSent} mídia(s) enviada(s) com sucesso`,
+                });
+            }
+
+        } catch (err) {
+            console.error('Erro ao enviar múltiplas mídias:', err);
+            toast({ description: 'Erro ao enviar mídias', variant: 'destructive' });
         }
     },
 

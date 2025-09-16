@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send, X, Image, FileText, Video, Mic, StopCircle, Music, Smile, Plus, MessageSquare, Hash } from "lucide-react";
-import { sendAudioMessage, sendMediaMessage, SendMediaParams } from "@/service/messageService";
+import { sendAudioMessage, sendMediaMessage, SendMediaParams, MediaItem } from "@/service/messageService";
 import { useToast } from "@/hooks/use-toast";
 import { useChatStore } from "@/store/chatStore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -27,10 +27,10 @@ interface ChatInputProps {
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ replyingTo, onSendReply }) => {
-  const { sendMessage, selectedChat } = useChatStore();
+  const { sendMessage, sendMultipleMedia, selectedChat } = useChatStore();
   const { register, handleSubmit, reset } = useForm<FormData>();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [audioRecorder, setAudioRecorder] = useState<MediaRecorder | null>(null);
@@ -120,8 +120,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ replyingTo, onSendReply }) => {
   const onSubmit = async (data: FormData) => {
     if (audioBlob && selectedChat) {
       await handleSendAudio();
-    } else if (selectedFile) {
-      await handleSendMedia(data.text);
+    } else if (selectedFiles.length > 0) {
+      await handleSendMultipleMedia(data.text);
     } else if (data.text && data.text.trim()) {
       reset();
 
@@ -138,83 +138,110 @@ const ChatInput: React.FC<ChatInputProps> = ({ replyingTo, onSendReply }) => {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    if (file.size > 10 * 1024 * 1024) {
+    // Verificar limite de 10 arquivos
+    if (selectedFiles.length + files.length > 10) {
       toast({
-        description: "Arquivo muito grande. O tamanho máximo é 10MB.",
+        description: "Máximo de 10 arquivos por vez.",
         variant: "destructive",
       });
       return;
     }
 
-    // Se for um arquivo de áudio, não permitir seleção
-    if (file.type.startsWith('audio/')) {
-      toast({
-        description: "Use o botão de gravação para enviar áudio.",
-        variant: "destructive",
-      });
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+    const validFiles: File[] = [];
+    const newPreviewUrls: string[] = [];
+
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          description: `Arquivo ${file.name} muito grande. O tamanho máximo é 10MB.`,
+          variant: "destructive",
+        });
+        continue;
       }
-      return;
+
+      // Se for um arquivo de áudio, não permitir seleção
+      if (file.type.startsWith('audio/')) {
+        toast({
+          description: `Use o botão de gravação para enviar áudio (${file.name}).`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      validFiles.push(file);
+
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newPreviewUrls.push(reader.result as string);
+          setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+        };
+        reader.readAsDataURL(file);
+      }
     }
 
-    setSelectedFile(file);
-    setAudioBlob(null);
+    if (validFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+      setAudioBlob(null);
+    }
 
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
-  const clearSelectedFile = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
+  const clearSelectedFiles = () => {
+    setSelectedFiles([]);
+    setPreviewUrls([]);
     setAudioBlob(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  const handleSendMedia = async (caption: string = "") => {
-    if (!selectedFile || !selectedChat) return;
-    setIsUploading(true);
-    try {
-      const base64 = await fileToBase64(selectedFile);
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
 
-      let mediaType: "image" | "video" | "document" = "document";
-      if (selectedFile.type.startsWith('image/')) {
-        mediaType = "image";
-      } else if (selectedFile.type.startsWith('video/')) {
-        mediaType = "video";
+  const handleSendMultipleMedia = async (caption: string = "") => {
+    if (selectedFiles.length === 0 || !selectedChat) return;
+    setIsUploading(true);
+    
+    try {
+      const mediaItems: MediaItem[] = [];
+
+      for (const file of selectedFiles) {
+        const base64 = await fileToBase64(file);
+
+        let mediaType: "image" | "video" | "document" = "document";
+        if (file.type.startsWith('image/')) {
+          mediaType = "image";
+        } else if (file.type.startsWith('video/')) {
+          mediaType = "video";
+        }
+
+        mediaItems.push({
+          mediaType,
+          mimeType: file.type,
+          caption: caption,
+          media: base64,
+          fileName: file.name
+        });
       }
 
-      const params: SendMediaParams = {
-        remoteJId: selectedChat.Contact.remoteJid,
-        mediaType,
-        mimeType: selectedFile.type,
-        caption: caption,
-        media: base64,
-        fileName: selectedFile.name
-      };
-
-      await sendMediaMessage(params);
+      await sendMultipleMedia(mediaItems);
 
       reset();
-      clearSelectedFile();
+      clearSelectedFiles();
 
     } catch (error) {
-      console.error("Erro ao enviar mídia:", error);
+      console.error("Erro ao enviar mídias:", error);
       toast({
-        description: "Erro ao enviar mídia. Tente novamente.",
+        description: "Erro ao enviar mídias. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -231,7 +258,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ replyingTo, onSendReply }) => {
       const base64 = await blobToBase64(audioBlob);
       await sendAudioMessage(selectedChat.Contact.remoteJid, base64);
 
-      clearSelectedFile();
+      clearSelectedFiles();
       reset();
 
     } catch (error) {
@@ -277,18 +304,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ replyingTo, onSendReply }) => {
     });
   };
 
-  const getFileIcon = () => {
-    if (audioBlob) {
-      return <Music className="h-5 w-5 text-blue-500" />;
-    }
-
-    if (!selectedFile) return null;
-
-    if (selectedFile.type.startsWith('image/')) {
+  const getFileIcon = (file: File) => {
+    if (file.type.startsWith('image/')) {
       return <Image className="h-4 w-4 text-green-500" />;
-    } else if (selectedFile.type.startsWith('video/')) {
+    } else if (file.type.startsWith('video/')) {
       return <Video className="h-4 w-4 text-purple-500" />;
-    } else if (selectedFile.type.startsWith('audio/')) {
+    } else if (file.type.startsWith('audio/')) {
       return <Music className="h-4 w-4 text-blue-500" />;
     } else {
       return <FileText className="h-4 w-4 text-gray-500" />;
@@ -314,14 +335,15 @@ const ChatInput: React.FC<ChatInputProps> = ({ replyingTo, onSendReply }) => {
         setAudioBlob(blob);
 
         // Limpar qualquer arquivo selecionado previamente
-        setSelectedFile(null);
+        setSelectedFiles([]);
+        setPreviewUrls([]);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
 
         // Criar uma URL para o áudio para ouvir (opcional)
         const audioUrl = URL.createObjectURL(blob);
-        setPreviewUrl(audioUrl);
+        setPreviewUrls([audioUrl]);
       };
 
       recorder.start();
@@ -474,32 +496,75 @@ const ChatInput: React.FC<ChatInputProps> = ({ replyingTo, onSendReply }) => {
         </div>
       )}
 
-      {(selectedFile || audioBlob) && (
-        <div className="mb-2 p-2 bg-gray-50 rounded-lg flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {getFileIcon()}
-            <span className="text-sm truncate max-w-[200px]">
-              {audioBlob ? "Mensagem de áudio" : selectedFile?.name}
-            </span>
-          </div>
-          {previewUrl && selectedFile?.type.startsWith('image/') && (
-            <div className="h-10 w-10 mr-2">
-              <img src={previewUrl} alt="Preview" className="h-full w-full object-cover rounded" />
+      {(selectedFiles.length > 0 || audioBlob) && (
+        <div className="mb-2 p-2 bg-gray-50 rounded-lg">
+          {audioBlob && (
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Music className="h-5 w-5 text-blue-500" />
+                <span className="text-sm">Mensagem de áudio</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <audio controls src={previewUrls[0] || undefined} className="h-8 w-40" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 rounded-full"
+                  onClick={clearSelectedFiles}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
-          {previewUrl && audioBlob && (
-            <div className="mr-2">
-              <audio controls src={previewUrl} className="h-8 w-40" />
+          
+          {selectedFiles.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  {selectedFiles.length} arquivo(s) selecionado(s)
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={clearSelectedFiles}
+                >
+                  Limpar todos
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {getFileIcon(file)}
+                      <span className="text-sm truncate">{file.name}</span>
+                      <span className="text-xs text-gray-500">
+                        ({(file.size / 1024 / 1024).toFixed(1)}MB)
+                      </span>
+                    </div>
+                    {previewUrls[index] && file.type.startsWith('image/') && (
+                      <div className="h-8 w-8 mr-2 flex-shrink-0">
+                        <img 
+                          src={previewUrls[index]} 
+                          alt="Preview" 
+                          className="h-full w-full object-cover rounded" 
+                        />
+                      </div>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 rounded-full flex-shrink-0"
+                      onClick={() => removeFile(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 rounded-full"
-            onClick={clearSelectedFile}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
       )}
 
@@ -543,6 +608,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ replyingTo, onSendReply }) => {
           ref={fileInputRef}
           onChange={handleFileSelect}
           className="hidden"
+          multiple
           accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         />
         <DropdownMenu>
@@ -685,7 +751,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ replyingTo, onSendReply }) => {
               textInputRef.current = e;
             }}
             className="flex-1 border-0 bg-transparent focus-visible:ring-0 resize-none min-h-[40px] max-h-[120px]"
-            placeholder={selectedFile || audioBlob ? "Adicionar legenda (opcional)..." : "Escreva aqui... (digite / para mensagens rápidas)"}
+            placeholder={selectedFiles.length > 0 || audioBlob ? "Adicionar legenda (opcional)..." : "Escreva aqui... (digite / para mensagens rápidas)"}
             autoComplete="off"
             disabled={isUploading || isRecording}
             rows={1}

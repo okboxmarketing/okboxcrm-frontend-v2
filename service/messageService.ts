@@ -13,8 +13,25 @@ export interface SendMediaParams {
   fileName: string;
 }
 
+export interface MediaItem {
+  mediaType: "image" | "video" | "document";
+  mimeType: string;
+  caption?: string;
+  media: string;
+  fileName: string;
+}
+
+export interface SendMultipleMediaParams {
+  remoteJId: string;
+  mediaItems: MediaItem[];
+}
+
 export const sendMediaMessage = async (params: SendMediaParams) => {
   await apiHelper.post('/message/media', params);
+}
+
+export const sendMultipleMediaMessages = async (params: SendMultipleMediaParams) => {
+  return await apiHelper.post('/message/media/multiple', params);
 }
 
 export const sendAudioMessage = async (remoteJId: string, media: string) => {
