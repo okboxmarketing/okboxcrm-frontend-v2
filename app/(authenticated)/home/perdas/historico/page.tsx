@@ -36,8 +36,10 @@ const LossHistoryPage: React.FC = () => {
         try {
             const data = await getLosses();
             if (data) {
-                setLosses(data);
-                setFilteredLosses(data);
+                // O backend retorna um objeto com paginação, precisamos extrair o array de perdas
+                const lossesArray = Array.isArray(data) ? data : data.losses || [];
+                setLosses(lossesArray);
+                setFilteredLosses(lossesArray);
             }
         } catch (error) {
             console.error("Erro ao carregar perdas:", error);

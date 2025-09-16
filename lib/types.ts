@@ -198,6 +198,15 @@ export interface LossReason {
   createdAt: string;
 }
 
+export interface LossesResponse {
+  losses: Loss[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+  totalItems: number;
+}
+
 
 export interface NewMessagePayload {
   contactId: string;

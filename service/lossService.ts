@@ -1,11 +1,11 @@
 import { apiHelper } from "@/lib/apiHelper";
-import { Loss, LossReason } from "@/lib/types";
+import { Loss, LossReason, LossesResponse } from "@/lib/types";
 import { CreateLossDto } from "@/types/loss";
 
 
 export const getLosses = async () => {
   try {
-    return await apiHelper.get<Loss[]>(`/losses`);
+    return await apiHelper.get<LossesResponse>(`/losses`);
   } catch (error) {
     console.error("Error fetching losses:", error);
     throw error;
