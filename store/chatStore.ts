@@ -498,10 +498,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
             };
 
             set((state) => {
-                // evita duplicar
                 const exists = state.messages.some(
-                    (m) => m.data.key.id === processedPayload.data.key.id ||
-                        (m.data.key.fromMe && m.data.message.conversation === processedPayload.data.message.conversation)
+                    (m) => m.data.key.id === processedPayload.data.key.id
                 );
 
                 const messages = !exists ? [...state.messages, processedPayload] : state.messages;
