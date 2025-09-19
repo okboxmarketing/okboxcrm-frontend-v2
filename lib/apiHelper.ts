@@ -40,7 +40,7 @@ async function refreshToken(): Promise<string | null> {
         if (!res.ok) return null;
         const { access_token } = await res.json();
         if (access_token) {
-          useAuthStore.getState().setToken(access_token);
+          useAuthStore.getState().updateToken(access_token);
           localStorage.setItem('authToken', access_token);
           return access_token;
         }
@@ -55,6 +55,7 @@ async function refreshToken(): Promise<string | null> {
 }
 
 
+
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleResponse(response: Response, responseData: any, originalRequest?: () => Promise<Response>) {
   if (response.status === 401) {
@@ -65,10 +66,17 @@ async function handleResponse(response: Response, responseData: any, originalReq
       //eslint-disable-next-line @typescript-eslint/no-explicit-any
       let newResponseData: any;
       try { newResponseData = JSON.parse(newText); } catch { newResponseData = newText; }
+     if(!newResponseData) {
+      const err = typeof newResponseData?.error === 'string'
+      ? newResponseData.error
+      : newResponse.statusText || 'Erro após renovar a sessão';
+      throw new Error(err);
+     }
+
       return newResponseData;
     }
     await handleLogout();
-    return undefined;
+    throw new Error('Sessão expirada. Faça login novamente.');
   }
 
   if (response.status === 403) {
@@ -83,7 +91,7 @@ async function handleResponse(response: Response, responseData: any, originalReq
     }
 
     if (errorMessage === 'INSUFFICIENT_PERMISSIONS') {
-      // Usuário não tem permissões suficientes para este recurso
+      throw new Error('Você não tem permissões suficientes para acessar este recurso.');
     }
   }
 
