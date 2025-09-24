@@ -77,7 +77,7 @@ export const acceptTicket = async (ticketId: number) => {
 }
 
 export const moveTicket = async (stepId: number, ticketId: string) => {
-  return apiHelper.post(`/tickets/move/${stepId}/${ticketId}`);
+  return apiHelper.post(`/tickets/move/${ticketId}/${stepId}`);
 }
 
 export const createTicket = async (remoteJid: string) => {
