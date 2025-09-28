@@ -1,4 +1,5 @@
 import useAuthStore from '@/store/authStore';
+import { toast } from '@/hooks/use-toast';
 
 interface ErrorResponse {
   statusCode: number;
@@ -11,6 +12,25 @@ interface ErrorObject {
   message?: string;
   error?: string;
   [key: string]: unknown;
+}
+
+// Tipos de erro para melhor categorização
+enum ErrorType {
+  NETWORK = 'NETWORK',
+  VALIDATION = 'VALIDATION',
+  AUTHENTICATION = 'AUTHENTICATION',
+  AUTHORIZATION = 'AUTHORIZATION',
+  SERVER = 'SERVER',
+  UNKNOWN = 'UNKNOWN'
+}
+
+// Interface para erros estruturados
+interface StructuredError {
+  type: ErrorType;
+  message: string;
+  userMessage: string;
+  statusCode?: number;
+  originalError?: unknown;
 }
 
 async function handleLogout() {
@@ -54,10 +74,107 @@ async function refreshToken(): Promise<string | null> {
   return refreshPromise;
 }
 
+// Função para categorizar erros baseado no status code
+function categorizeError(statusCode: number): ErrorType {
+  if (statusCode >= 500) return ErrorType.SERVER;
+  if (statusCode === 401) return ErrorType.AUTHENTICATION;
+  if (statusCode === 403) return ErrorType.AUTHORIZATION;
+  if (statusCode >= 400 && statusCode < 500) return ErrorType.VALIDATION;
+  return ErrorType.UNKNOWN;
+}
+
+// Função para gerar mensagens amigáveis ao usuário
+function getUserFriendlyMessage(errorType: ErrorType, originalMessage: string, statusCode?: number): string {
+  switch (errorType) {
+    case ErrorType.NETWORK:
+      return "Problema de conexão. Verifique sua internet e tente novamente.";
+    case ErrorType.AUTHENTICATION:
+      return "Sua sessão expirou. Faça login novamente.";
+    case ErrorType.AUTHORIZATION:
+      return "Você não tem permissão para realizar esta ação.";
+    case ErrorType.VALIDATION:
+      return originalMessage || "Dados inválidos. Verifique as informações e tente novamente.";
+    case ErrorType.SERVER:
+      return "Erro interno do servidor. Tente novamente em alguns minutos.";
+    case ErrorType.UNKNOWN:
+    default:
+      return originalMessage || "Ocorreu um erro inesperado. Tente novamente.";
+  }
+}
+
+// Função para mostrar toast baseado no tipo de erro
+function showErrorToast(errorType: ErrorType, userMessage: string, statusCode?: number) {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  // Em desenvolvimento, mostra mais detalhes
+  const title = isDevelopment 
+    ? `Erro ${statusCode ? `(${statusCode})` : ''} - ${errorType}`
+    : 'Erro';
+
+  toast({
+    title,
+    description: userMessage,
+    variant: "destructive",
+    duration: errorType === ErrorType.AUTHENTICATION ? 5000 : 4000,
+  });
+}
+
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractErrorMessage(response: Response, responseData: any): string {
+  let errorMessage = "Erro desconhecido";
+
+  // Caso API retorne string simples
+  if (typeof responseData === "string") {
+    errorMessage = responseData;
+  }
+
+  // Caso API retorne no formato do ErrorResponse
+  else if (responseData && typeof responseData === "object") {
+    const errorObj = responseData as Partial<ErrorResponse> & Partial<ErrorObject>;
+    errorMessage =
+      errorObj.message ||
+      errorObj.error?.toString() ||
+      JSON.stringify(errorObj);
+  }
+
+  // Garantir fallback
+  if (!errorMessage || errorMessage === "null" || errorMessage === "undefined") {
+    errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+  }
+
+  return errorMessage;
+}
+
+// Função para processar e estruturar erros
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+function processError(response: Response, responseData: any, originalError?: unknown): StructuredError {
+  const statusCode = response.status;
+  const errorType = categorizeError(statusCode);
+  const originalMessage = extractErrorMessage(response, responseData);
+  const userMessage = getUserFriendlyMessage(errorType, originalMessage, statusCode);
+
+  // Log detalhado em desenvolvimento
+  if (process.env.NODE_ENV === 'development') {
+    console.group(`🚨 Erro ${errorType} (${statusCode})`);
+    console.error('Status:', statusCode);
+    console.error('Response Data:', responseData);
+    console.error('Original Error:', originalError);
+    console.error('User Message:', userMessage);
+    console.groupEnd();
+  }
+
+  return {
+    type: errorType,
+    message: originalMessage,
+    userMessage,
+    statusCode,
+    originalError
+  };
+}
 
 
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function handleResponse(response: Response, responseData: any, originalRequest?: () => Promise<Response>) {
+async function handleResponse(response: Response, responseData: any, originalRequest?: () => Promise<Response>, showToast: boolean = true) {
   if (response.status === 401) {
     const newToken = await refreshToken();
     if (newToken && originalRequest) {
@@ -80,43 +197,32 @@ async function handleResponse(response: Response, responseData: any, originalReq
   }
 
   if (response.status === 403) {
-    const errorData = (responseData as ErrorResponse)?.error;
-    let errorMessage = "";
+    const errorMessage = extractErrorMessage(response, responseData);
 
-    if (typeof errorData === 'string') {
-      errorMessage = errorData;
-    } else if (errorData && typeof errorData === 'object') {
-      const errorObj = errorData as ErrorObject;
-      errorMessage = errorObj.message || errorObj.error || "";
+    if (errorMessage === "INSUFFICIENT_PERMISSIONS") {
+      if (showToast) {
+        showErrorToast(ErrorType.AUTHORIZATION, "Você não tem permissões suficientes para acessar este recurso.", 403);
+      }
+      throw new Error("Você não tem permissões suficientes para acessar este recurso.");
     }
 
-    if (errorMessage === 'INSUFFICIENT_PERMISSIONS') {
-      throw new Error('Você não tem permissões suficientes para acessar este recurso.');
+    if (showToast) {
+      showErrorToast(ErrorType.AUTHORIZATION, errorMessage, 403);
     }
+    throw new Error(errorMessage);
   }
 
   if (!response.ok) {
-    const errorData = (responseData as ErrorResponse)?.error;
-    let errorMessage = "Erro desconhecido";
-
-    if (typeof errorData === 'string') {
-      errorMessage = errorData;
-    } else if (errorData && typeof errorData === 'object') {
-      const errorObj = errorData as ErrorObject;
-      errorMessage = errorObj.message || errorObj.error || JSON.stringify(errorData);
+    const structuredError = processError(response, responseData);
+    if (showToast) {
+      showErrorToast(structuredError.type, structuredError.userMessage, structuredError.statusCode);
     }
-
-    // Garantir que errorMessage nunca seja null ou undefined
-    if (!errorMessage || errorMessage === 'null' || errorMessage === 'undefined') {
-      errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
-    }
-
-    throw new Error(errorMessage);
+    throw new Error(structuredError.userMessage);
   }
 }
 
 export const apiHelper = {
-  get: async <T>(url: string, params?: Record<string, unknown>): Promise<T> => {
+  get: async <T>(url: string, params?: Record<string, unknown>, showToast: boolean = true): Promise<T> => {
     try {
       const queryString = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
 
@@ -142,17 +248,41 @@ export const apiHelper = {
         responseData = text as T;
       }
 
-      const result = await handleResponse(response, responseData, makeRequest);
+      const result = await handleResponse(response, responseData, makeRequest, showToast);
       if (result) return result;
 
       return responseData;
     } catch (error) {
-      console.error(`Erro [GET ${url}]:`, error);
+      // Tratamento de erro de rede
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        const structuredError = {
+          type: ErrorType.NETWORK,
+          message: error.message,
+          userMessage: getUserFriendlyMessage(ErrorType.NETWORK, error.message),
+          originalError: error
+        };
+        
+        if (showToast) {
+          showErrorToast(structuredError.type, structuredError.userMessage);
+        }
+        
+        console.error(`Erro de rede [GET ${url}]:`, error);
+        throw new Error(structuredError.userMessage);
+      }
+
+      // Tratamento de outros erros
+      if (error instanceof Error) {
+        if (showToast) {
+          showErrorToast(ErrorType.UNKNOWN, error.message);
+        }
+        console.error(`Erro [GET ${url}]:`, error);
+      }
+      
       throw error;
     }
   },
 
-  post: async <T>(url: string, data?: unknown): Promise<T> => {
+  post: async <T>(url: string, data?: unknown, showToast: boolean = true): Promise<T> => {
     try {
       const makeRequest = async () => {
         const currentToken = useAuthStore.getState().token || localStorage.getItem("authToken");
@@ -171,18 +301,43 @@ export const apiHelper = {
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
-      const result = await handleResponse(response, responseData, makeRequest);
+      const result = await handleResponse(response, responseData, makeRequest, showToast);
       if (result) return result;
 
       return responseData;
     } catch (error) {
-      console.error(`Erro [POST ${url}]:`, error);
+      // Tratamento de erro de rede
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        const structuredError = {
+          type: ErrorType.NETWORK,
+          message: error.message,
+          userMessage: getUserFriendlyMessage(ErrorType.NETWORK, error.message),
+          originalError: error
+        };
+        
+        if (showToast) {
+          showErrorToast(structuredError.type, structuredError.userMessage);
+        }
+        
+        console.error(`Erro de rede [POST ${url}]:`, error);
+        throw new Error(structuredError.userMessage);
+      }
+
+      // Tratamento de outros erros
+      if (error instanceof Error) {
+        if (showToast) {
+          showErrorToast(ErrorType.UNKNOWN, error.message);
+        }
+        console.error(`Erro [POST ${url}]:`, error);
+      }
+      
       throw error;
     }
   },
   delete: async <T>(
     url: string,
-    params?: Record<string, unknown>
+    params?: Record<string, unknown>,
+    showToast: boolean = true
   ): Promise<T> => {
     try {
       const queryString = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
@@ -206,16 +361,40 @@ export const apiHelper = {
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
-      const result = await handleResponse(response, responseData, makeRequest);
+      const result = await handleResponse(response, responseData, makeRequest, showToast);
       if (result) return result;
 
       return responseData;
     } catch (error) {
-      console.error(`Erro [DELETE ${url}]:`, error);
+      // Tratamento de erro de rede
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        const structuredError = {
+          type: ErrorType.NETWORK,
+          message: error.message,
+          userMessage: getUserFriendlyMessage(ErrorType.NETWORK, error.message),
+          originalError: error
+        };
+        
+        if (showToast) {
+          showErrorToast(structuredError.type, structuredError.userMessage);
+        }
+        
+        console.error(`Erro de rede [DELETE ${url}]:`, error);
+        throw new Error(structuredError.userMessage);
+      }
+
+      // Tratamento de outros erros
+      if (error instanceof Error) {
+        if (showToast) {
+          showErrorToast(ErrorType.UNKNOWN, error.message);
+        }
+        console.error(`Erro [DELETE ${url}]:`, error);
+      }
+      
       throw error;
     }
   },
-  patch: async <T>(url: string, data?: unknown): Promise<T> => {
+  patch: async <T>(url: string, data?: unknown, showToast: boolean = true): Promise<T> => {
     try {
       const makeRequest = async () => {
         const currentToken = useAuthStore.getState().token || localStorage.getItem("authToken");
@@ -234,12 +413,36 @@ export const apiHelper = {
       const text = await response.text();
       const responseData = text ? (JSON.parse(text) as T) : ({} as T);
 
-      const result = await handleResponse(response, responseData, makeRequest);
+      const result = await handleResponse(response, responseData, makeRequest, showToast);
       if (result) return result;
 
       return responseData;
     } catch (error) {
-      console.error(`Erro [PATCH ${url}]:`, error);
+      // Tratamento de erro de rede
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        const structuredError = {
+          type: ErrorType.NETWORK,
+          message: error.message,
+          userMessage: getUserFriendlyMessage(ErrorType.NETWORK, error.message),
+          originalError: error
+        };
+        
+        if (showToast) {
+          showErrorToast(structuredError.type, structuredError.userMessage);
+        }
+        
+        console.error(`Erro de rede [PATCH ${url}]:`, error);
+        throw new Error(structuredError.userMessage);
+      }
+
+      // Tratamento de outros erros
+      if (error instanceof Error) {
+        if (showToast) {
+          showErrorToast(ErrorType.UNKNOWN, error.message);
+        }
+        console.error(`Erro [PATCH ${url}]:`, error);
+      }
+      
       throw error;
     }
   },
