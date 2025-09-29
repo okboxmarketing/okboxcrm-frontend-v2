@@ -35,7 +35,8 @@ export const findCompanyById = async (companyId: string) => {
 };
 
 export const findAllCompanies = async () => {
-  return await apiHelper.get<Company[]>("/company");
+  const response = await apiHelper.get<{ data: Company[]; meta: any }>("/company");
+  return response.data;
 };
 
 export const findMyCompany = async () => {
