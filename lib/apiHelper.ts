@@ -84,7 +84,7 @@ function categorizeError(statusCode: number): ErrorType {
 }
 
 // Função para gerar mensagens amigáveis ao usuário
-function getUserFriendlyMessage(errorType: ErrorType, originalMessage: string, statusCode?: number): string {
+function getUserFriendlyMessage(errorType: ErrorType, originalMessage: string): string {
   switch (errorType) {
     case ErrorType.NETWORK:
       return "Problema de conexão. Verifique sua internet e tente novamente.";
@@ -151,7 +151,7 @@ function processError(response: Response, responseData: any, originalError?: unk
   const statusCode = response.status;
   const errorType = categorizeError(statusCode);
   const originalMessage = extractErrorMessage(response, responseData);
-  const userMessage = getUserFriendlyMessage(errorType, originalMessage, statusCode);
+  const userMessage = getUserFriendlyMessage(errorType, originalMessage);
 
   // Log detalhado em desenvolvimento
   if (process.env.NODE_ENV === 'development') {
